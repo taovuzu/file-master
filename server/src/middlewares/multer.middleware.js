@@ -1,5 +1,5 @@
 import multer from "multer";
-import path from "path";
+import { v4 as uuidv4 } from 'uuid';
 import sanitize from "sanitize-filename";
 
 const storage = multer.diskStorage({
@@ -8,8 +8,8 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const sanitizedFileName = sanitize(file.originalname);
-    const randomName = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${randomName}-${sanitizedFileName}${path.extname(file.originalname)}`);
+    const randomName = uuidv4();
+    cb(null, `${randomName}___${sanitizedFileName}`);
   }
 });
 
