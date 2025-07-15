@@ -51,7 +51,7 @@ import compressPdfRouter from "./routes/compressPdf.route.js";
 // import watermarkRouter from "./routes/watermark.route.js";
 // import esignPdfRouter from "./routes/esignPdf.route.js";
 import unlockPdfRouter from "./routes/unlockPdf.route.js";
-// import protectPdfRouter from "./routes/protectPdf.route.js";
+import protectPdfRouter from "./routes/protectPdf.route.js";
 import downloadFileRouter from "./routes/download.route.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 
@@ -66,7 +66,7 @@ app.use("/api/v1/compress", compressPdfRouter); // ghostscript
 // app.use("/api/v1/watermark", watermarkRouter); //  { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 // app.use("/api/v1/esign", esignPdfRouter); // { PDFDocument } from 'pdf-lib';
 app.use("/api/v1/unlock", unlockPdfRouter); // ghostscript
-// app.use("/api/v1/protect", protectPdfRouter); // gostscript
+app.use("/api/v1/protect", protectPdfRouter); // gostscript
 app.use("/api/v1/download", downloadFileRouter);
 
 

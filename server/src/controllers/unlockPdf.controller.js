@@ -15,7 +15,6 @@ const unlockPdf = asyncHandler(async (req, res) => {
     throw new ApiError(404, "File could not be found on server");
   }
 
-  console.log(req.body);
   const password = req.body.PASSWORD;
 
   const inputPath = path.resolve(file.path);
