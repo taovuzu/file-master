@@ -4,6 +4,6 @@ import { upload } from "../middlewares/multer.middleware.js";
 
 const router = Router();
 
-router.post("/pdf",upload.single("PDFFILE") ,compressPdf);
+router.post("/pdf", upload.single("PDFFILE"), compressPdf);
 
 export default router;

@@ -11,6 +11,9 @@ import { GS_PATH } from "../constants.js";
 
 const compressPdf = asyncHandler(async (req, res) => {
   const file = req.file;
+  if(!file) {
+    throw new ApiError(404, "File could not be found on server");
+  }
   let compressionLevel = req.body.compressionLevel;
   if (!compressionLevel) compressionLevel = "ebook";
   else if (compressionLevel == 1) compressionLevel = "printer";
@@ -56,7 +59,7 @@ const compressPdf = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
       new ApiResponse(200, "PDF compressed successfully", {
-        FILE: `${outputName}`
+        file: `${outputName}`
       })
     );
   });
