@@ -44,7 +44,7 @@ app.use((req, res, next) => {
 
 // import converterRouter from "./routes/converter.route.js";
 // import mergePdfRouter from "./routes/mergePdf.route.js";
-// import splitPdfRouter from "./routes/splitPdf.route.js";
+import splitPdfRouter from "./routes/splitPdf.route.js";
 import compressPdfRouter from "./routes/compressPdf.route.js";
 // import rotatePdfRouter from "./routes/rotatePdf.route.js";
 // import pageNumbersRouter from "./routes/pageNumbers.route.js";
@@ -59,7 +59,7 @@ import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 // app.use("/api/v1/convert", converterRouter); // image-to-pdf -> {PDFDocument from "pdfkit"}, doc-to-pdf -> {libreoffice}
 // // pdf-to-ppt -> {pptxgen, pdf-poppler, pdf-lib}
 // app.use("/api/v1/merge", mergePdfRouter); //  PDFMerger from "pdf-merger-js";
-// app.use("/api/v1/split", splitPdfRouter); // { PDFDocument } from "pdf-lib";
+app.use("/api/v1/split", splitPdfRouter); // { PDFDocument } from "pdf-lib";
 app.use("/api/v1/compress", compressPdfRouter); // ghostscript
 // app.use("/api/v1/rotate", rotatePdfRouter); // { PDFDocument, degrees } from "pdf-lib";
 // app.use("/api/v1/page-numbers", pageNumbersRouter); // { PDFDocument, StandardFonts, rgb } from "pdf-lib";
