@@ -4,6 +4,6 @@ import { mergePdfFiles } from "../controllers/mergePdf.controller.js";
 
 const router = Router();
 
-router.route("/pdf").post(upload.array("PDFFILES", 10), mergePdfFiles);
+router.route("/pdf").post(upload.array("PDFFILES", 15), mergePdfFiles);
 
 export default router;
