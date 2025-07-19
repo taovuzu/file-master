@@ -36,8 +36,6 @@ const protectPdf = asyncHandler(async (req, res) => {
     `"${inputPath}"`
   ].join(" ");
 
-  console.log(gsCmd);
-
   exec(gsCmd, (error, stdout, stderr) => {
     fs.unlinkSync(inputPath);
 

@@ -18,10 +18,6 @@ const mergePdfFiles = asyncHandler(async (req, res) => {
   const outputDir = path.join(process.cwd(), "public", "processed");
   const outputPath = path.join(outputDir, outputName);
 
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
   const merger = new PDFMerger();
 
   for (let i = 0; i < files.length; i++) {
