@@ -56,8 +56,8 @@ import downloadFileRouter from "./routes/download.route.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 
 
-app.use("/api/v1/convert", converterRouter); // image-to-pdf -> {PDFDocument from "pdfkit"}, doc-to-pdf -> {libreoffice}
-// // pdf-to-ppt -> {pptxgen, pdf-poppler, pdf-lib}
+app.use("/api/v1/convert", converterRouter); // image-to-pdf -> {PDFDocument from "pdf-lib"}, doc-to-pdf -> {libreoffice}
+// // pdf-to-ppt -> {pptxgenjs, pdf-poppler, pdf-lib}
 app.use("/api/v1/merge", mergePdfRouter); //  PDFMerger from "pdf-merger-js";
 app.use("/api/v1/split", splitPdfRouter); // { PDFDocument } from "pdf-lib";
 app.use("/api/v1/compress", compressPdfRouter); // ghostscript

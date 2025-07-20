@@ -5,6 +5,9 @@ import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import { PDFDocument, PageSizes } from "pdf-lib";
 import archiver from "archiver";
+import pptxgen from "pptxgenjs";
+import pdf from "pdf-poppler";
+import { imageSizeFromFile } from 'image-size/fromFile'
 
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -72,7 +75,7 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
   const getBasePageSize = () => {
     if (pagetype === "UsLetter") return PageSizes.Letter;
     if (pagetype === "A4") return PageSizes.A4;
-    return null; 
+    return null;
   };
 
   const calculatePageSize = (imgWidth, imgHeight) => {
@@ -205,6 +208,63 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
   }
 });
 
+const convertPdfToPptx = asyncHandler(async (req, res) => {
+  const file = req.file;
+  if (!file) {
+    throw new ApiError(400, "File does not found");
+  }
 
-export { convertDocToPdf, convertImagesToPdf };
-// , convertPdfToPptx, convertPdfToImage 
+  const inputPath = path.resolve(file.path);
+  const name = path.basename(inputPath, path.extname(file.originalname));
+  const outputName = `${name}.pptx`;
+  const outputDir = path.join(process.cwd(), "public", "processed");
+  const outputPath = path.join(outputDir, outputName);
+
+  const baseOutDir = path.join(process.cwd(), "public", "temp", `pdf_to_image_${uuidv4()}`);
+  fs.mkdirSync(baseOutDir, { recursive: true });
+
+  const options = {
+    format: 'png',
+    out_dir: baseOutDir,
+    out_prefix: 'slide',
+    page: null,
+  };
+
+  await pdf.convert(inputPath, options);
+  fs.unlinkSync(inputPath);
+
+  const imageFiles = fs.readdirSync(baseOutDir).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  if (imageFiles.length == 0) {
+    throw new ApiError(400, "no image was generated from pdf");
+  }
+  const dimensions = await imageSizeFromFile(path.join(baseOutDir, imageFiles[0]));
+  const slideWidth = dimensions.width / 72;
+  const slideHeight = dimensions.height / 72;
+
+  const pptx = new pptxgen();
+  pptx.defineLayout({ name: 'customLayout', width: slideWidth, height: slideHeight });
+  pptx.layout = 'customLayout';
+
+  for (let i = 0; i < imageFiles.length; i++) {
+    const imagePath = path.join(baseOutDir, imageFiles[i]);
+    const slide = pptx.addSlide();
+    slide.addImage({ path: imagePath, x: 0, y: 0, w: slideWidth, h: slideHeight });
+  }
+
+  await pptx.writeFile({ fileName: outputPath });
+  fs.rm(baseOutDir, { recursive: true, force: true }, (err) => {
+    if (err) {
+      console.error(`Error deleting directory: ${err}`);
+    } else {
+      console.log(`Directory and its contents deleted: ${baseOutDir}`);
+    }
+  });
+
+  return res.status(200).json(
+    new ApiResponse(200, 'pdf converted successfully to pptx', {
+      file: `${outputPath}`
+    })
+  );
+});
+
+export { convertDocToPdf, convertImagesToPdf, convertPdfToPptx };
