@@ -8,7 +8,6 @@ import {
 import { Provider } from "react-redux";
 import store from "@/redux/store";
 import PageLoader from "@/components/PageLoader";
-import { AppContextProvider } from "@/context/appContext";
 
 const FileMasterOs = lazy(() => import("./apps/FileMasterOs.jsx"));
 
@@ -18,11 +17,9 @@ const router = createBrowserRouter(
       path="/"
       element={
         <Provider store={store}>
-          <AppContextProvider>
-            <Suspense fallback={<PageLoader />}>
-              <FileMasterOs />
-            </Suspense>
-          </AppContextProvider>
+          <Suspense fallback={<PageLoader />}>
+            <FileMasterOs />
+          </Suspense>
         </Provider>
       }
     />
