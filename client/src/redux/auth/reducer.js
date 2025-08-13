@@ -6,7 +6,7 @@ import {
   resetPassword,
   logout,
   updateProfile,
-} from './authThunks';
+} from './actions';
 
 const INITIAL_STATE = {
   current: {},

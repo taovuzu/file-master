@@ -1,3 +1,5 @@
+import './style/app.css';
+
 import { Suspense, lazy } from "react";
 import {
   Route,
