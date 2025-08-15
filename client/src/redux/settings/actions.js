@@ -1,5 +1,6 @@
 import { createAsyncThunk, createAction } from '@reduxjs/toolkit';
 import { request } from '@/request';
+import storePersist from '@/redux/storePersist.js';
 
 // Helper to normalize settings list into { category: { key: value } } shape
 const normalizeSettings = (datas) => {
@@ -13,9 +14,9 @@ const normalizeSettings = (datas) => {
   return settingsCategory;
 };
 
-// Helper to save settings to localStorage
+// Helper to save settings to storePersist
 const saveSettingsToLocalStorage = (settings) => {
-  window.localStorage.setItem('settings', JSON.stringify(settings));
+  storePersist.set('settings', settings);
 };
 
 // Sync actions

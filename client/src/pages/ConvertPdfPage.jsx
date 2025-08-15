@@ -1,22 +1,13 @@
 import React from 'react';
 import PdfToolPage from '@/components/PdfToolPage';
-import PdfForm from '@/components/PdfForm';
+import ConvertPdfForm from '@/forms/ConvertPdfForm';
 
 const ConvertPdfPage = () => {
-  const ConvertForm = ({ onFinish, disabled }) => (
-    <PdfForm
-      formType="convert"
-      onFinish={onFinish}
-      disabled={disabled}
-      config={{ buttonText: 'Convert PDF' }}
-    />
-  );
-
   return (
     <PdfToolPage
       title="Convert PDF"
       description="Convert PDF to Word, Excel, or image formats"
-      formComponent={ConvertForm}
+      formComponent={ConvertPdfForm} 
       entity="convert"
       multipleFiles={false}
       showPreview={true}

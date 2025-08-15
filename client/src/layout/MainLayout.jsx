@@ -8,17 +8,17 @@ const { Content } = Layout;
 
 const MainLayout = ({ 
   children, 
-  showSidebar = true, 
+  showSidebar = false, 
   showHeader = true, 
   showFooter = true
 }) => {
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', minWidth: '100%' }}>
       {showHeader && <Header />}
       <Layout>
         {showSidebar && <Sidebar />}
-        <Layout style={{ padding: '24px' }}>
-          <Content style={{ background: '#fff', padding: 24, margin: 0, minHeight: 280 }}>
+        <Layout style={{ padding: '0px' }}>
+          <Content style={{ background: '#fff', padding: 0, margin: 0, minHeight: 280 }}>
             {children}
           </Content>
           {showFooter && <Footer />}

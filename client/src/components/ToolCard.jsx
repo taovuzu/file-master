@@ -1,19 +1,22 @@
 import React from 'react';
-import { Card, Badge, Tooltip, Button } from 'antd';
+import { Badge } from 'antd';
 import { 
   FileText, 
-  Scissors, 
-  FileDown, 
-  Lock, 
-  Unlock, 
-  RotateCw, 
-  Type, 
   Download,
   Star,
   Clock,
   Users,
   Zap,
-  ArrowRight
+  ArrowRight,
+  Merge,
+  Split,
+  FileDown as Compress,
+  Download as Convert,
+  Lock as Protect,
+  Unlock as UnlockIcon,
+  RotateCw as Rotate,
+  Type as Watermark,
+  Hash as PageNumbers
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,93 +28,209 @@ import { logUserAction } from '@/utils/logger';
  * Tool configuration with metadata
  */
 const TOOL_CONFIG = {
-  [PDF_OPERATIONS.MERGE]: {
+  'Merge PDF': {
     title: 'Merge PDF',
     description: 'Combine multiple PDF files into one document',
-    icon: FileText,
+    icon: Merge,
     color: 'blue',
     features: ['Combine multiple files', 'Maintain quality', 'Fast processing'],
     popularity: 95,
     processingTime: '30 seconds',
     users: '2M+',
     premium: false,
+    route: '/merge',
   },
-  [PDF_OPERATIONS.SPLIT]: {
+  'Split PDF': {
     title: 'Split PDF',
     description: 'Separate PDF into multiple files by pages or ranges',
-    icon: Scissors,
+    icon: Split,
     color: 'green',
     features: ['Split by pages', 'Extract ranges', 'Batch processing'],
     popularity: 87,
     processingTime: '15 seconds',
     users: '1.5M+',
     premium: false,
+    route: '/split',
   },
-  [PDF_OPERATIONS.COMPRESS]: {
+  'Compress PDF': {
     title: 'Compress PDF',
     description: 'Reduce PDF file size while maintaining quality',
-    icon: FileDown,
+    icon: Compress,
     color: 'orange',
     features: ['Reduce file size', 'Maintain quality', 'Multiple levels'],
     popularity: 92,
     processingTime: '45 seconds',
     users: '3M+',
     premium: false,
+    route: '/compress',
   },
-  [PDF_OPERATIONS.PROTECT]: {
+  'Protect PDF': {
     title: 'Protect PDF',
     description: 'Add password protection to your PDF documents',
-    icon: Lock,
+    icon: Protect,
     color: 'red',
     features: ['Password protection', 'Encryption', 'Access control'],
     popularity: 78,
     processingTime: '20 seconds',
     users: '1.2M+',
     premium: true,
+    route: '/protect',
   },
-  [PDF_OPERATIONS.UNLOCK]: {
+  'Unlock PDF': {
     title: 'Unlock PDF',
     description: 'Remove password protection from PDF files',
-    icon: Unlock,
+    icon: UnlockIcon,
     color: 'purple',
     features: ['Remove passwords', 'Batch unlock', 'Secure processing'],
     popularity: 65,
     processingTime: '10 seconds',
     users: '800K+',
     premium: true,
+    route: '/unlock',
   },
-  [PDF_OPERATIONS.ROTATE]: {
+  'Rotate PDF': {
     title: 'Rotate PDF',
     description: 'Rotate PDF pages to correct orientation',
-    icon: RotateCw,
+    icon: Rotate,
     color: 'cyan',
     features: ['90° rotation', '180° rotation', 'Selective pages'],
     popularity: 72,
     processingTime: '8 seconds',
     users: '950K+',
     premium: false,
+    route: '/rotate',
   },
-  [PDF_OPERATIONS.WATERMARK]: {
+  'Watermark': {
     title: 'Add Watermark',
     description: 'Add text or image watermarks to PDF documents',
-    icon: Type,
+    icon: Watermark,
     color: 'indigo',
     features: ['Text watermarks', 'Image watermarks', 'Positioning'],
     popularity: 68,
     processingTime: '25 seconds',
     users: '750K+',
     premium: true,
+    route: '/watermark',
   },
-  [PDF_OPERATIONS.CONVERT]: {
+  'Convert PDF': {
     title: 'Convert PDF',
     description: 'Convert PDF to Word, Excel, or image formats',
-    icon: Download,
+    icon: Convert,
     color: 'teal',
     features: ['PDF to Word', 'PDF to Excel', 'PDF to Images'],
     popularity: 89,
     processingTime: '60 seconds',
     users: '2.5M+',
     premium: true,
+    route: '/convert',
+  },
+  'PDF to PowerPoint': {
+    title: 'PDF to PowerPoint',
+    description: 'Convert PDF presentations to editable PowerPoint files',
+    icon: Download,
+    color: 'pink',
+    features: ['Maintain formatting', 'Editable slides', 'High quality'],
+    popularity: 82,
+    processingTime: '45 seconds',
+    users: '1.8M+',
+    premium: true,
+    route: '/convert',
+  },
+  'Word to PDF': {
+    title: 'Word to PDF',
+    description: 'Convert Word documents to PDF format',
+    icon: FileText,
+    color: 'blue',
+    features: ['Preserve formatting', 'Fast conversion', 'High quality'],
+    popularity: 91,
+    processingTime: '20 seconds',
+    users: '2.2M+',
+    premium: false,
+    route: '/convert',
+  },
+  'PowerPoint to PDF': {
+    title: 'PowerPoint to PDF',
+    description: 'Convert PowerPoint presentations to PDF',
+    icon: Download,
+    color: 'orange',
+    features: ['Maintain slides', 'High resolution', 'Fast processing'],
+    popularity: 85,
+    processingTime: '25 seconds',
+    users: '1.9M+',
+    premium: false,
+    route: '/convert',
+  },
+  'Excel to PDF': {
+    title: 'Excel to PDF',
+    description: 'Convert Excel spreadsheets to PDF format',
+    icon: Download,
+    color: 'green',
+    features: ['Preserve data', 'Maintain layout', 'High quality'],
+    popularity: 79,
+    processingTime: '30 seconds',
+    users: '1.6M+',
+    premium: false,
+    route: '/convert',
+  },
+  'Edit PDF': {
+    title: 'Edit PDF',
+    description: 'Edit text, images, and content in PDF files',
+    icon: FileText,
+    color: 'purple',
+    features: ['Text editing', 'Image editing', 'Content modification'],
+    popularity: 76,
+    processingTime: '40 seconds',
+    users: '1.3M+',
+    premium: true,
+    route: '/convert',
+  },
+  'PDF to JPG': {
+    title: 'PDF to JPG',
+    description: 'Convert PDF pages to high-quality JPG images',
+    icon: Download,
+    color: 'yellow',
+    features: ['High resolution', 'Batch conversion', 'Custom settings'],
+    popularity: 74,
+    processingTime: '35 seconds',
+    users: '1.1M+',
+    premium: false,
+    route: '/convert',
+  },
+  'JPG to PDF': {
+    title: 'JPG to PDF',
+    description: 'Convert JPG images to PDF documents',
+    icon: FileText,
+    color: 'indigo',
+    features: ['Multiple images', 'Custom layout', 'High quality'],
+    popularity: 81,
+    processingTime: '20 seconds',
+    users: '1.7M+',
+    premium: false,
+    route: '/convert',
+  },
+  'Organize PDF': {
+    title: 'Organize PDF',
+    description: 'Reorder, delete, and organize PDF pages',
+    icon: FileText,
+    color: 'teal',
+    features: ['Page reordering', 'Page deletion', 'Batch operations'],
+    popularity: 69,
+    processingTime: '15 seconds',
+    users: '900K+',
+    premium: false,
+    route: '/split',
+  },
+  'Page numbers': {
+    title: 'Add Page Numbers',
+    description: 'Add page numbers to PDF documents',
+    icon: PageNumbers,
+    color: 'gray',
+    features: ['Custom formatting', 'Multiple styles', 'Positioning'],
+    popularity: 63,
+    processingTime: '12 seconds',
+    users: '700K+',
+    premium: false,
+    route: '/page-numbers',
   },
 };
 
@@ -129,6 +248,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-blue-100',
       icon: 'text-blue-500',
       gradient: 'from-blue-500 to-blue-600',
+      light: 'bg-blue-100',
     },
     green: {
       bg: 'bg-green-50',
@@ -137,6 +257,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-green-100',
       icon: 'text-green-500',
       gradient: 'from-green-500 to-green-600',
+      light: 'bg-green-100',
     },
     orange: {
       bg: 'bg-orange-50',
@@ -145,6 +266,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-orange-100',
       icon: 'text-orange-500',
       gradient: 'from-orange-500 to-orange-600',
+      light: 'bg-orange-100',
     },
     red: {
       bg: 'bg-red-50',
@@ -153,6 +275,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-red-100',
       icon: 'text-red-500',
       gradient: 'from-red-500 to-red-600',
+      light: 'bg-red-100',
     },
     purple: {
       bg: 'bg-purple-50',
@@ -161,6 +284,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-purple-100',
       icon: 'text-purple-500',
       gradient: 'from-purple-500 to-purple-600',
+      light: 'bg-purple-100',
     },
     cyan: {
       bg: 'bg-cyan-50',
@@ -169,6 +293,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-cyan-100',
       icon: 'text-cyan-500',
       gradient: 'from-cyan-500 to-cyan-600',
+      light: 'bg-cyan-100',
     },
     indigo: {
       bg: 'bg-indigo-50',
@@ -177,6 +302,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-indigo-100',
       icon: 'text-indigo-500',
       gradient: 'from-indigo-500 to-indigo-600',
+      light: 'bg-indigo-100',
     },
     teal: {
       bg: 'bg-teal-50',
@@ -185,6 +311,34 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-teal-100',
       icon: 'text-teal-500',
       gradient: 'from-teal-500 to-teal-600',
+      light: 'bg-teal-100',
+    },
+    pink: {
+      bg: 'bg-pink-50',
+      border: 'border-pink-200',
+      text: 'text-pink-600',
+      hover: 'hover:bg-pink-100',
+      icon: 'text-pink-500',
+      gradient: 'from-pink-500 to-pink-600',
+      light: 'bg-pink-100',
+    },
+    yellow: {
+      bg: 'bg-yellow-50',
+      border: 'border-yellow-200',
+      text: 'text-yellow-600',
+      hover: 'hover:bg-yellow-100',
+      icon: 'text-yellow-500',
+      gradient: 'from-yellow-500 to-yellow-600',
+      light: 'bg-yellow-100',
+    },
+    gray: {
+      bg: 'bg-gray-50',
+      border: 'border-gray-200',
+      text: 'text-gray-600',
+      hover: 'hover:bg-gray-100',
+      icon: 'text-gray-500',
+      gradient: 'from-gray-500 to-gray-600',
+      light: 'bg-gray-100',
     },
   };
 
@@ -211,7 +365,7 @@ const ToolCard = ({
     return null;
   }
 
-  const { title, description, icon: Icon, color, features, popularity, processingTime, users, premium } = config;
+  const { title, description, icon: Icon, color, features, popularity, processingTime, users, premium, route } = config;
   const colors = getColorClasses(color);
 
   /**
@@ -223,60 +377,55 @@ const ToolCard = ({
     
     if (onClick) {
       onClick(tool);
-    } else {
-      navigate(ROUTES[tool.toUpperCase()]);
+    } else if (route) {
+      navigate(route);
     }
-  };
-
-  /**
-   * Handle feature click
-   */
-  const handleFeatureClick = (feature) => {
-    trackInteraction('feature_clicked', { tool, feature });
   };
 
   return (
     <div
       className={`
-        tool-card relative overflow-hidden
+        group relative bg-white rounded-xl shadow-soft hover:shadow-medium 
+        transition-all duration-300 cursor-pointer overflow-hidden
         ${featured ? 'ring-2 ring-primary-500 ring-opacity-30' : ''}
-        ${compact ? 'h-48' : 'h-72'}
+        ${compact ? 'h-48' : 'h-64'}
         ${className}
       `}
       style={style}
       onClick={handleClick}
     >
-      {/* Background gradient overlay */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} opacity-0 hover:opacity-5 transition-opacity duration-300`} />
+      {/* Background gradient overlay on hover */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
       
       {/* Card content */}
       <div className="relative z-10 p-6 h-full flex flex-col">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <div className={`
-              p-3 rounded-xl ${colors.bg} ${colors.border}
-              transition-all duration-300 hover:scale-110 hover:shadow-medium
+              p-2.5 rounded-lg ${colors.light} ${colors.border}
+              transition-all duration-300 group-hover:scale-110 group-hover:shadow-soft
             `}>
-              <Icon className={`${colors.icon} ${compact ? 'w-5 h-5' : 'w-7 h-7'}`} />
+              <Icon className={`${colors.icon} w-5 h-5`} />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <h3 className={`
-                font-bold ${compact ? 'text-lg' : 'text-xl'}
-                ${colors.text} mb-2 hover:text-gray-900 transition-colors
+                font-semibold ${compact ? 'text-base' : 'text-lg'}
+                text-gray-900 group-hover:text-gray-700 transition-colors
+                truncate
               `}>
                 {title}
               </h3>
               {!compact && (
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 mt-1">
                   <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                    <span className="text-sm font-medium text-gray-700">{popularity}%</span>
+                    <Star className="w-3 h-3 text-yellow-500 fill-current" />
+                    <span className="text-xs font-medium text-gray-600">{popularity}%</span>
                   </div>
-                  <span className="text-gray-300">•</span>
+                  <span className="text-gray-300 text-xs">•</span>
                   <div className="flex items-center space-x-1">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{users}</span>
+                    <Users className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs text-gray-500">{users}</span>
                   </div>
                 </div>
               )}
@@ -292,10 +441,10 @@ const ToolCard = ({
                 style={{ 
                   backgroundColor: '#f59e0b',
                   color: 'white',
-                  fontSize: '10px',
+                  fontSize: '9px',
                   fontWeight: 'bold',
-                  borderRadius: '12px',
-                  padding: '2px 8px',
+                  borderRadius: '10px',
+                  padding: '1px 6px',
                 }}
               />
             </div>
@@ -305,70 +454,64 @@ const ToolCard = ({
         {/* Description */}
         <p className={`
           text-gray-600 mb-4 flex-1 leading-relaxed
-          ${compact ? 'text-sm line-clamp-2' : 'text-base line-clamp-3'}
+          ${compact ? 'text-sm line-clamp-2' : 'text-sm line-clamp-3'}
         `}>
           {description}
         </p>
 
-        {/* Features */}
-        {!compact && (
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
+        {/* Features - Show only in non-compact mode */}
+        {!compact && features && features.length > 0 && (
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-1.5">
               {features.slice(0, 2).map((feature, index) => (
-                <Tooltip key={index} title={feature}>
-                  <span 
-                    className="inline-block px-3 py-1 text-xs bg-white rounded-full border border-gray-200 text-gray-600 cursor-pointer hover:bg-gray-50 hover:border-gray-300 transition-all duration-200 shadow-soft"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleFeatureClick(feature);
-                    }}
-                  >
-                    {feature}
-                  </span>
-                </Tooltip>
+                <span 
+                  key={index}
+                  className="inline-block px-2 py-1 text-xs bg-gray-50 rounded-md text-gray-600 border border-gray-100"
+                >
+                  {feature}
+                </span>
               ))}
               {features.length > 2 && (
-                <Tooltip title={features.slice(2).join(', ')}>
-                  <span className="inline-block px-3 py-1 text-xs bg-gray-100 rounded-full text-gray-500 font-medium">
-                    +{features.length - 2} more
-                  </span>
-                </Tooltip>
+                <span className="inline-block px-2 py-1 text-xs bg-gray-100 rounded-md text-gray-500 font-medium">
+                  +{features.length - 2}
+                </span>
               )}
             </div>
           </div>
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-500 font-medium">{processingTime}</span>
-            </div>
-            {featured && (
-              <div className="flex items-center space-x-2">
-                <Zap className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm text-yellow-600 font-semibold">Featured</span>
-              </div>
-            )}
+        <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
+          <div className="flex items-center space-x-2">
+            <Clock className="w-3 h-3 text-gray-400" />
+            <span className="text-xs text-gray-500 font-medium">{processingTime}</span>
           </div>
           
-          <button
-            className={`
-              btn-primary bg-gradient-to-r ${colors.gradient} 
-              text-white font-semibold py-2 px-4 rounded-lg
-              flex items-center space-x-2 transition-all duration-300
-              hover:shadow-glow hover:scale-105
-              focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500
-            `}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClick();
-            }}
-          >
-            <span>{compact ? 'Use' : 'Start Now'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <div className="flex items-center space-x-2">
+            {featured && (
+              <div className="flex items-center space-x-1">
+                <Zap className="w-3 h-3 text-yellow-500" />
+                <span className="text-xs text-yellow-600 font-semibold">Featured</span>
+              </div>
+            )}
+            
+            <button
+              className={`
+                btn-primary bg-gradient-to-r ${colors.gradient} 
+                text-white font-medium py-1.5 px-3 rounded-lg text-xs
+                flex items-center space-x-1 transition-all duration-300
+                hover:shadow-soft hover:scale-105
+                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500
+              `}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
+            >
+              <span>{compact ? 'Use' : 'Start'}</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -424,6 +567,20 @@ export const toolCardUtils = {
   getPremiumTools: () => {
     return Object.entries(TOOL_CONFIG)
       .filter(([_, config]) => config.premium)
+      .map(([key, config]) => ({
+        key,
+        ...config,
+      }));
+  },
+
+  /**
+   * Get popular tools (top 8 by popularity)
+   * @returns {Array} Array of popular tool configurations
+   */
+  getPopularTools: () => {
+    return Object.entries(TOOL_CONFIG)
+      .sort((a, b) => b[1].popularity - a[1].popularity)
+      .slice(0, 8)
       .map(([key, config]) => ({
         key,
         ...config,

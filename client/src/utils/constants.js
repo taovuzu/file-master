@@ -200,14 +200,7 @@ export const API_ENDPOINTS = {
   },
 };
 
-// Local Storage Keys
-export const STORAGE_KEYS = {
-  AUTH_TOKEN: 'auth_token',
-  USER_DATA: 'user_data',
-  SETTINGS: 'app_settings',
-  THEME: 'app_theme',
-  LANGUAGE: 'app_language',
-};
+
 
 // Route Paths
 export const ROUTES = {

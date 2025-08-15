@@ -19,28 +19,12 @@ import {
   Globe,
   Award
 } from 'lucide-react';
-import ToolCard from './ToolCard';
-import FileUploadZone from './FileUploadZone';
-import Button from './Button';
+import ToolCard, { toolCardUtils } from '@/components/ToolCard';
+import { Button } from 'antd';
 
 const LandingPage = () => {
-  const featuredTools = [
-    'merge',
-    'compress',
-    'split',
-    'convert'
-  ];
-
-  const allTools = [
-    'merge',
-    'split', 
-    'compress',
-    'protect',
-    'unlock',
-    'rotate',
-    'watermark',
-    'convert'
-  ];
+  // Get all tools from the centralized configuration
+  const allTools = toolCardUtils.getAllTools().map(tool => tool.key);
 
   const features = [
     {
@@ -95,19 +79,34 @@ const LandingPage = () => {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Button 
-                variant="primary" 
-                size="lg" 
-                gradient 
+                type="primary" 
+                size="large" 
                 icon={<FileText className="w-5 h-5" />}
                 className="w-full sm:w-auto"
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none',
+                  height: '48px',
+                  padding: '0 24px',
+                  fontSize: '16px',
+                  fontWeight: '600'
+                }}
               >
                 Start Processing PDFs
               </Button>
               <Button 
-                variant="outline" 
-                size="lg"
+                type="default" 
+                size="large"
                 icon={<ArrowRight className="w-5 h-5" />}
                 className="w-full sm:w-auto"
+                style={{
+                  height: '48px',
+                  padding: '0 24px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  borderColor: '#667eea',
+                  color: '#667eea'
+                }}
               >
                 View All Tools
               </Button>
@@ -125,15 +124,6 @@ const LandingPage = () => {
               ))}
             </div>
           </div>
-
-          {/* Upload Zone */}
-          {/* <div className="max-w-4xl mx-auto">
-            <FileUploadZone 
-              multiple={true}
-              maxFiles={5}
-              className="mb-16"
-            />
-          </div> */}
         </div>
 
         {/* Background decoration */}
@@ -157,7 +147,7 @@ const LandingPage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {featuredTools.map((tool, index) => (
+            {allTools.map((tool, index) => (
               <ToolCard 
                 key={tool} 
                 tool={tool} 
@@ -170,9 +160,17 @@ const LandingPage = () => {
 
           <div className="text-center">
             <Button 
-              variant="outline" 
-              size="lg"
+              type="default" 
+              size="large"
               icon={<ArrowRight className="w-5 h-5" />}
+              style={{
+                height: '48px',
+                padding: '0 24px',
+                fontSize: '16px',
+                fontWeight: '600',
+                borderColor: '#667eea',
+                color: '#667eea'
+              }}
             >
               View All Tools
             </Button>
@@ -214,32 +212,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* All Tools Section */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Complete PDF Toolkit
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Everything you need to work with PDFs, all in one place
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {allTools.map((tool, index) => (
-              <ToolCard 
-                key={tool} 
-                tool={tool} 
-                compact={true}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-20 px-6 bg-gradient-to-r from-primary-600 to-primary-800">
         <div className="max-w-4xl mx-auto text-center">
@@ -251,18 +223,35 @@ const LandingPage = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              variant="secondary" 
-              size="lg"
+              type="default" 
+              size="large"
               icon={<FileText className="w-5 h-5" />}
               className="bg-white text-primary-600 hover:bg-gray-50"
+              style={{
+                height: '48px',
+                padding: '0 24px',
+                fontSize: '16px',
+                fontWeight: '600',
+                backgroundColor: 'white',
+                color: '#667eea',
+                borderColor: 'white'
+              }}
             >
               Start Processing Now
             </Button>
             <Button 
-              variant="outline" 
-              size="lg"
+              type="default" 
+              size="large"
               icon={<ArrowRight className="w-5 h-5" />}
-              className="border-white text-white hover:bg-white hover:text-primary-600"
+              style={{
+                height: '48px',
+                padding: '0 24px',
+                fontSize: '16px',
+                fontWeight: '600',
+                borderColor: 'white',
+                color: 'white',
+                backgroundColor: 'transparent'
+              }}
             >
               Learn More
             </Button>

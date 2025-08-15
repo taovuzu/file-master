@@ -1,22 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  FileText, 
-  Scissors, 
-  FileDown, 
-  Lock, 
-  Unlock, 
-  RotateCw, 
-  Type, 
-  Download,
-  Star,
-  Clock,
-  Users,
-  Zap,
+import {
+  FileText,
   ArrowRight,
-  CheckCircle,
-  Shield,
-  Sparkles,
-  Globe,
   Award,
   Mail,
   User,
@@ -24,8 +9,7 @@ import {
 } from 'lucide-react';
 import ToolCard from '@/components/ToolCard';
 import FileUploadZone from '@/components/FileUploadZone';
-import Button from '@/components/Button';
-import InputField from '@/components/InputField';
+import { Button, Input, Form } from 'antd';
 import Header from '@/components/Header';
 
 const StyleDemoPage = () => {
@@ -61,38 +45,46 @@ const StyleDemoPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-700">Primary Buttons</h3>
-              <Button variant="primary" size="sm">Small</Button>
-              <Button variant="primary" size="md">Medium</Button>
-              <Button variant="primary" size="lg">Large</Button>
-              <Button variant="primary" gradient>Gradient</Button>
+              <Button type="primary" size="small">Small</Button>
+              <Button type="primary" size="middle">Medium</Button>
+              <Button type="primary" size="large">Large</Button>
+              <Button 
+                type="primary" 
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none'
+                }}
+              >
+                Gradient
+              </Button>
             </div>
             
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-700">Secondary Buttons</h3>
-              <Button variant="secondary" size="sm">Small</Button>
-              <Button variant="secondary" size="md">Medium</Button>
-              <Button variant="secondary" size="lg">Large</Button>
-              <Button variant="outline">Outline</Button>
+              <Button type="default" size="small">Small</Button>
+              <Button type="default" size="middle">Medium</Button>
+              <Button type="default" size="large">Large</Button>
+              <Button type="default" ghost>Outline</Button>
             </div>
             
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-700">Status Buttons</h3>
-              <Button variant="success">Success</Button>
-              <Button variant="warning">Warning</Button>
-              <Button variant="error">Error</Button>
-              <Button variant="ghost">Ghost</Button>
+              <Button type="primary" style={{ backgroundColor: '#52c41a' }}>Success</Button>
+              <Button type="primary" style={{ backgroundColor: '#faad14' }}>Warning</Button>
+              <Button type="primary" danger>Error</Button>
+              <Button type="text">Ghost</Button>
             </div>
             
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-700">With Icons</h3>
-              <Button variant="primary" icon={<FileText className="w-4 h-4" />}>
+              <Button type="primary" icon={<FileText className="w-4 h-4" />}>
                 With Icon
               </Button>
-              <Button variant="primary" iconRight={<ArrowRight className="w-4 h-4" />}>
+              <Button type="primary" icon={<ArrowRight className="w-4 h-4" />}>
                 With Right Icon
               </Button>
-              <Button variant="primary" loading>Loading</Button>
-              <Button variant="primary" disabled>Disabled</Button>
+              <Button type="primary" loading>Loading</Button>
+              <Button type="primary" disabled>Disabled</Button>
             </div>
           </div>
         </section>
@@ -103,53 +95,58 @@ const StyleDemoPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-700">Basic Inputs</h3>
-              <InputField
-                label="Email Address"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                prefix={<Mail className="w-4 h-4" />}
-                helperText="We'll never share your email"
-              />
-              <InputField
-                label="Password"
-                type="password"
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={(e) => handleInputChange('password', e.target.value)}
-                prefix={<User className="w-4 h-4" />}
-              />
+              <Form.Item label="Email Address" help="We'll never share your email">
+                <Input
+                  placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  prefix={<Mail className="w-4 h-4" />}
+                  size="large"
+                />
+              </Form.Item>
+              <Form.Item label="Password">
+                <Input.Password
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  prefix={<User className="w-4 h-4" />}
+                  size="large"
+                />
+              </Form.Item>
             </div>
             
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-700">Search Input</h3>
-              <InputField
+              <Input
                 placeholder="Search PDF tools..."
                 value={formData.search}
                 onChange={(e) => handleInputChange('search', e.target.value)}
                 prefix={<Search className="w-4 h-4" />}
+                size="large"
               />
-              <InputField
-                label="Success Input"
-                placeholder="This is a success input"
-                success
-                helperText="Great! This looks good"
-              />
+              <Form.Item label="Success Input" help="Great! This looks good">
+                <Input
+                  placeholder="This is a success input"
+                  status="success"
+                  size="large"
+                />
+              </Form.Item>
             </div>
             
             <div className="space-y-4">
               <h3 className="font-semibold text-gray-700">Error States</h3>
-              <InputField
-                label="Error Input"
-                placeholder="This has an error"
-                error
-                errorMessage="This field is required"
-              />
-              <InputField
-                label="Required Field"
-                placeholder="This field is required"
-                required
-              />
+              <Form.Item label="Error Input" help="This field is required" validateStatus="error">
+                <Input
+                  placeholder="This has an error"
+                  size="large"
+                />
+              </Form.Item>
+              <Form.Item label="Required Field" required>
+                <Input
+                  placeholder="This field is required"
+                  size="large"
+                />
+              </Form.Item>
             </div>
           </div>
         </section>
@@ -196,17 +193,17 @@ const StyleDemoPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                icon: <Shield className="w-8 h-8" />,
+                icon: <Award className="w-8 h-8" />,
                 title: 'Secure & Private',
                 description: 'Your files are encrypted and automatically deleted after processing'
               },
               {
-                icon: <Zap className="w-8 h-8" />,
+                icon: <Award className="w-8 h-8" />,
                 title: 'Lightning Fast',
                 description: 'Process your PDFs in seconds with our optimized algorithms'
               },
               {
-                icon: <Globe className="w-8 h-8" />,
+                icon: <Award className="w-8 h-8" />,
                 title: 'Works Everywhere',
                 description: 'No installation needed. Works on any device with a web browser'
               },
@@ -265,16 +262,16 @@ const StyleDemoPage = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                variant="secondary" 
-                size="lg"
+                type="default" 
+                size="large"
                 icon={<FileText className="w-5 h-5" />}
                 className="bg-white text-primary-600 hover:bg-gray-50"
               >
                 Start Processing Now
               </Button>
               <Button 
-                variant="outline" 
-                size="lg"
+                type="default" 
+                size="large"
                 icon={<ArrowRight className="w-5 h-5" />}
                 className="border-white text-white hover:bg-white hover:text-primary-600"
               >

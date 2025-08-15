@@ -1,4 +1,5 @@
 import { COLORS } from './constants';
+import storePersist from '@/redux/storePersist';
 
 /**
  * Theme configuration for the I Love PDF clone
@@ -379,7 +380,7 @@ export const themeUtils = {
    */
   applyTheme: (theme) => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    storePersist.set('theme', theme);
   },
 
   /**
@@ -400,10 +401,10 @@ export const themeUtils = {
   },
 
   /**
-   * Initialize theme from localStorage or system preference
+   * Initialize theme from storePersist or system preference
    */
   initializeTheme: () => {
-    const savedTheme = localStorage.getItem('theme');
+    const savedTheme = storePersist.get('theme');
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     if (savedTheme) {

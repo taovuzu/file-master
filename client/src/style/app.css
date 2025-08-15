@@ -90,10 +90,14 @@
 @layer base {
   * {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
   }
   html {
     font-family: var(--font-sans);
     scroll-behavior: smooth;
+    margin: 0;
+    padding: 0;
   }
   body {
     margin: 0;
@@ -160,6 +164,22 @@
   .animate-slide-up {
     animation: slideUp 0.3s ease-out;
   }
+}
+
+/* Global margin and padding reset */
+html, body, #root {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ant-layout {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.ant-layout-content {
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Import existing partials */
