@@ -1,23 +1,31 @@
-import { AppContextProvider } from '@/context/appContext';
-
-import { Layout } from 'antd';
+import React from 'react';
+import { Layout, Row, Col } from 'antd';
+import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
+import Footer from '@/components/Footer';
 
 const { Content } = Layout;
 
-export default function ErpLayout({ children }) {
+const MainLayout = ({ 
+  children, 
+  showSidebar = true, 
+  showHeader = true, 
+  showFooter = true
+}) => {
   return (
-    <AppContextProvider>
-      <Content
-        className="whiteBox shadow layoutPadding"
-        style={{
-          margin: '30px auto',
-          width: '100%',
-          maxWidth: '1100px',
-          minHeight: '600px',
-        }}
-      >
-        {children}
-      </Content>
-    </AppContextProvider>
+    <Layout style={{ minHeight: '100vh' }}>
+      {showHeader && <Header />}
+      <Layout>
+        {showSidebar && <Sidebar />}
+        <Layout style={{ padding: '24px' }}>
+          <Content style={{ background: '#fff', padding: 24, margin: 0, minHeight: 280 }}>
+            {children}
+          </Content>
+          {showFooter && <Footer />}
+        </Layout>
+      </Layout>
+    </Layout>
   );
-}
+};
+
+export default MainLayout;

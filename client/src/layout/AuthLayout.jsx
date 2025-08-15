@@ -1,31 +1,53 @@
-import React from "react";
-import { Layout, Row, Col } from "antd";
+import React from 'react';
+import { Layout, Card, Typography } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
-const AuthLayout = ({ children, sideContent }) => {
+const { Content } = Layout;
+const { Title } = Typography;
+
+const AuthLayout = ({ 
+  children, 
+  title = "Welcome", 
+  subtitle = "Please sign in to continue",
+  showBackLink = true 
+}) => {
+  const navigate = useNavigate();
+
   return (
-    <Layout>
-      <Row>
-        <Col
-          xs={{ span: 0, order: 2 }}
-          sm={{ span: 0, order: 2 }}
-          md={{ span: 11, order: 1 }}
-          lg={{ span: 12, order: 1 }}
-          style={{
-            minHeight: "100vh",
+    <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
+      <Content style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        padding: '24px'
+      }}>
+        <Card 
+          style={{ 
+            width: '100%', 
+            maxWidth: '400px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
           }}
         >
-          {sideContent}
-        </Col>
-        <Col
-          xs={{ span: 24, order: 1 }}
-          sm={{ span: 24, order: 1 }}
-          md={{ span: 13, order: 2 }}
-          lg={{ span: 12, order: 2 }}
-          style={{ background: "#FFF", minHeight: "100vh" }}
-        >
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <Title level={2} style={{ marginBottom: '8px' }}>
+              {title}
+            </Title>
+            <Typography.Text type="secondary">
+              {subtitle}
+            </Typography.Text>
+          </div>
+          
           {children}
-        </Col>
-      </Row>
+          
+          {showBackLink && (
+            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+              <Typography.Link onClick={() => navigate('/')}>
+                ← Back to Home
+              </Typography.Link>
+            </div>
+          )}
+        </Card>
+      </Content>
     </Layout>
   );
 };

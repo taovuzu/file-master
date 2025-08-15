@@ -17,7 +17,7 @@ function useAppContext() {
     throw new Error('useAppContext must be used within a AppContextProvider');
   }
   const [state, dispatch] = context;
-  const appContextAction = contextActions(dispatch);
+  const appContextAction = useMemo(() => contextActions(dispatch), [dispatch]);
   // const appContextSelector = contextSelectors(state);
   return { state, appContextAction };
 }

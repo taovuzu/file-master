@@ -14,3 +14,5 @@ const ToolLayout = ({ children }) => {
     </Layout>
   );
 };
+
+export default ToolLayout;
