@@ -1,25 +1,20 @@
 import React from 'react';
-import PdfToolPage from '@/components/PdfToolPage';
-import PdfForm from '@/components/PdfForm';
+import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
+import WatermarkPdfForm from '@/forms/WatermarkPdfForm';
 
 const WatermarkPdfPage = () => {
-  const WatermarkForm = ({ onFinish, disabled }) => (
-    <PdfForm
-      formType="watermark"
-      onFinish={onFinish}
-      disabled={disabled}
-      config={{ buttonText: 'Add Watermark' }}
-    />
-  );
-
   return (
-    <PdfToolPage
+    <EnhancedPdfToolPage
       title="Add Watermark"
       description="Add text watermark to your PDF document"
-      formComponent={WatermarkForm}
-      entity="watermark"
-      multipleFiles={false}
-      showPreview={true}
+      toolType="watermark"
+      FormComponent={WatermarkPdfForm}
+      requirements={{
+        multipleFiles: false,
+        minFiles: 1,
+        maxFiles: 1,
+        maxSize: 10,
+      }}
     />
   );
 };

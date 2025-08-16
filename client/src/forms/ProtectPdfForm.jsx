@@ -212,7 +212,7 @@ const ProtectPdfForm = ({ onFinish }) => {
               size="small"
               style={{ 
                 textAlign: 'center',
-                border: '1px solid '#d9d9d9',
+                border: '1px solid #d9d9d9',
                 backgroundColor: '#fff2e8'
               }}
             >
@@ -253,7 +253,7 @@ const ProtectPdfForm = ({ onFinish }) => {
         padding: '16px', 
         backgroundColor: '#f6f8fa', 
         borderRadius: '8px',
-        border: '1px solid '#e1e4e8',
+        border: '1px solid #e1e4e8',
         fontSize: '12px',
         color: '#586069'
       }}>

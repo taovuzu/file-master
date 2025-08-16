@@ -1,25 +1,20 @@
 import React from 'react';
-import PdfToolPage from '@/components/PdfToolPage';
-import PdfForm from '@/components/PdfForm';
+import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
+import ProtectPdfForm from '@/forms/ProtectPdfForm';
 
 const ProtectPdfPage = () => {
-  const ProtectForm = ({ onFinish, disabled }) => (
-    <PdfForm
-      formType="protect"
-      onFinish={onFinish}
-      disabled={disabled}
-      config={{ buttonText: 'Protect PDF' }}
-    />
-  );
-
   return (
-    <PdfToolPage
+    <EnhancedPdfToolPage
       title="Protect PDF"
       description="Add password protection to your PDF document"
-      formComponent={ProtectForm}
-      entity="protect"
-      multipleFiles={false}
-      showPreview={true}
+      toolType="protect"
+      FormComponent={ProtectPdfForm}
+      requirements={{
+        multipleFiles: false,
+        minFiles: 1,
+        maxFiles: 1,
+        maxSize: 10,
+      }}
     />
   );
 };

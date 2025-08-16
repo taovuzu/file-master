@@ -1,25 +1,20 @@
 import React from 'react';
-import PdfToolPage from '@/components/PdfToolPage';
-import PdfForm from '@/components/PdfForm';
+import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
+import PageNumbersPdfForm from '@/forms/PageNumbersPdfForm';
 
 const PageNumbersPdfPage = () => {
-  const PageNumbersForm = ({ onFinish, disabled }) => (
-    <PdfForm
-      formType="pageNumbers"
-      onFinish={onFinish}
-      disabled={disabled}
-      config={{ buttonText: 'Add Page Numbers' }}
-    />
-  );
-
   return (
-    <PdfToolPage
+    <EnhancedPdfToolPage
       title="Add Page Numbers"
       description="Insert page numbers in your PDF document"
-      formComponent={PageNumbersForm}
-      entity="pageNumbers"
-      multipleFiles={false}
-      showPreview={true}
+      toolType="pageNumbers"
+      FormComponent={PageNumbersPdfForm}
+      requirements={{
+        multipleFiles: false,
+        minFiles: 1,
+        maxFiles: 1,
+        maxSize: 10,
+      }}
     />
   );
 };

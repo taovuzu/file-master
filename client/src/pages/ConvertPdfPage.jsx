@@ -1,16 +1,20 @@
 import React from 'react';
-import PdfToolPage from '@/components/PdfToolPage';
+import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
 import ConvertPdfForm from '@/forms/ConvertPdfForm';
 
 const ConvertPdfPage = () => {
   return (
-    <PdfToolPage
+    <EnhancedPdfToolPage
       title="Convert PDF"
       description="Convert PDF to Word, Excel, or image formats"
-      formComponent={ConvertPdfForm} 
-      entity="convert"
-      multipleFiles={false}
-      showPreview={true}
+      toolType="convert"
+      FormComponent={ConvertPdfForm}
+      requirements={{
+        multipleFiles: false,
+        minFiles: 1,
+        maxFiles: 1,
+        maxSize: 10,
+      }}
     />
   );
 };

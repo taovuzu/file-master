@@ -1,25 +1,20 @@
 import React from 'react';
-import PdfToolPage from '@/components/PdfToolPage';
-import PdfForm from '@/components/PdfForm';
+import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
+import UnlockPdfForm from '@/forms/UnlockPdfForm';
 
 const UnlockPdfPage = () => {
-  const UnlockForm = ({ onFinish, disabled }) => (
-    <PdfForm
-      formType="unlock"
-      onFinish={onFinish}
-      disabled={disabled}
-      config={{ buttonText: 'Unlock PDF' }}
-    />
-  );
-
   return (
-    <PdfToolPage
+    <EnhancedPdfToolPage
       title="Unlock PDF"
       description="Remove password protection from your PDF"
-      formComponent={UnlockForm}
-      entity="unlock"
-      multipleFiles={false}
-      showPreview={true}
+      toolType="unlock"
+      FormComponent={UnlockPdfForm}
+      requirements={{
+        multipleFiles: false,
+        minFiles: 1,
+        maxFiles: 1,
+        maxSize: 10,
+      }}
     />
   );
 };

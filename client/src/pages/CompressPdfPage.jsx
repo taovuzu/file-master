@@ -1,25 +1,20 @@
 import React from 'react';
-import PdfToolPage from '@/components/PdfToolPage';
-import PdfForm from '@/components/PdfForm';
+import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
+import CompressPdfForm from '@/forms/CompressPdfForm';
 
 const CompressPdfPage = () => {
-  const CompressForm = ({ onFinish, disabled }) => (
-    <PdfForm
-      formType="compress"
-      onFinish={onFinish}
-      disabled={disabled}
-      config={{ buttonText: 'Compress PDF' }}
-    />
-  );
-
   return (
-    <PdfToolPage
+    <EnhancedPdfToolPage
       title="Compress PDF"
       description="Reduce PDF file size while maintaining quality"
-      formComponent={CompressForm}
-      entity="compress"
-      multipleFiles={false}
-      showPreview={true}
+      toolType="compress"
+      FormComponent={CompressPdfForm}
+      requirements={{
+        multipleFiles: false,
+        minFiles: 1,
+        maxFiles: 1,
+        maxSize: 10,
+      }}
     />
   );
 };

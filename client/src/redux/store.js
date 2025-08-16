@@ -3,6 +3,7 @@ import storePersist from "./storePersist";
 
 import { reducer as authReducer } from './auth';
 import { reducer as settingsReducer } from './settings';
+import { reducer as pdfToolsReducer } from './pdfTools';
 
 const AUTH_INITIAL_STATE = {
   current: {},
@@ -19,6 +20,7 @@ const store = configureStore({
   reducer: {
     auth: authReducer,
     settings: settingsReducer,
+    pdfTools: pdfToolsReducer,
   },
   preloadedState: initialState,
   devTools: import.meta.env.PROD === false,
