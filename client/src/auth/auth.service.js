@@ -5,10 +5,8 @@ import axios from 'axios';
 
 const sendAuthRequest = async (method, endpoint, data = {}, successOptions) => {
   try {
-    console.log(method, API_BASE_URL + endpoint, data);
     let response = await axios({ method, url: API_BASE_URL + endpoint, data, headers: { 'Content-Type': 'application/json' }, withCredentials: true });
 
-    console.log(response);
     if (successOptions) {
       successHandler({ data: response.data, status: response.status }, successOptions);
     }
@@ -18,40 +16,44 @@ const sendAuthRequest = async (method, endpoint, data = {}, successOptions) => {
   }
 };
 
-// Step 1: Register email first
 export const registerEmail = ({ email }) =>
   sendAuthRequest(
     'post',
     'users/register-email',
     { email },
-    { notifyOnSuccess: true, notifyOnFailed: true }
+    { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
-// Step 2: Complete user registration
 export const registerUser = ({ registerData }) =>
   sendAuthRequest(
     'post',
     'users/register-user',
     registerData,
-    { notifyOnSuccess: true, notifyOnFailed: true }
+    { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
-// Verify email by link (GET request)
+export const resendVerification = () =>
+  sendAuthRequest(
+    'post',
+    'users/resend-verification',
+    {},
+    { notifyOnSuccess: false, notifyOnFailed: false }
+  );
+
 export const verifyEmailByLink = ({ token }) =>
   sendAuthRequest(
     'get',
     `users/verify-email-link?token=${token}`,
     null,
-    { notifyOnSuccess: true, notifyOnFailed: true }
+    { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
-// Verify email by OTP
 export const verifyEmailByOTP = ({ email, otp }) =>
   sendAuthRequest(
     'post',
     'users/verify-email-otp',
     { email, otp },
-    { notifyOnSuccess: true, notifyOnFailed: true }
+    { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
 export const login = ({ loginData }) =>
@@ -59,34 +61,23 @@ export const login = ({ loginData }) =>
     'post',
     'users/login',
     loginData,
-    { notifyOnSuccess: false, notifyOnFailed: true }
+    { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
-// Request password reset
 export const requestPasswordReset = ({ email }) =>
   sendAuthRequest(
-    'get',
-    `users/request-password-reset?email=${email}`,
-    {},
-    { notifyOnSuccess: true, notifyOnFailed: true }
-  );
-
-// Reset forgotten password
-export const resetForgottenPassword = ({ resetPasswordData }) =>
-  sendAuthRequest(
     'post',
-    'users/reset-forgot-password',
-    resetPasswordData,
-    { notifyOnSuccess: true, notifyOnFailed: true }
+    `users/request-password-reset`,
+    { email },
+    { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
-// Refresh access token
 export const refreshAccessToken = () =>
   sendAuthRequest(
     'post',
     'users/refreshAccessToken',
     {},
-    { notifyOnSuccess: false, notifyOnFailed: true }
+    { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
 export const logout = () =>
@@ -94,45 +85,25 @@ export const logout = () =>
     'post',
     'users/logout',
     {},
-    { notifyOnSuccess: false, notifyOnFailed: true }
+    { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
-// Get current user
 export const getCurrentUser = () =>
   sendAuthRequest(
     'get',
     'users/current-user',
     {},
-    { notifyOnSuccess: false, notifyOnFailed: true }
+    { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
-// Change current password
-export const changeCurrentPassword = ({ currentPassword, newPassword }) =>
+export const changeCurrentPassword = ({ newPassword }) =>
   sendAuthRequest(
     'post',
     'users/change-password',
-    { currentPassword, newPassword },
-    { notifyOnSuccess: true, notifyOnFailed: true }
+    { newPassword },
+    { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
-// Google OAuth
 export const googleLogin = () => {
   window.location.href = "http://localhost:8080/api/v1/users/google";
 }
-
-// Legacy methods for backward compatibility
-export const verify = ({ userId, emailToken }) =>
-  sendAuthRequest(
-    'get',
-    `users/verify/${userId}/${emailToken}`,
-    null,
-    { notifyOnSuccess: true, notifyOnFailed: true }
-  );
-
-export const resetPassword = ({ resetPasswordData }) =>
-  sendAuthRequest(
-    'post',
-    'users/resetpassword',
-    resetPasswordData,
-    { notifyOnSuccess: true, notifyOnFailed: true }
-  );

@@ -1,28 +1,27 @@
-import React, { useState } from 'react';
-import { message } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import AuthLayout from '@/layout/AuthLayout';
-import AuthForm from '@/forms/AuthForm';
-import { requestPasswordReset } from '@/redux/auth/actions';
+import React, { useState } from "react";
+import { message, Form, Input, Button } from "antd";
+import { useDispatch } from "react-redux";
+import AuthLayout from "@/layout/AuthLayout";
+import { requestPasswordReset } from "@/redux/auth/actions";
 
 const ForgotPasswordPage = () => {
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [linkSent, setLinkSent] = useState(false);
+  const [email, setEmail] = useState("");
   const dispatch = useDispatch();
 
   const handleForgotPassword = async (values) => {
     setLoading(true);
     try {
       const result = await dispatch(requestPasswordReset({ email: values.email }));
-      if (result.meta.requestStatus === 'fulfilled') {
-        message.success('Password reset link has been sent to your email!');
-        navigate('/login');
+      if (result.meta.requestStatus === "fulfilled") {
+        setEmail(values.email);
+        setLinkSent(true);
       } else {
-        message.error('Failed to send reset link. Please try again.');
+        message.error("Failed to send reset link. Please try again.");
       }
     } catch (error) {
-      message.error('Failed to send reset link. Please try again.');
+      message.error("Failed to send reset link. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -30,14 +29,38 @@ const ForgotPasswordPage = () => {
 
   return (
     <AuthLayout
-      title="Forgot Password"
-      subtitle="Enter your email to receive a password reset link"
+      title={linkSent ? "Check your email" : "Forgot Password"}
+      subtitle={
+        linkSent
+          ? `We’ve sent a password reset link to ${email}. Please check your inbox.`
+          : "Enter your email to receive a password reset link"
+      }
     >
-      <AuthForm
-        type="forgetPassword"
-        onFinish={handleForgotPassword}
-        loading={loading}
-      />
+      {!linkSent ? (
+        <Form layout="vertical" onFinish={handleForgotPassword}>
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              { required: true, message: "Please enter your email" },
+              { type: "email", message: "Please enter a valid email address" },
+            ]}
+          >
+            <Input placeholder="Enter your email" />
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block loading={loading}>
+              Send Reset Link
+            </Button>
+          </Form.Item>
+        </Form>
+      ) : (
+        <div className="text-center">
+          <p>If you don’t see the email, check your spam folder.</p>
+          <p>You can close this window once you’ve clicked the reset link.</p>
+        </div>
+      )}
     </AuthLayout>
   );
 };

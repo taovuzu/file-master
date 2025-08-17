@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, message, Card, Typography, Space } from "antd";
 import { GoogleOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import AuthLayout from "@/layout/AuthLayout";
 import AuthForm from "@/forms/AuthForm";
@@ -9,8 +9,9 @@ import {
   registerEmail,
   registerUser,
   verifyEmailByOTP,
+  resendVerification,
   clearEmailRegistrationStep,
-  googleLogin
+  googleLogin,
 } from "@/redux/auth/actions";
 import {
   selectEmailRegistrationStep,
@@ -23,6 +24,8 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState("email"); // 'email', 'otp', 'userDetails'
   const [emailData, setEmailData] = useState(null);
+  const [resendTimer, setResendTimer] = useState(0);
+  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -36,10 +39,32 @@ const RegisterPage = () => {
   }, [emailRegistrationStep, isSuccess]);
 
   useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const verified = query.get("verified");
+    const email = query.get("email");
+
+    if (verified === "true" && email) {
+      setEmailData(email);
+      setCurrentStep("userDetails");
+      message.success("Email verified by link! Please complete registration.");
+    }
+  }, [location]);
+
+  useEffect(() => {
     return () => {
       dispatch(clearEmailRegistrationStep());
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    let timer;
+    if (resendTimer > 0) {
+      timer = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendTimer]);
 
   const handleGoogleLogin = () => {
     dispatch(googleLogin());
@@ -51,6 +76,7 @@ const RegisterPage = () => {
       const result = await dispatch(registerEmail({ email: values.email }));
       if (result.meta.requestStatus === "fulfilled") {
         setEmailData(values.email);
+        setResendTimer(120); // start 2-min countdown
         message.success(
           "Verification email sent! Please check your inbox and enter the OTP."
         );
@@ -61,6 +87,21 @@ const RegisterPage = () => {
       message.error("An unexpected error occurred");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendTimer > 0) return;
+    try {
+      const result = await dispatch(resendVerification());
+      if (result.meta.requestStatus === "fulfilled") {
+        setResendTimer(120);
+        message.success("OTP resent! Please check your inbox.");
+      } else {
+        message.error("Failed to resend OTP. Please try again.");
+      }
+    } catch (error) {
+      message.error("An unexpected error occurred");
     }
   };
 
@@ -96,10 +137,7 @@ const RegisterPage = () => {
 
       const result = await dispatch(registerUser({ registerData }));
       if (result.meta.requestStatus === "fulfilled") {
-        message.success(
-          "Registration successful! Please check your email to verify your account."
-        );
-        navigate("/login");
+        navigate("/");
       } else {
         message.error("Registration failed. Please try again.");
       }
@@ -173,12 +211,13 @@ const RegisterPage = () => {
             />
             <div style={{ textAlign: "center", marginTop: "16px" }}>
               <Text>Didn't receive the code? </Text>
-              <a
-                onClick={() => setCurrentStep("email")}
-                style={{ cursor: "pointer" }}
-              >
-                Resend
-              </a>
+              {resendTimer > 0 ? (
+                <Text type="secondary">Resend available in {resendTimer}s</Text>
+              ) : (
+                <a onClick={handleResendOTP} style={{ cursor: "pointer" }}>
+                  Resend
+                </a>
+              )}
             </div>
           </div>
         );
@@ -205,6 +244,7 @@ const RegisterPage = () => {
               type="register"
               onFinish={handleUserRegistration}
               loading={loading}
+              email={emailData}
             />
           </div>
         );

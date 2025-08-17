@@ -9,7 +9,8 @@ const AuthForm = ({
   type = 'login', // 'login', 'register', 'registerEmail', 'verifyOTP', 'forgetPassword', 'resetPassword'
   onFinish,
   loading = false,
-  config = {}
+  config = {},
+  email = "",
 }) => {
   const [form] = Form.useForm();
 
@@ -49,7 +50,7 @@ const AuthForm = ({
                 <Form.Item name="remember" valuePropName="checked" noStyle>
                   <Checkbox>Remember me</Checkbox>
                 </Form.Item>
-                <Link to="/forget-password">Forgot password?</Link>
+                <Link to="/forgot-password">Forgot password?</Link>
               </Space>
             </Form.Item>
           </>
@@ -67,7 +68,7 @@ const AuthForm = ({
           >
             <Input
               prefix={<MailOutlined />}
-              placeholder="Enter your email"
+              placeholder="Enter your Email"
               size="large"
             />
           </Form.Item>
@@ -124,14 +125,10 @@ const AuthForm = ({
             <Form.Item
               label="Email"
               name="email"
-              rules={[
-                { required: true, message: 'Please enter your email!' },
-                { type: 'email', message: 'Please enter a valid email!' }
-              ]}
             >
               <Input
                 prefix={<MailOutlined />}
-                placeholder="Enter your email"
+                placeholder={email}
                 size="large"
                 disabled
               />
@@ -288,10 +285,7 @@ const AuthForm = ({
         );
       case 'verifyOTP':
         return (
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
-            <Text>Didn't receive OTP? </Text>
-            <Link to="/register">Resend</Link>
-          </div>
+          <></>
         );
       case 'forgetPassword':
         return (

@@ -9,15 +9,13 @@ const buildAuthState = (user) => ({
   isSuccess: true,
 });
 
-// Action to clear email registration step
 export const clearEmailRegistrationStep = createAsyncThunk(
   'auth/clearEmailRegistrationStep',
   async () => {
-    return null; // No async operation needed
+    return null; 
   }
 );
 
-// Step 1: Register email
 export const registerEmail = createAsyncThunk(
   'auth/registerEmail',
   async ({ email }, { rejectWithValue }) => {
@@ -30,7 +28,6 @@ export const registerEmail = createAsyncThunk(
   }
 );
 
-// Step 2: Complete user registration
 export const registerUser = createAsyncThunk(
   'auth/registerUser',
   async ({ registerData }, { rejectWithValue }) => {
@@ -46,7 +43,6 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-// Verify email by link
 export const verifyEmailByLink = createAsyncThunk(
   'auth/verifyEmailByLink',
   async ({ token }, { rejectWithValue }) => {
@@ -62,7 +58,6 @@ export const verifyEmailByLink = createAsyncThunk(
   }
 );
 
-// Verify email by OTP
 export const verifyEmailByOTP = createAsyncThunk(
   'auth/verifyEmailByOTP',
   async ({ email, otp }, { rejectWithValue }) => {
@@ -75,6 +70,18 @@ export const verifyEmailByOTP = createAsyncThunk(
       return data.result;
     }
     return rejectWithValue(data?.error || 'OTP verification failed');
+  }
+);
+
+export const resendVerification = createAsyncThunk(
+  'auth/resendVerification',
+  async (_, { rejectWithValue }) => {
+    const data = await authService.resendVerification();
+    
+    if (data.success === true) {
+      return data.result;
+    }
+    return rejectWithValue(data?.error || 'Email registration failed');
   }
 );
 
@@ -93,10 +100,10 @@ export const login = createAsyncThunk(
   }
 );
 
-// Request password reset
 export const requestPasswordReset = createAsyncThunk(
   'auth/requestPasswordReset',
   async ({ email }, { rejectWithValue }) => {
+    console.log(email);
     const data = await authService.requestPasswordReset({ email });
 
     if (data.success === true) {
@@ -106,20 +113,6 @@ export const requestPasswordReset = createAsyncThunk(
   }
 );
 
-// Reset forgotten password
-export const resetForgottenPassword = createAsyncThunk(
-  'auth/resetForgottenPassword',
-  async ({ resetPasswordData }, { rejectWithValue }) => {
-    const data = await authService.resetForgottenPassword({ resetPasswordData });
-
-    if (data.success === true) {
-      return data.result;
-    }
-    return rejectWithValue(data?.error || 'Password reset failed');
-  }
-);
-
-// Refresh access token
 export const refreshAccessToken = createAsyncThunk(
   'auth/refreshAccessToken',
   async (_, { rejectWithValue }) => {
@@ -132,7 +125,6 @@ export const refreshAccessToken = createAsyncThunk(
   }
 );
 
-// Get current user
 export const getCurrentUser = createAsyncThunk(
   'auth/getCurrentUser',
   async (_, { rejectWithValue }) => {
@@ -147,11 +139,10 @@ export const getCurrentUser = createAsyncThunk(
   }
 );
 
-// Change current password
 export const changeCurrentPassword = createAsyncThunk(
   'auth/changeCurrentPassword',
-  async ({ currentPassword, newPassword }, { rejectWithValue }) => {
-    const data = await authService.changeCurrentPassword({ currentPassword, newPassword });
+  async ({ newPassword }, { rejectWithValue }) => {
+    const data = await authService.changeCurrentPassword({newPassword });
 
     if (data.success === true) {
       return data.result;
@@ -160,12 +151,10 @@ export const changeCurrentPassword = createAsyncThunk(
   }
 );
 
-// Google OAuth login
 export const googleLogin = createAsyncThunk(
   'auth/googleLogin',
   async (_, { rejectWithValue }) => {
     try {
-      // assume authService.googleLogin accepts a token or code from Google SDK
       const data = await authService.googleLogin();
 
       if (data.success === true) {
@@ -181,7 +170,6 @@ export const googleLogin = createAsyncThunk(
     }
   }
 );
-
 
 export const logout = createAsyncThunk(
   'auth/logout',
@@ -224,51 +212,5 @@ export const updateProfile = createAsyncThunk(
       return data.result;
     }
     return rejectWithValue(data?.error || 'Profile update failed');
-  }
-);
-
-// Legacy methods for backward compatibility
-export const register = createAsyncThunk(
-  'auth/register',
-  async ({ registerData }, { rejectWithValue }) => {
-    const data = await authService.registerUser({ registerData });
-
-    if (data.success === true) {
-      const authState = buildAuthState(data.result);
-      window.localStorage.setItem('auth', JSON.stringify(authState));
-      window.localStorage.removeItem('isLogout');
-      return data.result;
-    }
-    return rejectWithValue(data?.error || 'Registration failed');
-  }
-);
-
-export const verify = createAsyncThunk(
-  'auth/verify',
-  async ({ userId, emailToken }, { rejectWithValue }) => {
-    const data = await authService.verify({ userId, emailToken });
-
-    if (data.success === true) {
-      const authState = buildAuthState(data.result);
-      window.localStorage.setItem('auth', JSON.stringify(authState));
-      window.localStorage.removeItem('isLogout');
-      return data.result;
-    }
-    return rejectWithValue(data?.error || 'Verification failed');
-  }
-);
-
-export const resetPassword = createAsyncThunk(
-  'auth/resetPassword',
-  async ({ resetPasswordData }, { rejectWithValue }) => {
-    const data = await authService.resetPassword({ resetPasswordData });
-
-    if (data.success === true) {
-      const authState = buildAuthState(data.result);
-      window.localStorage.setItem('auth', JSON.stringify(authState));
-      window.localStorage.removeItem('isLogout');
-      return data.result;
-    }
-    return rejectWithValue(data?.error || 'Password reset failed');
   }
 );

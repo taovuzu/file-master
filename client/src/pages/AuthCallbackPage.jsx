@@ -1,4 +1,3 @@
-// src/pages/AuthCallback.jsx
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { getCurrentUser } from "@/redux/auth/actions";

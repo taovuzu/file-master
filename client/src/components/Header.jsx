@@ -1,51 +1,38 @@
-// src/components/Header.jsx
 import React, { useState, useEffect } from "react";
 import { Dropdown, Avatar, Badge } from "antd";
 import {
   User,
-  Bell,
   Settings,
   LogOut,
   Menu as MenuIcon,
   Search,
   FileText,
   ChevronDown,
-  ChevronRight,
   MoreHorizontal,
-  Globe,
   Download,
-  Upload,
   Lock,
   Unlock,
   RotateCw,
   Type,
   Hash,
-  Scissors,
   FileDown,
   Merge,
   Split,
   Sparkles,
   Crown,
-  HelpCircle,
-  Info,
-  Shield,
   Users as TeamIcon,
   PenTool,
   Workflow,
-  Languages,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectIsLoggedIn } from "../redux/auth/selectors";
-import { toolCardUtils } from "./ToolCard";
 
 const Header = () => {
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // Complete tool categories based on ToolCard configuration
   const toolCategories = {
     organize: {
       title: "Organize PDF",
@@ -94,7 +81,6 @@ const Header = () => {
     },
   };
 
-  // User menu items
   const userMenuItems = [
     {
       key: "profile",
@@ -143,7 +129,6 @@ const Header = () => {
     },
   ];
 
-  // Company menu items
   const companyMenuItems = [
     {
       key: "products",
@@ -231,7 +216,6 @@ const Header = () => {
     },
   ];
 
-  // Language options
   const languageOptions = [
     { key: "en", label: "English", flag: "🇺🇸" },
     { key: "es", label: "Español", flag: "🇪🇸" },
@@ -260,7 +244,6 @@ const Header = () => {
     }
   };
 
-  // Render tool dropdown menu
   const renderToolDropdown = () => (
     <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 min-w-[800px]">
       <div className="grid grid-cols-3 gap-6">

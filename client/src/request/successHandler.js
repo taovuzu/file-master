@@ -1,7 +1,7 @@
 import { notification } from 'antd';
 import codeMessage from './codeMessage';
 
-const notify = (type, title, description, duration = 3, maxCount = 2) => {
+const notify = (type, title, description, duration = 15, maxCount = 1) => {
   notification.config({ duration, maxCount });
   notification[type]({ message: title, description });
 };
