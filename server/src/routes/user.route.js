@@ -14,9 +14,10 @@ router.route("/register-user").post(userRegisterValidator(), validate, registerU
 router.route("/verify-email-link").get(verifyEmailByLink);
 router.route("/verify-email-otp").post(verifyEmailByOTP);
 router.route("/login").post(userLoginValidator(), loginUser);
-router.route("/request-password-reset").get(emailValidator(), validate, forgotPasswordRequest);
+router.route("/resend-verification").post(resendEmailVerification);
+router.route("/request-password-reset").post(emailValidator(), validate, forgotPasswordRequest);
 router.route("/reset-forgot-password").post(resetForgottenPasswordValidator(), validate, resetForgottenPassword);
-router.route("/refreshAccessToken").post(refreshAccessToken);
+router.route("/refresh-access-token").get(refreshAccessToken);
 
 //secure routes
 router.route("/logout").post(verifyJWT, logoutUser);

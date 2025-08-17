@@ -141,13 +141,34 @@ export const getCurrentUser = createAsyncThunk(
 
 export const changeCurrentPassword = createAsyncThunk(
   'auth/changeCurrentPassword',
-  async ({ newPassword }, { rejectWithValue }) => {
-    const data = await authService.changeCurrentPassword({newPassword });
+  async ({ oldPassword, newPassword }, { rejectWithValue }) => {
+    const data = await authService.changeCurrentPassword({oldPassword, newPassword });
 
     if (data.success === true) {
       return data.result;
     }
     return rejectWithValue(data?.error || 'Password change failed');
+  }
+);
+
+export const resetPasswordWithToken = createAsyncThunk(
+  "auth/resetPasswordWithToken",
+  async ({ email, unHashedToken, newPassword }, { rejectWithValue }) => {
+    try {
+      const data = await authService.resetPasswordWithToken({
+        email,
+        unHashedToken,
+        newPassword,
+      });
+
+      if (data.success === true) {
+        return data.result;
+      }
+
+      return rejectWithValue(data?.error || "Password reset failed");
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
   }
 );
 

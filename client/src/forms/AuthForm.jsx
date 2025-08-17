@@ -1,12 +1,18 @@
-import React from 'react';
-import { Form, Input, Button, Checkbox, Typography, Space } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined, EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Form, Input, Button, Checkbox, Typography, Space } from "antd";
+import {
+  UserOutlined,
+  LockOutlined,
+  MailOutlined,
+  EyeInvisibleOutlined,
+  EyeTwoTone,
+} from "@ant-design/icons";
+import { Link } from "react-router-dom";
 
 const { Text } = Typography;
 
 const AuthForm = ({
-  type = 'login', // 'login', 'register', 'registerEmail', 'verifyOTP', 'forgetPassword', 'resetPassword'
+  type = "login", // 'login', 'register', 'registerEmail', 'verifyOTP', 'forgetPassword', 'resetPassword'
   onFinish,
   loading = false,
   config = {},
@@ -16,15 +22,15 @@ const AuthForm = ({
 
   const renderFormFields = () => {
     switch (type) {
-      case 'login':
+      case "login":
         return (
           <>
             <Form.Item
               label="Email"
               name="email"
               rules={[
-                { required: true, message: 'Please enter your email!' },
-                { type: 'email', message: 'Please enter a valid email!' }
+                { required: true, message: "Please enter your email!" },
+                { type: "email", message: "Please enter a valid email!" },
               ]}
             >
               <Input
@@ -36,17 +42,21 @@ const AuthForm = ({
             <Form.Item
               label="Password"
               name="password"
-              rules={[{ required: true, message: 'Please enter your password!' }]}
+              rules={[
+                { required: true, message: "Please enter your password!" },
+              ]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
                 placeholder="Enter your password"
                 size="large"
-                iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
+                iconRender={(visible) =>
+                  visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                }
               />
             </Form.Item>
             <Form.Item>
-              <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+              <Space style={{ width: "100%", justifyContent: "space-between" }}>
                 <Form.Item name="remember" valuePropName="checked" noStyle>
                   <Checkbox>Remember me</Checkbox>
                 </Form.Item>
@@ -56,14 +66,14 @@ const AuthForm = ({
           </>
         );
 
-      case 'registerEmail':
+      case "registerEmail":
         return (
           <Form.Item
             label="Email"
             name="email"
             rules={[
-              { required: true, message: 'Please enter your email!' },
-              { type: 'email', message: 'Please enter a valid email!' }
+              { required: true, message: "Please enter your email!" },
+              { type: "email", message: "Please enter a valid email!" },
             ]}
           >
             <Input
@@ -74,15 +84,15 @@ const AuthForm = ({
           </Form.Item>
         );
 
-      case 'verifyOTP':
+      case "verifyOTP":
         return (
           <>
             <Form.Item
               label="Email"
               name="email"
               rules={[
-                { required: true, message: 'Please enter your email!' },
-                { type: 'email', message: 'Please enter a valid email!' }
+                { required: true, message: "Please enter your email!" },
+                { type: "email", message: "Please enter a valid email!" },
               ]}
             >
               <Input
@@ -95,8 +105,8 @@ const AuthForm = ({
               label="OTP Code"
               name="otp"
               rules={[
-                { required: true, message: 'Please enter the OTP code!' },
-                { len: 6, message: 'OTP must be 6 digits!' }
+                { required: true, message: "Please enter the OTP code!" },
+                { len: 6, message: "OTP must be 6 digits!" },
               ]}
             >
               <Input
@@ -108,13 +118,15 @@ const AuthForm = ({
           </>
         );
 
-      case 'register':
+      case "register":
         return (
           <>
             <Form.Item
               label="Full Name"
               name="fullName"
-              rules={[{ required: true, message: 'Please enter your full name!' }]}
+              rules={[
+                { required: true, message: "Please enter your full name!" },
+              ]}
             >
               <Input
                 prefix={<UserOutlined />}
@@ -122,10 +134,7 @@ const AuthForm = ({
                 size="large"
               />
             </Form.Item>
-            <Form.Item
-              label="Email"
-              name="email"
-            >
+            <Form.Item label="Email" name="email">
               <Input
                 prefix={<MailOutlined />}
                 placeholder={email}
@@ -137,29 +146,31 @@ const AuthForm = ({
               label="Password"
               name="password"
               rules={[
-                { required: true, message: 'Please enter your password!' },
-                { min: 6, message: 'Password must be at least 6 characters!' }
+                { required: true, message: "Please enter your password!" },
+                { min: 6, message: "Password must be at least 6 characters!" },
               ]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
                 placeholder="Enter your password"
                 size="large"
-                iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
+                iconRender={(visible) =>
+                  visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                }
               />
             </Form.Item>
             <Form.Item
               label="Confirm Password"
               name="confirmPassword"
-              dependencies={['password']}
+              dependencies={["password"]}
               rules={[
-                { required: true, message: 'Please confirm your password!' },
+                { required: true, message: "Please confirm your password!" },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
-                    if (!value || getFieldValue('password') === value) {
+                    if (!value || getFieldValue("password") === value) {
                       return Promise.resolve();
                     }
-                    return Promise.reject(new Error('Passwords do not match!'));
+                    return Promise.reject(new Error("Passwords do not match!"));
                   },
                 }),
               ]}
@@ -168,27 +179,30 @@ const AuthForm = ({
                 prefix={<LockOutlined />}
                 placeholder="Confirm your password"
                 size="large"
-                iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
+                iconRender={(visible) =>
+                  visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                }
               />
             </Form.Item>
             <Form.Item>
               <Form.Item name="agree" valuePropName="checked" noStyle>
                 <Checkbox>
-                  I agree to the <Link to="/terms">Terms of Service</Link> and <Link to="/privacy">Privacy Policy</Link>
+                  I agree to the <Link to="/terms">Terms of Service</Link> and{" "}
+                  <Link to="/privacy">Privacy Policy</Link>
                 </Checkbox>
               </Form.Item>
             </Form.Item>
           </>
         );
 
-      case 'forgetPassword':
+      case "forgetPassword":
         return (
           <Form.Item
             label="Email"
             name="email"
             rules={[
-              { required: true, message: 'Please enter your email!' },
-              { type: 'email', message: 'Please enter a valid email!' }
+              { required: true, message: "Please enter your email!" },
+              { type: "email", message: "Please enter a valid email!" },
             ]}
           >
             <Input
@@ -199,36 +213,41 @@ const AuthForm = ({
           </Form.Item>
         );
 
-      case 'resetPassword':
+      case "resetPassword":
         return (
           <>
             <Form.Item
               label="New Password"
               name="password"
               rules={[
-                { required: true, message: 'Please enter your new password!' },
-                { min: 6, message: 'Password must be at least 6 characters!' }
+                { required: true, message: "Please enter your new password!" },
+                { min: 6, message: "Password must be at least 6 characters!" },
               ]}
             >
               <Input.Password
                 prefix={<LockOutlined />}
                 placeholder="Enter your new password"
                 size="large"
-                iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
+                iconRender={(visible) =>
+                  visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                }
               />
             </Form.Item>
             <Form.Item
               label="Confirm New Password"
               name="confirmPassword"
-              dependencies={['password']}
+              dependencies={["password"]}
               rules={[
-                { required: true, message: 'Please confirm your new password!' },
+                {
+                  required: true,
+                  message: "Please confirm your new password!",
+                },
                 ({ getFieldValue }) => ({
                   validator(_, value) {
-                    if (!value || getFieldValue('password') === value) {
+                    if (!value || getFieldValue("password") === value) {
                       return Promise.resolve();
                     }
-                    return Promise.reject(new Error('Passwords do not match!'));
+                    return Promise.reject(new Error("Passwords do not match!"));
                   },
                 }),
               ]}
@@ -237,7 +256,80 @@ const AuthForm = ({
                 prefix={<LockOutlined />}
                 placeholder="Confirm your new password"
                 size="large"
-                iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />)}
+                iconRender={(visible) =>
+                  visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                }
+              />
+            </Form.Item>
+          </>
+        );
+
+      // Inside renderFormFields() switch-case, add:
+
+      case "changeCurrentPassword":
+        return (
+          <>
+            <Form.Item
+              label="Old Password"
+              name="oldPassword"
+              rules={[
+                { required: true, message: "Please enter your old password!" },
+              ]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Enter your old password"
+                size="large"
+                iconRender={(visible) =>
+                  visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                }
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="New Password"
+              name="newPassword"
+              rules={[
+                { required: true, message: "Please enter your new password!" },
+                { min: 6, message: "Password must be at least 6 characters!" },
+              ]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Enter your new password"
+                size="large"
+                iconRender={(visible) =>
+                  visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                }
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="Confirm New Password"
+              name="confirmNewPassword"
+              dependencies={["newPassword"]}
+              rules={[
+                {
+                  required: true,
+                  message: "Please confirm your new password!",
+                },
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (!value || getFieldValue("newPassword") === value) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(new Error("Passwords do not match!"));
+                  },
+                }),
+              ]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Confirm your new password"
+                size="large"
+                iconRender={(visible) =>
+                  visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                }
               />
             </Form.Item>
           </>
@@ -250,46 +342,53 @@ const AuthForm = ({
 
   const getButtonText = () => {
     switch (type) {
-      case 'login': return 'Sign In';
-      case 'register': return 'Sign Up';
-      case 'registerEmail': return 'Send Verification Email';
-      case 'verifyOTP': return 'Verify OTP';
-      case 'forgetPassword': return 'Send Reset Link';
-      case 'resetPassword': return 'Reset Password';
-      default: return 'Submit';
+      case "login":
+        return "Sign In";
+      case "register":
+        return "Sign Up";
+      case "registerEmail":
+        return "Send Verification Email";
+      case "verifyOTP":
+        return "Verify OTP";
+      case "forgetPassword":
+        return "Send Reset Link";
+      case "resetPassword":
+        return "Reset Password";
+      case "changeCurrentPassword":
+        return "Change Password";
+      default:
+        return "Submit";
     }
   };
 
   const getFooterText = () => {
     switch (type) {
-      case 'login':
+      case "login":
         return (
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <div style={{ textAlign: "center", marginTop: "16px" }}>
             <Text>Don't have an account? </Text>
             <Link to="/register">Sign up</Link>
           </div>
         );
-      case 'register':
+      case "register":
         return (
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <div style={{ textAlign: "center", marginTop: "16px" }}>
             <Text>Already have an account? </Text>
             <Link to="/login">Sign in</Link>
           </div>
         );
-      case 'registerEmail':
+      case "registerEmail":
         return (
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <div style={{ textAlign: "center", marginTop: "16px" }}>
             <Text>Already have an account? </Text>
             <Link to="/login">Sign in</Link>
           </div>
         );
-      case 'verifyOTP':
+      case "verifyOTP":
+        return <></>;
+      case "forgetPassword":
         return (
-          <></>
-        );
-      case 'forgetPassword':
-        return (
-          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          <div style={{ textAlign: "center", marginTop: "16px" }}>
             <Text>Remember your password? </Text>
             <Link to="/login">Sign in</Link>
           </div>
@@ -300,14 +399,9 @@ const AuthForm = ({
   };
 
   return (
-    <Form
-      form={form}
-      layout="vertical"
-      onFinish={onFinish}
-      size="large"
-    >
+    <Form form={form} layout="vertical" onFinish={onFinish} size="large">
       {renderFormFields()}
-      
+
       <Form.Item>
         <Button
           type="primary"

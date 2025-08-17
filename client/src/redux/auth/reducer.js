@@ -12,6 +12,7 @@ import {
   refreshAccessToken,
   getCurrentUser,
   changeCurrentPassword,
+  resetPasswordWithToken,
   googleLogin,
   clearEmailRegistrationStep,
 } from './actions';
@@ -157,6 +158,25 @@ const authSlice = createSlice({
       .addCase(changeCurrentPassword.rejected, (state) => {
         state.isLoading = false;
         state.isSuccess = false;
+      });
+    builder
+      .addCase(resetPasswordWithToken.pending, (state) => {
+        state.isLoading = true;
+        state.isSuccess = false;
+        state.isError = false;
+        state.errorMessage = "";
+      })
+      .addCase(resetPasswordWithToken.fulfilled, (state) => {
+        state.isLoading = false;
+        state.isSuccess = true;
+        state.isError = false;
+        state.errorMessage = "";
+      })
+      .addCase(resetPasswordWithToken.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isSuccess = false;
+        state.isError = true;
+        state.errorMessage = action.payload || "Password reset failed";
       });
 
     builder

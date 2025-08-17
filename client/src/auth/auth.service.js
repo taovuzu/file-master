@@ -3,9 +3,35 @@ import errorHandler from '@/request/errorHandler';
 import successHandler from '@/request/successHandler';
 import axios from 'axios';
 
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+});
+
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        await axiosInstance.get(`${API_BASE_URL}/users/refresh-access-token`);
+        return axiosInstance(originalRequest);
+      } catch (refreshError) {
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 const sendAuthRequest = async (method, endpoint, data = {}, successOptions) => {
   try {
-    let response = await axios({ method, url: API_BASE_URL + endpoint, data, headers: { 'Content-Type': 'application/json' }, withCredentials: true });
+    console.log(endpoint, data);
+    let response = await axiosInstance({ method, url: API_BASE_URL + endpoint, data, headers: { 'Content-Type': 'application/json' }, withCredentials: true });
 
     if (successOptions) {
       successHandler({ data: response.data, status: response.status }, successOptions);
@@ -96,11 +122,19 @@ export const getCurrentUser = () =>
     { notifyOnSuccess: false, notifyOnFailed: false }
   );
 
-export const changeCurrentPassword = ({ newPassword }) =>
+export const changeCurrentPassword = ({oldPassword, newPassword }) =>
   sendAuthRequest(
     'post',
     'users/change-password',
-    { newPassword },
+    {oldPassword, newPassword },
+    { notifyOnSuccess: false, notifyOnFailed: false }
+  );
+
+export const resetPasswordWithToken = ({ email, unHashedToken, newPassword }) =>
+  sendAuthRequest(
+    "post",
+    "users/reset-forgot-password",
+    { email, unHashedToken, newPassword },
     { notifyOnSuccess: false, notifyOnFailed: false }
   );
 

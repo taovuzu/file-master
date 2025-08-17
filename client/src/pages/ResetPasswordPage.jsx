@@ -1,39 +1,43 @@
 import React, { useState, useEffect } from "react";
 import { message } from "antd";
-import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import AuthLayout from "@/layout/AuthLayout";
 import AuthForm from "@/forms/AuthForm";
-import { changeCurrentPassword } from "@/redux/auth/actions";
-import { selectIsLoggedIn } from "@/redux/auth/selectors";
+import { resetPasswordWithToken } from "@/redux/auth/actions"; // new action for token-based reset
 
 const ResetPasswordPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const location = useLocation();
 
-  const isLoggedIn = useSelector(selectIsLoggedIn);
+  const query = new URLSearchParams(location.search);
+  const email = query.get("email");
+  const unHashedToken = query.get("unHashedToken");
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      message.error("Please request a reset link to continue.");
+    if (!email || !unHashedToken) {
+      message.error("Invalid or expired password reset link.");
       navigate("/login");
     }
-  }, [isLoggedIn, navigate]);
+  }, [email, unHashedToken, navigate]);
 
   const handleResetPassword = async (values) => {
-    if (!isLoggedIn) return;
+    if (!email || !unHashedToken) return;
 
     setLoading(true);
     try {
       const resetPasswordData = {
+        email,
+        unHashedToken,
         newPassword: values.password,
       };
 
-      const result = await dispatch(changeCurrentPassword(resetPasswordData));
+      const result = await dispatch(resetPasswordWithToken(resetPasswordData));
       if (result.meta.requestStatus === "fulfilled") {
         message.success("Password has been reset successfully!");
-        navigate("/");
+        navigate("/login");
       } else {
         message.error("Failed to reset password. Please try again.");
       }
@@ -43,8 +47,6 @@ const ResetPasswordPage = () => {
       setLoading(false);
     }
   };
-
-  if (!isLoggedIn) return null;
 
   return (
     <AuthLayout title="Reset Password" subtitle="Enter your new password">

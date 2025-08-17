@@ -9,6 +9,7 @@ const RegisterPage = lazy(() => import("@/pages/RegisterPage"));
 const LogoutPage = lazy(() => import("@/pages/LogoutPage"));
 const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
+const ChangePasswordPage = lazy(() => import("@/pages/ChangePasswordPage"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const AuthCallbackPage = lazy(() => import("@/pages/AuthCallbackPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
@@ -57,6 +58,10 @@ const routes = {
       element: <ResetPasswordPage />,
     },
     {
+      path: "/change-password",
+      element: <ChangePasswordPage />,
+    },
+    {
       path: "/logout",
       element: <LogoutPage />,
     },
@@ -66,7 +71,7 @@ const routes = {
     },
     {
       path: "/auth/callback",
-      element: <AuthCallbackPage/>,
+      element: <AuthCallbackPage />,
     },
     // PDF Tool Routes
     {
