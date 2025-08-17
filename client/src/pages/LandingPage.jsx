@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import ToolCard, { toolCardUtils } from '@/components/ToolCard';
 import { Button } from 'antd';
+import Header from '@/components/Header';
 
 const LandingPage = () => {
   // Get all tools from the centralized configuration
@@ -58,6 +59,7 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <Header/>
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 px-6">
         <div className="max-w-7xl mx-auto">

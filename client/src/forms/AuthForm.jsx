@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 const { Text } = Typography;
 
 const AuthForm = ({
-  type = 'login', // 'login', 'register', 'forgetPassword', 'resetPassword'
+  type = 'login', // 'login', 'register', 'registerEmail', 'verifyOTP', 'forgetPassword', 'resetPassword'
   onFinish,
   loading = false,
   config = {}
@@ -55,6 +55,58 @@ const AuthForm = ({
           </>
         );
 
+      case 'registerEmail':
+        return (
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              { required: true, message: 'Please enter your email!' },
+              { type: 'email', message: 'Please enter a valid email!' }
+            ]}
+          >
+            <Input
+              prefix={<MailOutlined />}
+              placeholder="Enter your email"
+              size="large"
+            />
+          </Form.Item>
+        );
+
+      case 'verifyOTP':
+        return (
+          <>
+            <Form.Item
+              label="Email"
+              name="email"
+              rules={[
+                { required: true, message: 'Please enter your email!' },
+                { type: 'email', message: 'Please enter a valid email!' }
+              ]}
+            >
+              <Input
+                prefix={<MailOutlined />}
+                placeholder="Enter your email"
+                size="large"
+              />
+            </Form.Item>
+            <Form.Item
+              label="OTP Code"
+              name="otp"
+              rules={[
+                { required: true, message: 'Please enter the OTP code!' },
+                { len: 6, message: 'OTP must be 6 digits!' }
+              ]}
+            >
+              <Input
+                placeholder="Enter 6-digit OTP"
+                size="large"
+                maxLength={6}
+              />
+            </Form.Item>
+          </>
+        );
+
       case 'register':
         return (
           <>
@@ -81,6 +133,7 @@ const AuthForm = ({
                 prefix={<MailOutlined />}
                 placeholder="Enter your email"
                 size="large"
+                disabled
               />
             </Form.Item>
             <Form.Item
@@ -202,6 +255,8 @@ const AuthForm = ({
     switch (type) {
       case 'login': return 'Sign In';
       case 'register': return 'Sign Up';
+      case 'registerEmail': return 'Send Verification Email';
+      case 'verifyOTP': return 'Verify OTP';
       case 'forgetPassword': return 'Send Reset Link';
       case 'resetPassword': return 'Reset Password';
       default: return 'Submit';
@@ -224,6 +279,20 @@ const AuthForm = ({
             <Link to="/login">Sign in</Link>
           </div>
         );
+      case 'registerEmail':
+        return (
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <Text>Already have an account? </Text>
+            <Link to="/login">Sign in</Link>
+          </div>
+        );
+      case 'verifyOTP':
+        return (
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <Text>Didn't receive OTP? </Text>
+            <Link to="/register">Resend</Link>
+          </div>
+        );
       case 'forgetPassword':
         return (
           <div style={{ textAlign: 'center', marginTop: '16px' }}>
@@ -236,17 +305,11 @@ const AuthForm = ({
     }
   };
 
-  const handleFinish = (values) => {
-    if (onFinish) {
-      onFinish(values);
-    }
-  };
-
   return (
     <Form
       form={form}
       layout="vertical"
-      onFinish={handleFinish}
+      onFinish={onFinish}
       size="large"
     >
       {renderFormFields()}

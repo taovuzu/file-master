@@ -1,24 +1,26 @@
 import React, { useState } from 'react';
 import { message } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import AuthLayout from '@/layout/AuthLayout';
 import AuthForm from '@/forms/AuthForm';
+import { requestPasswordReset } from '@/redux/auth/actions';
 
 const ForgotPasswordPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleForgotPassword = async (values) => {
     setLoading(true);
     try {
-      // TODO: Implement forgot password API call
-      // const result = await forgotPasswordService(values.email);
-      
-      // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      message.success('Password reset link has been sent to your email!');
-      navigate('/login');
+      const result = await dispatch(requestPasswordReset({ email: values.email }));
+      if (result.meta.requestStatus === 'fulfilled') {
+        message.success('Password reset link has been sent to your email!');
+        navigate('/login');
+      } else {
+        message.error('Failed to send reset link. Please try again.');
+      }
     } catch (error) {
       message.error('Failed to send reset link. Please try again.');
     } finally {

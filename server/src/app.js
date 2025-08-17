@@ -1,11 +1,13 @@
 import express from "express";
+import session from "express-session";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
 import requestIp from "request-ip";
+import passport from "passport";
+import { ApiError } from "./utils/ApiError.js";
 
 const app = express();
-
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
   credentials: true
@@ -41,7 +43,23 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(session({
+  secret: process.env.EXPRESS_SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 3600000,
+    secure: false,
+    httpOnly: true,
+    sameSite: 'lax'
+   } 
+}));
 
+// Initialize passport after session and environment variables are loaded
+import "./middlewares/passport.js";
+app.use(passport.initialize());
+
+import userRouter from "./routes/user.route.js"
 import converterRouter from "./routes/converter.route.js";
 import mergePdfRouter from "./routes/mergePdf.route.js";
 import splitPdfRouter from "./routes/splitPdf.route.js";
@@ -55,7 +73,7 @@ import protectPdfRouter from "./routes/protectPdf.route.js";
 import downloadFileRouter from "./routes/download.route.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 
-
+app.use("/api/v1/users", userRouter);
 app.use("/api/v1/convert", converterRouter); // image-to-pdf -> {PDFDocument from "pdf-lib"}, doc-to-pdf -> {libreoffice}
 // // pdf-to-ppt -> {pptxgenjs, pdf-poppler, pdf-lib}
 app.use("/api/v1/merge", mergePdfRouter); //  PDFMerger from "pdf-merger-js";

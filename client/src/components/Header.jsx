@@ -1,11 +1,11 @@
 // src/components/Header.jsx
-import React, { useState } from 'react';
-import { Dropdown, Avatar, Badge } from 'antd';
-import { 
-  User, 
-  Bell, 
-  Settings, 
-  LogOut, 
+import React, { useState, useEffect } from "react";
+import { Dropdown, Avatar, Badge } from "antd";
+import {
+  User,
+  Bell,
+  Settings,
+  LogOut,
   Menu as MenuIcon,
   Search,
   FileText,
@@ -32,13 +32,15 @@ import {
   Users as TeamIcon,
   PenTool,
   Workflow,
-  Languages
-} from 'lucide-react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { toolCardUtils } from './ToolCard';
+  Languages,
+} from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectIsLoggedIn } from "../redux/auth/selectors";
+import { toolCardUtils } from "./ToolCard";
 
 const Header = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const isLoggedIn = useSelector(selectIsLoggedIn);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,100 +48,97 @@ const Header = () => {
   // Complete tool categories based on ToolCard configuration
   const toolCategories = {
     organize: {
-      title: 'Organize PDF',
+      title: "Organize PDF",
       tools: [
-        { name: 'Merge PDF', path: '/merge', icon: Merge },
-        { name: 'Split PDF', path: '/split', icon: Split },
-        { name: 'Organize PDF', path: '/split', icon: FileText },
-        { name: 'Add Page Numbers', path: '/page-numbers', icon: Hash },
-      ]
+        { name: "Merge PDF", path: "/merge", icon: Merge },
+        { name: "Split PDF", path: "/split", icon: Split },
+        { name: "Organize PDF", path: "/split", icon: FileText },
+        { name: "Add Page Numbers", path: "/page-numbers", icon: Hash },
+      ],
     },
     optimize: {
-      title: 'Optimize PDF',
-      tools: [
-        { name: 'Compress PDF', path: '/compress', icon: FileDown },
-      ]
+      title: "Optimize PDF",
+      tools: [{ name: "Compress PDF", path: "/compress", icon: FileDown }],
     },
     convertToPdf: {
-      title: 'Convert to PDF',
+      title: "Convert to PDF",
       tools: [
-        { name: 'Word to PDF', path: '/convert', icon: FileText },
-        { name: 'PowerPoint to PDF', path: '/convert', icon: Download },
-        { name: 'Excel to PDF', path: '/convert', icon: Download },
-        { name: 'JPG to PDF', path: '/convert', icon: FileText },
-      ]
+        { name: "Word to PDF", path: "/convert", icon: FileText },
+        { name: "PowerPoint to PDF", path: "/convert", icon: Download },
+        { name: "Excel to PDF", path: "/convert", icon: Download },
+        { name: "JPG to PDF", path: "/convert", icon: FileText },
+      ],
     },
     convertFromPdf: {
-      title: 'Convert from PDF',
+      title: "Convert from PDF",
       tools: [
-        { name: 'Convert PDF', path: '/convert', icon: Download },
-        { name: 'PDF to PowerPoint', path: '/convert', icon: Download },
-        { name: 'PDF to JPG', path: '/convert', icon: Download },
-        { name: 'Edit PDF', path: '/convert', icon: FileText },
-      ]
+        { name: "Convert PDF", path: "/convert", icon: Download },
+        { name: "PDF to PowerPoint", path: "/convert", icon: Download },
+        { name: "PDF to JPG", path: "/convert", icon: Download },
+        { name: "Edit PDF", path: "/convert", icon: FileText },
+      ],
     },
     edit: {
-      title: 'Edit PDF',
+      title: "Edit PDF",
       tools: [
-        { name: 'Rotate PDF', path: '/rotate', icon: RotateCw },
-        { name: 'Add Watermark', path: '/watermark', icon: Type },
-      ]
+        { name: "Rotate PDF", path: "/rotate", icon: RotateCw },
+        { name: "Add Watermark", path: "/watermark", icon: Type },
+      ],
     },
     security: {
-      title: 'PDF Security',
+      title: "PDF Security",
       tools: [
-        { name: 'Protect PDF', path: '/protect', icon: Lock },
-        { name: 'Unlock PDF', path: '/unlock', icon: Unlock },
-      ]
-    }
+        { name: "Protect PDF", path: "/protect", icon: Lock },
+        { name: "Unlock PDF", path: "/unlock", icon: Unlock },
+      ],
+    },
   };
 
   // User menu items
   const userMenuItems = [
     {
-      key: 'profile',
+      key: "profile",
       icon: <User className="w-4 h-4" />,
-      label: 'My Profile',
-      onClick: () => navigate('/profile'),
+      label: "My Profile",
+      onClick: () => navigate("/profile"),
     },
     {
-      key: 'settings',
+      key: "settings",
       icon: <Settings className="w-4 h-4" />,
-      label: 'Account settings',
-      onClick: () => navigate('/settings'),
+      label: "Account settings",
+      onClick: () => navigate("/settings"),
     },
     {
-      key: 'team',
+      key: "team",
       icon: <TeamIcon className="w-4 h-4" />,
-      label: 'Team',
-      onClick: () => navigate('/team'),
+      label: "Team",
+      onClick: () => navigate("/team"),
     },
     {
-      key: 'signatures',
+      key: "signatures",
       icon: <PenTool className="w-4 h-4" />,
-      label: 'Signatures',
-      onClick: () => navigate('/signatures'),
+      label: "Signatures",
+      onClick: () => navigate("/signatures"),
     },
     {
-      key: 'workflows',
+      key: "workflows",
       icon: <Workflow className="w-4 h-4" />,
-      label: 'Workflows',
-      onClick: () => navigate('/workflows'),
+      label: "Workflows",
+      onClick: () => navigate("/workflows"),
     },
     {
-      key: 'premium',
+      key: "premium",
       icon: <Crown className="w-4 h-4" />,
-      label: 'Upgrade to Premium',
-      onClick: () => navigate('/premium'),
+      label: "Upgrade to Premium",
+      onClick: () => navigate("/premium"),
     },
-    { type: 'divider' },
+    { type: "divider" },
     {
-      key: 'logout',
+      key: "logout",
       icon: <LogOut className="w-4 h-4" />,
-      label: 'Log out',
+      label: "Log out",
       onClick: () => {
-        setIsLoggedIn(false);
-        navigate('/login');
+        navigate("/logout");
       },
     },
   ];
@@ -147,88 +146,105 @@ const Header = () => {
   // Company menu items
   const companyMenuItems = [
     {
-      key: 'products',
-      label: 'Other products',
+      key: "products",
+      label: "Other products",
       children: [
         {
-          key: 'iloveimg',
-          label: 'iLoveIMG',
-          description: 'Effortless image editing',
-          onClick: () => window.open('https://iloveimg.com', '_blank'),
+          key: "iloveimg",
+          label: "iLoveIMG",
+          description: "Effortless image editing",
+          onClick: () => window.open("https://iloveimg.com", "_blank"),
         },
         {
-          key: 'ilovesign',
-          label: 'iLoveSign',
-          description: 'e-Signing made simple',
-          onClick: () => window.open('https://ilovesign.com', '_blank'),
+          key: "ilovesign",
+          label: "iLoveSign",
+          description: "e-Signing made simple",
+          onClick: () => window.open("https://ilovesign.com", "_blank"),
         },
         {
-          key: 'iloveapi',
-          label: 'iLoveAPI',
-          description: 'Document automation for developers',
-          onClick: () => window.open('https://iloveapi.com', '_blank'),
+          key: "iloveapi",
+          label: "iLoveAPI",
+          description: "Document automation for developers",
+          onClick: () => window.open("https://iloveapi.com", "_blank"),
         },
-      ]
+      ],
     },
     {
-      key: 'solutions',
-      label: 'Solutions',
+      key: "solutions",
+      label: "Solutions",
       children: [
         {
-          key: 'business',
-          label: 'Business',
-          description: 'Streamlined PDF editing and workflows for business teams',
-          onClick: () => navigate('/business'),
+          key: "business",
+          label: "Business",
+          description:
+            "Streamlined PDF editing and workflows for business teams",
+          onClick: () => navigate("/business"),
         },
-      ]
+      ],
     },
     {
-      key: 'applications',
-      label: 'Applications',
+      key: "applications",
+      label: "Applications",
       children: [
         {
-          key: 'desktop',
-          label: 'Desktop App',
-          description: 'Available for Mac and Windows',
-          onClick: () => navigate('/desktop'),
+          key: "desktop",
+          label: "Desktop App",
+          description: "Available for Mac and Windows",
+          onClick: () => navigate("/desktop"),
         },
         {
-          key: 'mobile',
-          label: 'Mobile App',
-          description: 'Available for iOS and Android',
-          onClick: () => navigate('/mobile'),
+          key: "mobile",
+          label: "Mobile App",
+          description: "Available for iOS and Android",
+          onClick: () => navigate("/mobile"),
         },
-      ]
+      ],
     },
     {
-      key: 'general',
-      label: 'General',
+      key: "general",
+      label: "General",
       children: [
-        { key: 'pricing', label: 'Pricing', onClick: () => navigate('/pricing') },
-        { key: 'security', label: 'Security', onClick: () => navigate('/security') },
-        { key: 'features', label: 'Features', onClick: () => navigate('/features') },
-        { key: 'about', label: 'About us', onClick: () => navigate('/about') },
-        { type: 'divider' },
-        { key: 'help', label: 'Help', onClick: () => navigate('/help') },
-        { key: 'contact', label: 'Contact', onClick: () => navigate('/contact') },
-      ]
-    }
+        {
+          key: "pricing",
+          label: "Pricing",
+          onClick: () => navigate("/pricing"),
+        },
+        {
+          key: "security",
+          label: "Security",
+          onClick: () => navigate("/security"),
+        },
+        {
+          key: "features",
+          label: "Features",
+          onClick: () => navigate("/features"),
+        },
+        { key: "about", label: "About us", onClick: () => navigate("/about") },
+        { type: "divider" },
+        { key: "help", label: "Help", onClick: () => navigate("/help") },
+        {
+          key: "contact",
+          label: "Contact",
+          onClick: () => navigate("/contact"),
+        },
+      ],
+    },
   ];
 
   // Language options
   const languageOptions = [
-    { key: 'en', label: 'English', flag: '🇺🇸' },
-    { key: 'es', label: 'Español', flag: '🇪🇸' },
-    { key: 'fr', label: 'Français', flag: '🇫🇷' },
-    { key: 'de', label: 'Deutsch', flag: '🇩🇪' },
-    { key: 'it', label: 'Italiano', flag: '🇮🇹' },
-    { key: 'pt', label: 'Português', flag: '🇵🇹' },
-    { key: 'ja', label: '日本語', flag: '🇯🇵' },
-    { key: 'ru', label: 'Pусский', flag: '🇷🇺' },
-    { key: 'ko', label: '한국어', flag: '🇰🇷' },
-    { key: 'zh-cn', label: '中文 (简体)', flag: '🇨🇳' },
-    { key: 'zh-tw', label: '中文 (繁體)', flag: '🇹🇼' },
-    { key: 'ar', label: 'العربية', flag: '🇸🇦' },
+    { key: "en", label: "English", flag: "🇺🇸" },
+    { key: "es", label: "Español", flag: "🇪🇸" },
+    { key: "fr", label: "Français", flag: "🇫🇷" },
+    { key: "de", label: "Deutsch", flag: "🇩🇪" },
+    { key: "it", label: "Italiano", flag: "🇮🇹" },
+    { key: "pt", label: "Português", flag: "🇵🇹" },
+    { key: "ja", label: "日本語", flag: "🇯🇵" },
+    { key: "ru", label: "Pусский", flag: "🇷🇺" },
+    { key: "ko", label: "한국어", flag: "🇰🇷" },
+    { key: "zh-cn", label: "中文 (简体)", flag: "🇨🇳" },
+    { key: "zh-tw", label: "中文 (繁體)", flag: "🇹🇼" },
+    { key: "ar", label: "العربية", flag: "🇸🇦" },
   ];
 
   const handleToolClick = (path) => {
@@ -238,10 +254,9 @@ const Header = () => {
 
   const handleAuthClick = () => {
     if (isLoggedIn) {
-      setIsLoggedIn(false);
-      navigate('/login');
+      navigate("/profile");
     } else {
-      navigate('/login');
+      navigate("/login");
     }
   };
 
@@ -281,7 +296,11 @@ const Header = () => {
       <nav className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Brand */}
-          <Link to="/" className="brand flex items-center space-x-3" title="FileMaster">
+          <Link
+            to="/"
+            className="brand flex items-center space-x-3"
+            title="FileMaster"
+          >
             <div className="p-2 bg-gradient-to-r from-primary-600 to-primary-700 rounded-lg">
               <FileText className="w-6 h-6 text-white" />
             </div>
@@ -296,7 +315,7 @@ const Header = () => {
             {/* All PDF Tools Dropdown */}
             <Dropdown
               overlay={renderToolDropdown()}
-              trigger={['hover']}
+              trigger={["hover"]}
               placement="bottomLeft"
             >
               <button className="menu--md flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-primary-600 font-medium transition-colors">
@@ -311,7 +330,9 @@ const Header = () => {
                 <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-4 min-w-[400px]">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <h3 className="font-semibold text-gray-900 text-sm mb-3">Convert to PDF</h3>
+                      <h3 className="font-semibold text-gray-900 text-sm mb-3">
+                        Convert to PDF
+                      </h3>
                       <ul className="space-y-2">
                         {toolCategories.convertToPdf.tools.map((tool) => {
                           const Icon = tool.icon;
@@ -322,7 +343,9 @@ const Header = () => {
                                 className="flex items-center space-x-3 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
                               >
                                 <Icon className="w-4 h-4 text-gray-500" />
-                                <span className="text-sm text-gray-700">{tool.name}</span>
+                                <span className="text-sm text-gray-700">
+                                  {tool.name}
+                                </span>
                               </button>
                             </li>
                           );
@@ -330,7 +353,9 @@ const Header = () => {
                       </ul>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900 text-sm mb-3">Convert from PDF</h3>
+                      <h3 className="font-semibold text-gray-900 text-sm mb-3">
+                        Convert from PDF
+                      </h3>
                       <ul className="space-y-2">
                         {toolCategories.convertFromPdf.tools.map((tool) => {
                           const Icon = tool.icon;
@@ -341,7 +366,9 @@ const Header = () => {
                                 className="flex items-center space-x-3 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
                               >
                                 <Icon className="w-4 h-4 text-gray-500" />
-                                <span className="text-sm text-gray-700">{tool.name}</span>
+                                <span className="text-sm text-gray-700">
+                                  {tool.name}
+                                </span>
                               </button>
                             </li>
                           );
@@ -351,7 +378,7 @@ const Header = () => {
                   </div>
                 </div>
               }
-              trigger={['hover']}
+              trigger={["hover"]}
               placement="bottomLeft"
             >
               <button className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-primary-600 font-medium transition-colors">
@@ -378,28 +405,30 @@ const Header = () => {
               <Dropdown
                 menu={{ items: userMenuItems }}
                 placement="bottomRight"
-                trigger={['click']}
+                trigger={["click"]}
               >
                 <button className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded-lg transition-all duration-200">
-                  <Avatar 
-                    size={32} 
+                  <Avatar
+                    size={32}
                     className="bg-gradient-to-r from-primary-600 to-primary-700"
                     icon={<User className="w-4 h-4" />}
                   />
-                  <span className="hidden sm:block text-sm font-medium text-gray-700">resr</span>
                 </button>
               </Dropdown>
             ) : (
-              <div className="flex items-center space-x-3">
-                <button 
-                  onClick={handleAuthClick}
-                  className="text-gray-600 hover:text-primary-600 font-medium transition-colors duration-200 text-sm"
+              <div className="flex items-center gap-4">
+                {/* Sign In Button */}
+                <button
+                  onClick={() => navigate("/login")}
+                  className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors"
                 >
                   Sign In
                 </button>
-                <button 
-                  onClick={() => navigate('/home')}
-                  className="btn-primary bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center space-x-2 transition-all duration-300 hover:shadow-glow hover:scale-105 text-sm"
+
+                {/* Get Started Button */}
+                <button
+                  onClick={() => navigate("/home")}
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:shadow-lg hover:scale-[1.03] focus:ring-2 focus:ring-primary-400 focus:outline-none"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>Get Started</span>
@@ -414,7 +443,9 @@ const Header = () => {
                   <div className="space-y-4">
                     {companyMenuItems.map((section) => (
                       <div key={section.key}>
-                        <h3 className="font-semibold text-gray-900 text-sm mb-2">{section.label}</h3>
+                        <h3 className="font-semibold text-gray-900 text-sm mb-2">
+                          {section.label}
+                        </h3>
                         <ul className="space-y-1">
                           {section.children?.map((item) => (
                             <li key={item.key}>
@@ -422,9 +453,13 @@ const Header = () => {
                                 onClick={item.onClick}
                                 className="flex items-center space-x-3 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
                               >
-                                <span className="text-sm text-gray-700">{item.label}</span>
+                                <span className="text-sm text-gray-700">
+                                  {item.label}
+                                </span>
                                 {item.description && (
-                                  <span className="text-xs text-gray-500">{item.description}</span>
+                                  <span className="text-xs text-gray-500">
+                                    {item.description}
+                                  </span>
                                 )}
                               </button>
                             </li>
@@ -435,7 +470,7 @@ const Header = () => {
                   </div>
                 </div>
               }
-              trigger={['click']}
+              trigger={["click"]}
               placement="bottomRight"
             >
               <button className="p-2 text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-lg transition-all duration-200">
@@ -471,7 +506,9 @@ const Header = () => {
               <div className="space-y-4">
                 {Object.entries(toolCategories).map(([key, category]) => (
                   <div key={key}>
-                    <h3 className="font-semibold text-gray-900 text-sm mb-2">{category.title}</h3>
+                    <h3 className="font-semibold text-gray-900 text-sm mb-2">
+                      {category.title}
+                    </h3>
                     <div className="space-y-1">
                       {category.tools.map((tool) => {
                         const Icon = tool.icon;
@@ -482,7 +519,9 @@ const Header = () => {
                             className="flex items-center space-x-3 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
                           >
                             <Icon className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm text-gray-700">{tool.name}</span>
+                            <span className="text-sm text-gray-700">
+                              {tool.name}
+                            </span>
                           </button>
                         );
                       })}
@@ -510,7 +549,7 @@ const Header = () => {
                       Sign In
                     </button>
                     <button
-                      onClick={() => navigate('/home')}
+                      onClick={() => navigate("/home")}
                       className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-lg transition-all duration-300 hover:shadow-glow"
                     >
                       <Sparkles className="w-4 h-4" />

@@ -1,43 +1,51 @@
-import React, { useState } from 'react';
-import { message } from 'antd';
-import { useNavigate } from 'react-router-dom';
-import AuthLayout from '@/layout/AuthLayout';
-import AuthForm from '@/forms/AuthForm';
-import { useDispatch } from 'react-redux';
-import { login } from '@/redux/auth/actions';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button, Divider, message } from "antd";
+import { GoogleOutlined } from "@ant-design/icons";
+import AuthLayout from "@/layout/AuthLayout";
+import AuthForm from "@/forms/AuthForm";
+import { useDispatch, useSelector } from "react-redux";
+import { login, googleLogin } from "@/redux/auth/actions";
+import { selectAuthState } from "@/redux/auth/selectors";
 
 const LoginPage = () => {
-  const [loading, setLoading] = useState(false);
+  const { isLoading, isSuccess } = useSelector(selectAuthState);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleLogin = async (values) => {
-    setLoading(true);
-    try {
-      const result = await dispatch(login(values));
-      if (result.success) {
-        message.success('Login successful!');
-        navigate('/');
-      } else {
-        message.error(result.message || 'Login failed');
-      }
-    } catch (error) {
-      message.error('An unexpected error occurred');
-    } finally {
-      setLoading(false);
-    }
+  const handleLogin = (values) => {
+    dispatch(login({ loginData: values }));
   };
+
+  const handleGoogleLogin = () => {
+    dispatch(googleLogin());
+  };
+
+  useEffect(() => {
+    if (isSuccess) {
+      navigate("/");
+    }
+  }, [isSuccess, navigate]);
 
   return (
     <AuthLayout
       title="Welcome Back"
       subtitle="Sign in to your account to continue"
     >
-      <AuthForm
-        type="login"
-        onFinish={handleLogin}
-        loading={loading}
-      />
+      <AuthForm type="login" onFinish={handleLogin} loading={isLoading} />
+      
+      <Divider>or</Divider>
+      
+      <Button
+        type="default"
+        size="large"
+        block
+        icon={<GoogleOutlined />}
+        onClick={handleGoogleLogin}
+        style={{ marginBottom: '16px' }}
+      >
+        Continue with Google
+      </Button>
     </AuthLayout>
   );
 };

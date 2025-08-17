@@ -28,7 +28,6 @@ const EnhancedPdfToolPage = ({
     loading,
     processedFile,
     error: hookError,
-    isLoggedIn,
     processPdfTool,
     downloadProcessedFile,
     reset,
@@ -112,7 +111,6 @@ const EnhancedPdfToolPage = ({
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       {/* Header */}
-      <Card style={{ marginBottom: '24px' }}>
         <div style={{ textAlign: 'center' }}>
           <Title level={2} style={{ marginBottom: '8px' }}>
             <FileTextOutlined style={{ marginRight: '8px' }} />
@@ -121,31 +119,12 @@ const EnhancedPdfToolPage = ({
           <Paragraph type="secondary" style={{ fontSize: '16px', marginBottom: '16px' }}>
             {description}
           </Paragraph>
-          
-          {/* {requirements && (
-            <Alert
-              message="Requirements"
-              description={
-                <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                  {requirements.minFiles && <li>Minimum {requirements.minFiles} file(s) required</li>}
-                  {requirements.maxFiles && <li>Maximum {requirements.maxFiles} files allowed</li>}
-                  {requirements.maxSize && <li>Maximum file size: {requirements.maxSize}MB</li>}
-                  <li>Only PDF files accepted</li>
-                </ul>
-              }
-              type="info"
-              showIcon
-              style={{ maxWidth: 600, margin: '0 auto' }}
-            />
-          )} */}
         </div>
-      </Card>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
         {/* Left Column - File Upload and Form */}
         <div>
           {/* File Upload */}
-          <Card title="Upload Files" style={{ marginBottom: '24px' }}>
             <FileUploadZone
               onFilesSelected={handleFilesSelected}
               onFileRemove={handleFileRemove}
@@ -154,7 +133,6 @@ const EnhancedPdfToolPage = ({
               maxFiles={requirements.maxFiles}
               accept=".pdf"
             />
-          </Card>
 
           {/* Form Component */}
           {FormComponent && (

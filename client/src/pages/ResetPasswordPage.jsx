@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { message } from 'antd';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import AuthLayout from '@/layout/AuthLayout';
 import AuthForm from '@/forms/AuthForm';
+import { resetForgottenPassword } from '@/redux/auth/actions';
 
 const ResetPasswordPage = () => {
   const [loading, setLoading] = useState(false);
   const [tokenValid, setTokenValid] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -32,14 +35,19 @@ const ResetPasswordPage = () => {
     setLoading(true);
     try {
       const token = searchParams.get('token');
-      // TODO: Implement reset password API call
-      // const result = await resetPasswordService(token, values.password);
+      const resetPasswordData = {
+        token: token,
+        password: values.password,
+        confirmPassword: values.confirmPassword
+      };
       
-      // Simulate API call for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      message.success('Password has been reset successfully!');
-      navigate('/login');
+      const result = await dispatch(resetForgottenPassword({ resetPasswordData }));
+      if (result.meta.requestStatus === 'fulfilled') {
+        message.success('Password has been reset successfully!');
+        navigate('/login');
+      } else {
+        message.error('Failed to reset password. Please try again.');
+      }
     } catch (error) {
       message.error('Failed to reset password. Please try again.');
     } finally {

@@ -9,10 +9,7 @@ import { MESSAGES, APP_CONFIG } from '@/utils/constants';
 import { usePdfPerformance } from '@/utils/performance';
 import { logUserAction } from '@/utils/logger';
 
-/**
- * Modern file upload zone component with drag-and-drop functionality
- * Supports multiple files, progress tracking, and validation
- */
+
 const FileUploadZone = ({
   onFilesSelected,
   onFileRemove,

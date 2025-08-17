@@ -9,16 +9,61 @@ const includeToken = () => {
   axios.defaults.withCredentials = true;
 
   const auth = storePersist.get('auth');
-  if (auth) {
-    axios.defaults.headers.common['Authorization'] = `Bearer ${auth.current.token}`;
+  if (auth && auth.current && auth.current.accessToken) {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${auth.current.accessToken}`;
   }
 };
+
+// Create axios instance with interceptors
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true,
+});
+
+// Request interceptor to add token
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const auth = storePersist.get('auth');
+    if (auth && auth.current && auth.current.accessToken) {
+      config.headers.Authorization = `Bearer ${auth.current.accessToken}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle token refresh
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      // Clear the invalid token from storage
+      const auth = storePersist.get('auth');
+      if (auth) {
+        delete auth.current.accessToken;
+        storePersist.set('auth', auth);
+      }
+      
+      // Redirect to login or handle token refresh through the app
+      // The app should handle this by dispatching refreshAccessToken
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 // Generic axios wrapper
 const sendRequest = async (method, url, data = null, config = {}, successOptions) => {
   try {
-    includeToken();
-    const response = await axios({ method, url, data, ...config });
+    const response = await axiosInstance({ method, url, data, ...config });
     if (successOptions) successHandler(response, successOptions);
     return response.data;
   } catch (error) {

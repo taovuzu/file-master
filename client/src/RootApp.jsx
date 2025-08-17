@@ -1,3 +1,5 @@
+import '@ant-design/v5-patch-for-react-19';
+import 'antd/dist/reset.css'; 
 import './style/app.css';
 
 import { Suspense, lazy } from "react";

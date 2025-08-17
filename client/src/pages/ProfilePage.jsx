@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateProfile } from '@/redux/auth/actions';
 import MainLayout from '@/layout/MainLayout';
 import ProfileLayout from '@/layout/ProfileLayout';
+import { current } from '@reduxjs/toolkit';
 
 const { Title, Text } = Typography;
 
@@ -79,7 +80,7 @@ const ProfilePage = () => {
                 >
                   <Input
                     prefix={<MailOutlined />}
-                    placeholder="Email"
+                    placeholder={current.email}
                     disabled
                   />
                 </Form.Item>
