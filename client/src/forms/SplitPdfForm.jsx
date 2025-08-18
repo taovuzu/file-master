@@ -1,15 +1,10 @@
 // src/components/SplitPdfForm.jsx
 import React, { useState } from "react";
-import { Form, Button, Upload, Input, message, Alert, Divider, Space } from "antd";
-import { UploadOutlined, PartitionOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
+import { Form, Button, InputNumber, message, Alert, Divider, Space } from "antd";
+import { PartitionOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
 
-const SplitPdfForm = ({ onFinish }) => {
-  const [fileList, setFileList] = useState([]);
+const SplitPdfForm = ({ onFinish, file }) => {
   const [ranges, setRanges] = useState([{ start: 1, end: 1 }]);
-
-  const handleUploadChange = ({ fileList }) => {
-    setFileList(fileList.slice(-1)); // Keep only the latest uploaded file
-  };
 
   const addRange = () => {
     setRanges([...ranges, { start: 1, end: 1 }]);
@@ -23,9 +18,13 @@ const SplitPdfForm = ({ onFinish }) => {
   };
 
   const updateRange = (index, field, value) => {
-    const newRanges = [...ranges];
-    newRanges[index][field] = parseInt(value) || 1;
-    setRanges(newRanges);
+    const numeric = typeof value === 'number' ? value : parseInt(value, 10);
+    if (!Number.isFinite(numeric) || numeric < 1) return;
+    setRanges(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: numeric };
+      return next;
+    });
   };
 
   const validateRanges = () => {
@@ -43,8 +42,8 @@ const SplitPdfForm = ({ onFinish }) => {
     return true;
   };
 
-  const handleFinish = (values) => {
-    if (fileList.length === 0) {
+  const handleFinish = () => {
+    if (!file) {
       message.error("Please upload a PDF file!");
       return;
     }
@@ -53,147 +52,91 @@ const SplitPdfForm = ({ onFinish }) => {
       return;
     }
 
-    // Convert ranges to the format expected by server: [[start, end], [start, end], ...]
-    const rangesArray = ranges.map(range => [range.start, range.end]);
-
-    onFinish({ 
-      file: fileList[0].originFileObj,
-      ranges: rangesArray
-    });
-  };
-
-  const beforeUpload = (file) => {
-    const isPDF = file.type === 'application/pdf';
-    if (!isPDF) {
-      message.error('You can only upload PDF files!');
-      return false;
-    }
-    
-    const isLt10M = file.size / 1024 / 1024 < 10;
-    if (!isLt10M) {
-      message.error('File must be smaller than 10MB!');
-      return false;
-    }
-    
-    return false; // Prevent auto-upload
+    const rangesArray = ranges.map((range) => [range.start, range.end]);
+    onFinish({ ranges: rangesArray });
   };
 
   return (
-    <Form
-      name="split-pdf"
-      layout="vertical"
-      onFinish={handleFinish}
-      style={{ maxWidth: 600, margin: "0 auto" }}
-    >
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <Form
+        name="split-pdf"
+        layout="vertical"
+        onFinish={handleFinish}
+        style={{ flex: 1, overflowY: "auto", padding: "16px" }}
+      >
+        <Form.Item>
+          <div style={{ fontSize: "18px", fontWeight: 600 }}>Split PDF</div>
+        </Form.Item>
+
+        <Divider orientation="left">Page Ranges</Divider>
+
+        <Form.Item label="Define Page Ranges" help="Specify which pages to extract. Each range creates a separate PDF.">
+          {ranges.map((range, index) => (
+            <Space key={index} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+              <span style={{ minWidth: '60px' }}>Range {index + 1}:</span>
+              <InputNumber
+                min={1}
+                placeholder="Start"
+                value={range.start}
+                onChange={(val) => updateRange(index, 'start', val)}
+                style={{ width: '100px' }}
+              />
+              <span>to</span>
+              <InputNumber
+                min={1}
+                placeholder="End"
+                value={range.end}
+                onChange={(val) => updateRange(index, 'end', val)}
+                style={{ width: '100px' }}
+              />
+              {ranges.length > 1 && (
+                <Button
+                  type="text"
+                  danger
+                  icon={<MinusCircleOutlined />}
+                  onClick={() => removeRange(index)}
+                  size="small"
+                />
+              )}
+            </Space>
+          ))}
+
+          <Button type="dashed" onClick={addRange} icon={<PlusOutlined />} style={{ marginTop: 8 }}>
+            Add Another Range
+          </Button>
+        </Form.Item>
+
+        {ranges.length > 0 && (
+          <Form.Item>
+            <div style={{ padding: '12px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
+              <strong>Ranges to extract ({ranges.length}):</strong>
+              <div style={{ marginTop: '8px', fontSize: '13px' }}>
+                {ranges.map((range, index) => (
+                  <div key={index} style={{ marginBottom: '4px', color: '#586069' }}>
+                    Range {index + 1}: Pages {range.start} - {range.end}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Form.Item>
+        )}
+      </Form>
+
       <Alert
         message="PDF Split Instructions"
-        description="Upload a PDF file and specify page ranges to split. Each range will create a separate PDF file. The result will be downloaded as a ZIP file containing all split PDFs."
+        description="Specify one or more page ranges. Each range will become a separate PDF and will be packaged in a ZIP archive."
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
         style={{ marginBottom: 24 }}
       />
 
-      <Form.Item
-        label="Upload PDF"
-        rules={[{ required: true, message: "Please upload a PDF file!" }]}
-      >
-        <Upload
-          accept="application/pdf"
-          beforeUpload={beforeUpload}
-          onChange={handleUploadChange}
-          fileList={fileList}
-        >
-          <Button icon={<UploadOutlined />} size="large">
-            Select PDF
-          </Button>
-        </Upload>
-        <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-          • Only PDF files accepted • Maximum file size: 10MB
-        </div>
-      </Form.Item>
-
-      <Divider orientation="left">Page Ranges</Divider>
-
-      <Form.Item
-        label="Define Page Ranges"
-        help="Specify which pages to extract. Each range will create a separate PDF file."
-      >
-        {ranges.map((range, index) => (
-          <Space key={index} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-            <span style={{ minWidth: '60px' }}>Range {index + 1}:</span>
-            <Input
-              type="number"
-              min={1}
-              placeholder="Start"
-              value={range.start}
-              onChange={(e) => updateRange(index, 'start', e.target.value)}
-              style={{ width: '80px' }}
-            />
-            <span>to</span>
-            <Input
-              type="number"
-              min={1}
-              placeholder="End"
-              value={range.end}
-              onChange={(e) => updateRange(index, 'end', e.target.value)}
-              style={{ width: '80px' }}
-            />
-            {ranges.length > 1 && (
-              <Button
-                type="text"
-                danger
-                icon={<MinusCircleOutlined />}
-                onClick={() => removeRange(index)}
-                size="small"
-              />
-            )}
-          </Space>
-        ))}
-        
-        <Button
-          type="dashed"
-          onClick={addRange}
-          icon={<PlusOutlined />}
-          style={{ marginTop: 8 }}
-        >
-          Add Another Range
-        </Button>
-      </Form.Item>
-
-      {ranges.length > 0 && (
-        <Form.Item>
-          <div style={{ 
-            padding: '12px', 
-            backgroundColor: '#f6f8fa', 
-            borderRadius: '6px',
-            border: '1px solid #e1e4e8'
-          }}>
-            <strong>Ranges to extract ({ranges.length}):</strong>
-            <div style={{ marginTop: '8px', fontSize: '13px' }}>
-              {ranges.map((range, index) => (
-                <div key={index} style={{ marginBottom: '4px', color: '#586069' }}>
-                  Range {index + 1}: Pages {range.start} - {range.end}
-                </div>
-              ))}
-            </div>
-          </div>
-        </Form.Item>
-      )}
-
-      <Form.Item>
-        <Button
-          type="primary"
-          htmlType="submit"
-          block
-          icon={<PartitionOutlined />}
-          size="large"
-          disabled={fileList.length === 0 || ranges.length === 0}
-        >
+      <div style={{ padding: '12px 16px', borderTop: '1px solid #f0f0f0', background: '#fff', position: 'sticky', bottom: 0, zIndex: 10 }}>
+        <Button type="primary" htmlType="submit" block icon={<PartitionOutlined />} size="large" disabled={!file || ranges.length === 0} onClick={handleFinish}>
           Split PDF into {ranges.length} File{ranges.length !== 1 ? 's' : ''}
         </Button>
-      </Form.Item>
-    </Form>
+      </div>
+    </div>
   );
 };
 

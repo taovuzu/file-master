@@ -1,4 +1,4 @@
-import { PDF_ACTIONS } from "./types";
+import { PDF_ACTIONS } from './actions';
 
 export const initialState = {
   currentFiles: [],
@@ -8,31 +8,21 @@ export const initialState = {
   processingHistory: [],
   error: null,
   settings: {
-    compressionLevel: "medium",
-    watermarkPosition: "center",
+    compressionLevel: 'medium',
+    watermarkPosition: 'center',
     watermarkOpacity: 0.5,
-    defaultFormat: "pdf",
+    defaultFormat: 'pdf',
   },
 };
 
-export const pdfReducer = (state, action) => {
+export default function reducer(state = initialState, action) {
   switch (action.type) {
     case PDF_ACTIONS.SET_FILES:
       return { ...state, currentFiles: action.payload, error: null };
     case PDF_ACTIONS.ADD_FILE:
-      return {
-        ...state,
-        currentFiles: [...state.currentFiles, action.payload],
-        error: null,
-      };
+      return { ...state, currentFiles: [...state.currentFiles, action.payload], error: null };
     case PDF_ACTIONS.REMOVE_FILE:
-      return {
-        ...state,
-        currentFiles: state.currentFiles.filter(
-          (f) => f.uid !== action.payload
-        ),
-        error: null,
-      };
+      return { ...state, currentFiles: state.currentFiles.filter((f) => f.uid !== action.payload), error: null };
     case PDF_ACTIONS.CLEAR_FILES:
       return { ...state, currentFiles: [], processedFile: null, error: null };
     case PDF_ACTIONS.SET_PROCESSED_FILE:
@@ -44,18 +34,10 @@ export const pdfReducer = (state, action) => {
     case PDF_ACTIONS.ADD_TO_HISTORY:
       return {
         ...state,
-        processingHistory: [
-          action.payload,
-          ...state.processingHistory.slice(0, 9),
-        ],
+        processingHistory: [action.payload, ...state.processingHistory.slice(0, 9)],
       };
     case PDF_ACTIONS.SET_ERROR:
-      return {
-        ...state,
-        error: action.payload,
-        isProcessing: false,
-        processingProgress: 0,
-      };
+      return { ...state, error: action.payload, isProcessing: false, processingProgress: 0 };
     case PDF_ACTIONS.CLEAR_ERROR:
       return { ...state, error: null };
     case PDF_ACTIONS.UPDATE_SETTINGS:
@@ -63,4 +45,6 @@ export const pdfReducer = (state, action) => {
     default:
       return state;
   }
-};
+}
+
+

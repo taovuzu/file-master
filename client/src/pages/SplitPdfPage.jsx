@@ -1,10 +1,10 @@
 import React from 'react';
-import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
+import PdfToolPage from '@/Pages/PdfToolPage';
 import SplitPdfForm from '@/forms/SplitPdfForm';
 
 const SplitPdfPage = () => {
   return (
-    <EnhancedPdfToolPage
+    <PdfToolPage
       title="Split PDF"
       description="Split a PDF into multiple files by pages or ranges"
       toolType="split"
@@ -14,6 +14,7 @@ const SplitPdfPage = () => {
         minFiles: 1,
         maxFiles: 1,
         maxSize: 10,
+        acceptedTypes: ["application/pdf"],
       }}
     />
   );

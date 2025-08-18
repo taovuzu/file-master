@@ -1,10 +1,10 @@
 import React from 'react';
-import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
+import PdfToolPage from '@/Pages/PdfToolPage';
 import ProtectPdfForm from '@/forms/ProtectPdfForm';
 
 const ProtectPdfPage = () => {
   return (
-    <EnhancedPdfToolPage
+    <PdfToolPage
       title="Protect PDF"
       description="Add password protection to your PDF document"
       toolType="protect"
@@ -14,6 +14,7 @@ const ProtectPdfPage = () => {
         minFiles: 1,
         maxFiles: 1,
         maxSize: 10,
+        acceptedTypes: ["application/pdf"],
       }}
     />
   );

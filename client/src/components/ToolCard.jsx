@@ -112,18 +112,6 @@ const TOOL_CONFIG = {
     premium: true,
     route: '/watermark',
   },
-  'Convert PDF': {
-    title: 'Convert PDF',
-    description: 'Convert PDF to Word, Excel, or image formats',
-    icon: Convert,
-    color: 'teal',
-    features: ['PDF to Word', 'PDF to Excel', 'PDF to Images'],
-    popularity: 89,
-    processingTime: '60 seconds',
-    users: '2.5M+',
-    premium: true,
-    route: '/convert',
-  },
   'PDF to PowerPoint': {
     title: 'PDF to PowerPoint',
     description: 'Convert PDF presentations to editable PowerPoint files',
@@ -134,7 +122,7 @@ const TOOL_CONFIG = {
     processingTime: '45 seconds',
     users: '1.8M+',
     premium: true,
-    route: '/convert',
+    route: '/pdf-to-powerpoint',
   },
   'Word to PDF': {
     title: 'Word to PDF',
@@ -146,7 +134,7 @@ const TOOL_CONFIG = {
     processingTime: '20 seconds',
     users: '2.2M+',
     premium: false,
-    route: '/convert',
+    route: '/convert?type=doc-to-pdf',
   },
   'PowerPoint to PDF': {
     title: 'PowerPoint to PDF',
@@ -158,7 +146,7 @@ const TOOL_CONFIG = {
     processingTime: '25 seconds',
     users: '1.9M+',
     premium: false,
-    route: '/convert',
+    route: '/convert?type=doc-to-pdf&source=powerpoint',
   },
   'Excel to PDF': {
     title: 'Excel to PDF',
@@ -170,7 +158,7 @@ const TOOL_CONFIG = {
     processingTime: '30 seconds',
     users: '1.6M+',
     premium: false,
-    route: '/convert',
+    route: '/convert?type=doc-to-pdf&source=excel',
   },
   'Edit PDF': {
     title: 'Edit PDF',
@@ -194,7 +182,7 @@ const TOOL_CONFIG = {
     processingTime: '35 seconds',
     users: '1.1M+',
     premium: false,
-    route: '/convert',
+    route: '/convert?type=pdf-to-jpg',
   },
   'JPG to PDF': {
     title: 'JPG to PDF',
@@ -206,7 +194,7 @@ const TOOL_CONFIG = {
     processingTime: '20 seconds',
     users: '1.7M+',
     premium: false,
-    route: '/convert',
+    route: '/convert?type=image-to-pdf',
   },
   'Organize PDF': {
     title: 'Organize PDF',

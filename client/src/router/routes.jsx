@@ -26,6 +26,7 @@ const RotatePdfPage = lazy(() => import("@/pages/RotatePdfPage"));
 const WatermarkPdfPage = lazy(() => import("@/pages/WatermarkPdfPage"));
 const PageNumbersPdfPage = lazy(() => import("@/pages/PageNumbersPdfPage"));
 const DownloadPage = lazy(() => import("@/pages/DownloadPage"));
+const PdfToPowerPointPage = lazy(() => import("@/pages/PdfToPowerPointPage"));
 
 const routes = {
   default: [
@@ -89,6 +90,10 @@ const routes = {
     {
       path: "/convert",
       element: <ConvertPdfPage />,
+    },
+    {
+      path: "/pdf-to-powerpoint",
+      element: <PdfToPowerPointPage />,
     },
     {
       path: "/protect",

@@ -81,7 +81,13 @@ const request = {
   listAll: (p) =>
     sendRequest('get', `${p.entity}/listAll?${buildQuery(p.options)}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: false }),
 
-  post: (p) => sendRequest('post', p.entity, p.jsonData),
+  post: (p) => {
+    const config = {};
+    if (p.onUploadProgress) {
+      config.onUploadProgress = p.onUploadProgress;
+    }
+    return sendRequest('post', p.entity, p.jsonData, config);
+  },
 
   get: (p) => sendRequest('get', p.entity),
 

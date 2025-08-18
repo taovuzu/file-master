@@ -1,58 +1,52 @@
 import React, { useState, useEffect } from 'react';
-import { Card, List, Button, message, Typography, Space } from 'antd';
-import { DownloadOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { Card, List, Button, message, Typography, Space, Empty } from 'antd';
+import { DownloadOutlined, EyeOutlined, FileDoneOutlined, HomeOutlined } from '@ant-design/icons';
 import MainLayout from '@/layout/MainLayout';
-import { request } from '@/request';
+import { useSelector } from 'react-redux';
+import * as pdfToolsService from '@/services/pdfToolsService';
 
 const { Title, Text } = Typography;
 
 const DownloadPage = () => {
-  const [downloads, setDownloads] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [readyFile, setReadyFile] = useState(null); // { file?: string, url?: string, name?: string }
+  const history = useSelector((state) => state.pdfTools.history);
 
   useEffect(() => {
-    fetchDownloads();
+    // If redirected with query params, prepare a ready-to-download card
+    const params = new URLSearchParams(window.location.search);
+    const file = params.get('file');
+    const url = params.get('url');
+    const name = params.get('name');
+    if (file || url) {
+      // Derive a nice filename using server-provided file name or url
+      const deriveName = () => {
+        try {
+          const raw = file || (url ? decodeURIComponent(url.split('/').pop() || '') : '');
+          const decoded = decodeURIComponent(raw);
+          const base = decoded.includes('___') ? decoded.split('___').pop() : decoded;
+          if (base && base.includes('.')) return base;
+          return 'processed-document.pdf';
+        } catch (e) {
+          return 'processed-document.pdf';
+        }
+      };
+
+      setReadyFile({ file: file || undefined, url: url || undefined, name: name || deriveName() });
+      // Clean query params to avoid stale state if user refreshes later
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    // No server-side list; show client-side history
+    setLoading(false);
   }, []);
 
-  const fetchDownloads = async () => {
-    setLoading(true);
-    try {
-      const result = await request.list({
-        entity: 'downloads',
-        options: { limit: 50 }
-      });
-      setDownloads(result.data || []);
-    } catch (error) {
-      message.error('Failed to fetch downloads');
-    } finally {
-      setLoading(false);
-    }
+  const handleDownload = (url, name) => {
+    pdfToolsService.downloadFile(url, name);
   };
 
-  const handleDownload = (file) => {
-    const link = document.createElement('a');
-    link.href = file.url;
-    link.download = file.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleDelete = async (fileId) => {
-    try {
-      await request.delete({
-        entity: 'downloads',
-        id: fileId
-      });
-      message.success('File deleted successfully');
-      fetchDownloads();
-    } catch (error) {
-      message.error('Failed to delete file');
-    }
-  };
-
-  const handlePreview = (file) => {
-    window.open(file.url, '_blank');
+  const handlePreview = (url) => {
+    window.open(url, '_blank');
   };
 
   return (
@@ -64,53 +58,84 @@ const DownloadPage = () => {
             <Text type="secondary">Access your processed PDF files</Text>
           </div>
 
+          {readyFile && (
+            <Card
+              style={{ borderRadius: 12 }}
+              bodyStyle={{ padding: 24 }}
+            >
+              <Space direction="vertical" size="middle" style={{ width: '100%', alignItems: 'center' }}>
+                <FileDoneOutlined style={{ fontSize: 40, color: '#52c41a' }} />
+                <Title level={4} style={{ margin: 0 }}>Your file is ready</Title>
+                <Text type="secondary">{readyFile.name}</Text>
+                <Space size="middle">
+                  <Button
+                    type="primary"
+                    size="large"
+                    icon={<DownloadOutlined />}
+                    onClick={() => handleDownload(readyFile.file || readyFile.url, readyFile.name)}
+                  >
+                    Download file
+                  </Button>
+                  <Button
+                    size="large"
+                    icon={<HomeOutlined />}
+                    onClick={() => window.location.assign('/')}
+                  >
+                    Go to Home
+                  </Button>
+                </Space>
+              </Space>
+            </Card>
+          )}
+
           <Card>
-            <List
-              loading={loading}
-              dataSource={downloads}
-              renderItem={(file) => (
-                <List.Item
-                  actions={[
-                    <Button 
-                      icon={<EyeOutlined />} 
-                      onClick={() => handlePreview(file)}
-                      size="small"
+            {history && history.length > 0 ? (
+              <List
+                loading={loading}
+                dataSource={history}
+                renderItem={(item) => {
+                  const fileUrl = item.result;
+                  const fileNameFromUrl = typeof fileUrl === 'string' ? decodeURIComponent(fileUrl.split('/').pop() || '') : '';
+                  const displayName = fileNameFromUrl || `processed-${item.operation}.pdf`;
+                  return (
+                    <List.Item
+                      actions={[
+                        <Button 
+                          icon={<EyeOutlined />} 
+                          onClick={() => handlePreview(fileUrl)}
+                          size="small"
+                          key="preview"
+                        >
+                          Preview
+                        </Button>,
+                        <Button 
+                          type="primary" 
+                          icon={<DownloadOutlined />} 
+                          onClick={() => handleDownload(fileUrl, displayName)}
+                          size="small"
+                          key="download"
+                        >
+                          Download
+                        </Button>
+                      ]}
                     >
-                      Preview
-                    </Button>,
-                    <Button 
-                      type="primary" 
-                      icon={<DownloadOutlined />} 
-                      onClick={() => handleDownload(file)}
-                      size="small"
-                    >
-                      Download
-                    </Button>,
-                    <Button 
-                      danger 
-                      icon={<DeleteOutlined />} 
-                      onClick={() => handleDelete(file.id)}
-                      size="small"
-                    >
-                      Delete
-                    </Button>
-                  ]}
-                >
-                  <List.Item.Meta
-                    title={file.name}
-                    description={
-                      <Space direction="vertical" size="small">
-                        <Text type="secondary">Size: {file.size}</Text>
-                        <Text type="secondary">Created: {new Date(file.createdAt).toLocaleDateString()}</Text>
-                      </Space>
-                    }
-                  />
-                </List.Item>
-              )}
-              locale={{
-                emptyText: 'No downloads available'
-              }}
-            />
+                      <List.Item.Meta
+                        title={displayName}
+                        description={
+                          <Space direction="vertical" size="small">
+                            <Text type="secondary">Operation: {item.operation}</Text>
+                            <Text type="secondary">Files: {(item.files || []).join(', ')}</Text>
+                            <Text type="secondary">Created: {item.timestamp ? new Date(item.timestamp).toLocaleString() : ''}</Text>
+                          </Space>
+                        }
+                      />
+                    </List.Item>
+                  );
+                }}
+              />
+            ) : (
+              <Empty description="No downloads available yet" />
+            )}
           </Card>
         </Space>
       </div>

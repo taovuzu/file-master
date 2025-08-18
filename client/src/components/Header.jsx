@@ -280,7 +280,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Brand */}
           <Link
-            to="/"
+            to="/home"
             className="brand flex items-center space-x-3"
             title="FileMaster"
           >
@@ -288,8 +288,12 @@ const Header = () => {
               <FileText className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">FileMaster</h1>
-              <p className="text-xs text-gray-500 -mt-1">PDF Tools</p>
+              <h1 className="text-xl font-bold text-gray-900 leading-none">
+                FileMaster
+              </h1>
+              <p className="text-xs text-gray-500 mt-0 leading-none">
+                PDF Tools
+              </p>
             </div>
           </Link>
 

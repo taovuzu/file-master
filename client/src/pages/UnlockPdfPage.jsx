@@ -1,10 +1,10 @@
 import React from 'react';
-import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
+import PdfToolPage from '@/Pages/PdfToolPage';
 import UnlockPdfForm from '@/forms/UnlockPdfForm';
 
 const UnlockPdfPage = () => {
   return (
-    <EnhancedPdfToolPage
+    <PdfToolPage
       title="Unlock PDF"
       description="Remove password protection from your PDF"
       toolType="unlock"
@@ -14,6 +14,7 @@ const UnlockPdfPage = () => {
         minFiles: 1,
         maxFiles: 1,
         maxSize: 10,
+        acceptedTypes: ["application/pdf"],
       }}
     />
   );

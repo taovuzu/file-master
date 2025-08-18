@@ -15,8 +15,15 @@ const splitPdf = asyncHandler(async (req, res) => {
     throw new ApiError(404, "File could not be found on server");
   }
 
-  const ranges = req.body.ranges;
-  console.log(ranges);
+  let { ranges } = req.body;
+
+  if (typeof ranges === 'string') {
+    try {
+      ranges = JSON.parse(ranges);
+    } catch (err) {
+      throw new ApiError(400, 'Invalid ranges format');
+    }
+  }
 
   const inputPath = path.resolve(file.path);
   const name = path.basename(file.originalname, path.extname(file.originalname));
@@ -31,14 +38,14 @@ const splitPdf = asyncHandler(async (req, res) => {
   const numberOfPages = pdfDoc.getPages().length;
 
   const outputPaths = [];
-  console.log(ranges.length);
 
   for (let i = 0; i < ranges.length; i++) {
+    console.log(typeof ranges[i]);
+    console.log(ranges[i]);
     let [start, end] = ranges[i].map(Number);
     if (start < 1 || end < start) {
       continue;
     }
-    console.log(i, [start, end]);
 
     const actualEnd = Math.min(end, numberOfPages);
     const idxs = Array.from({ length: actualEnd - start + 1 }, (_, i) => start - 1 + i);

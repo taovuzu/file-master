@@ -1,10 +1,10 @@
 import React from 'react';
-import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
+import PdfToolPage from '@/Pages/PdfToolPage';
 import CompressPdfForm from '@/forms/CompressPdfForm';
 
 const CompressPdfPage = () => {
   return (
-    <EnhancedPdfToolPage
+    <PdfToolPage
       title="Compress PDF"
       description="Reduce PDF file size while maintaining quality"
       toolType="compress"
@@ -13,7 +13,8 @@ const CompressPdfPage = () => {
         multipleFiles: false,
         minFiles: 1,
         maxFiles: 1,
-        maxSize: 10,
+        maxSize: 50,
+        acceptedTypes: ["application/pdf"],
       }}
     />
   );

@@ -1,10 +1,10 @@
 import React from 'react';
-import EnhancedPdfToolPage from '@/components/EnhancedPdfToolPage';
+import PdfToolPage from '@/Pages/PdfToolPage';
 import MergePdfForm from '@/forms/MergePdfForm';
 
 const MergePdfPage = () => {
   return (
-    <EnhancedPdfToolPage
+    <PdfToolPage
       title="Merge PDFs"
       description="Combine multiple PDF files into one document"
       toolType="merge"
@@ -14,6 +14,7 @@ const MergePdfPage = () => {
         minFiles: 2,
         maxFiles: 15,
         maxSize: 10,
+        acceptedTypes: ["application/pdf"],
       }}
     />
   );

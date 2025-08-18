@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, Routes, Route } from 'react-router-dom';
-import { useAppContext } from '@/context/appContext';
+import { useDispatch } from 'react-redux';
+import { openApp as openAppAction, resetApp as resetAppAction } from '@/redux/app';
 import routes from './routes';
 import { matchPath } from 'react-router-dom';
 
 export default function AppRouter() {
   const location = useLocation();
-  const { appContextAction } = useAppContext();
-  const { app } = appContextAction;
+  const dispatch = useDispatch();
   const previousPathRef = useRef(location.pathname);
 
   const routesList = Object.values(routes).flat();
@@ -24,18 +24,17 @@ export default function AppRouter() {
   };
 
   useEffect(() => {
-    // Only update app context if the path has actually changed
     if (previousPathRef.current !== location.pathname) {
       previousPathRef.current = location.pathname;
-      
+
       if (location.pathname === '/') {
-        app.default();
+        dispatch(resetAppAction());
       } else {
         const appName = getAppNameByPath(location.pathname);
-        app.open(appName);
+        dispatch(openAppAction(appName));
       }
     }
-  }, [location.pathname, app]);
+  }, [location.pathname, dispatch]);
 
   return (
     <Routes>

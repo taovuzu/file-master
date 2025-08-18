@@ -1,34 +1,26 @@
 // src/components/PageNumbersPdfForm.jsx
 import React, { useState } from "react";
-import { Form, Button, Upload, Select, Radio, InputNumber, Switch, message, Alert, Divider, Row, Col, ColorPicker } from "antd";
-import { UploadOutlined, FileTextOutlined, InfoCircleOutlined, FontSizeOutlined } from "@ant-design/icons";
+import { Form, Button, Select, Radio, InputNumber, Switch, message, Alert, Divider, Row, Col, ColorPicker } from "antd";
+import { FileTextOutlined, InfoCircleOutlined, FontSizeOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
 
-const PageNumbersPdfForm = ({ onFinish }) => {
-  const [fileList, setFileList] = useState([]);
+const PageNumbersPdfForm = ({ onFinish, file }) => {
   const [textColor, setTextColor] = useState([0, 0, 0]); // RGB values 0-1
 
-  const handleUploadChange = ({ fileList }) => {
-    setFileList(fileList.slice(-1)); // Keep only the latest uploaded file
-  };
-
   const handleFinish = (values) => {
-    if (fileList.length === 0) {
+    if (!file) {
       message.error("Please upload a PDF file first!");
       return;
     }
 
-    // Validate page ranges
     if (values.fromPage > values.toPage) {
       message.error("From page cannot be greater than To page!");
       return;
     }
 
-    // Convert color to RGB array if it's a hex string
     let finalColor = textColor;
     if (typeof textColor === 'string') {
-      // Convert hex to RGB (0-1 range)
       const hex = textColor.replace('#', '');
       finalColor = [
         parseInt(hex.substr(0, 2), 16) / 255,
@@ -38,7 +30,6 @@ const PageNumbersPdfForm = ({ onFinish }) => {
     }
 
     onFinish({ 
-      file: fileList[0].originFileObj,
       pageMode: values.pageMode || "All Pages",
       firstPageCover: values.firstPageCover || false,
       position: values.position || "bottom-right",
@@ -53,277 +44,153 @@ const PageNumbersPdfForm = ({ onFinish }) => {
     });
   };
 
-  const beforeUpload = (file) => {
-    const isPDF = file.type === 'application/pdf';
-    if (!isPDF) {
-      message.error('You can only upload PDF files!');
-      return false;
-    }
-    
-    const isLt10M = file.size / 1024 / 1024 < 10;
-    if (!isLt10M) {
-      message.error('File must be smaller than 10MB!');
-      return false;
-    }
-    
-    return false; // Prevent auto-upload
-  };
-
-  const getTextStylePreview = (style, firstNumber) => {
-    const styles = [
-      `${firstNumber}`,
-      `Page ${firstNumber}`,
-      `Page ${firstNumber} of N`
-    ];
-    return styles[style] || styles[0];
-  };
-
   return (
-    <Form
-      name="page-numbers-pdf"
-      layout="vertical"
-      onFinish={handleFinish}
-      style={{ maxWidth: 700, margin: "0 auto" }}
-      initialValues={{
-        pageMode: "All Pages",
-        firstPageCover: false,
-        position: "bottom-right",
-        margin: "normal",
-        firstNumber: 1,
-        fromPage: 1,
-        toPage: 1,
-        textStyle: 0,
-        fontFamily: "Arial",
-        fontSize: "normal"
-      }}
-    >
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <Form
+        name="page-numbers-pdf"
+        layout="vertical"
+        onFinish={handleFinish}
+        style={{ flex: 1, overflowY: "auto", padding: "16px" }}
+        initialValues={{
+          pageMode: "All Pages",
+          firstPageCover: false,
+          position: "bottom-right",
+          margin: "normal",
+          firstNumber: 1,
+          fromPage: 1,
+          toPage: 1,
+          textStyle: 0,
+          fontFamily: "Arial",
+          fontSize: "normal"
+        }}
+      >
+        <Form.Item>
+          <div style={{ fontSize: "18px", fontWeight: 600 }}>Add Page Numbers</div>
+        </Form.Item>
+
+        <Divider orientation="left">Page Range Settings</Divider>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label="Page Mode" name="pageMode">
+              <Radio.Group>
+                <Radio.Button value="All Pages">All Pages</Radio.Button>
+                <Radio.Button value="Facing Pages">Facing Pages</Radio.Button>
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="First Page is Cover" name="firstPageCover" valuePropName="checked">
+              <Switch />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item label="From Page" name="fromPage" rules={[{ required: true, message: "Enter start page!" }]}>
+              <InputNumber min={1} style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item label="To Page" name="toPage" rules={[{ required: true, message: "Enter end page!" }]}>
+              <InputNumber min={1} style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item label="First Number" name="firstNumber" rules={[{ required: true, message: "Enter first number!" }]}>
+              <InputNumber min={1} style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Divider orientation="left">Page Number Style</Divider>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item label="Position" name="position">
+              <Select>
+                <Option value="top-left">Top Left</Option>
+                <Option value="top-right">Top Right</Option>
+                <Option value="bottom-left">Bottom Left</Option>
+                <Option value="bottom-right">Bottom Right</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item label="Margin" name="margin">
+              <Select>
+                <Option value="small">Small</Option>
+                <Option value="normal">Normal</Option>
+                <Option value="large">Large</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col span={8}>
+            <Form.Item label="Text Style" name="textStyle">
+              <Select>
+                <Option value={0}>Just Number (1)</Option>
+                <Option value={1}>Page Number (Page 1)</Option>
+                <Option value={2}>Page X of Y (Page 1 of N)</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item label="Font Family" name="fontFamily">
+              <Select>
+                <Option value="Arial">Arial</Option>
+                <Option value="Times New Roman">Times New Roman</Option>
+                <Option value="Courier">Courier</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item label="Font Size" name="fontSize">
+              <Select>
+                <Option value="small">Small</Option>
+                <Option value="normal">Normal</Option>
+                <Option value="large">Large</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Form.Item label="Text Color" name="textColor">
+          <ColorPicker value={textColor} onChange={setTextColor} showText presets={[{ label: 'Recommended', colors: ['#000000','#FFFFFF','#FF0000','#0000FF','#008000','#800080','#FFA500','#808080'] }]} />
+        </Form.Item>
+
+        <Form.Item>
+          <div style={{ padding: '20px', backgroundColor: '#f6f8fa', borderRadius: '8px', border: '2px solid #1890ff', textAlign: 'center' }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff', marginBottom: '16px' }}>
+              <FontSizeOutlined style={{ marginRight: '8px' }} />
+              Page Number Preview
+            </div>
+            <div style={{ fontSize: '14px', color: '#333', marginBottom: '8px' }}>
+              Style: <strong>1</strong>
+            </div>
+            <div style={{ fontSize: '12px', color: '#666' }}>
+              Position: <strong>Bottom Right</strong> • Font: <strong>Arial</strong> • Size: <strong>Normal</strong>
+            </div>
+          </div>
+        </Form.Item>
+      </Form>
+
       <Alert
-        message="Add Page Numbers Instructions"
-        description="Upload a PDF file and configure page number settings. You can customize the position, style, font, and page range for adding page numbers."
+        message="Page Numbers Instructions"
+        description="Configure page number settings. Upload your PDF in the upload area. Choose page range, style, and formatting options."
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
         style={{ marginBottom: 24 }}
       />
 
-      <Form.Item
-        label="Upload PDF"
-        rules={[{ required: true, message: "Please upload a PDF file!" }]}
-      >
-        <Upload
-          accept="application/pdf"
-          beforeUpload={beforeUpload}
-          onChange={handleUploadChange}
-          fileList={fileList}
-        >
-          <Button icon={<UploadOutlined />} size="large">
-            Select PDF
-          </Button>
-        </Upload>
-        <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
-          • Only PDF files accepted • Maximum file size: 10MB
-        </div>
-      </Form.Item>
-
-      <Divider orientation="left">Page Range Settings</Divider>
-
-      <Row gutter={16}>
-        <Col span={12}>
-          <Form.Item
-            label="Page Mode"
-            name="pageMode"
-          >
-            <Radio.Group>
-              <Radio.Button value="All Pages">All Pages</Radio.Button>
-              <Radio.Button value="Facing Pages">Facing Pages</Radio.Button>
-            </Radio.Group>
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            label="First Page is Cover"
-            name="firstPageCover"
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
-        </Col>
-      </Row>
-
-      <Row gutter={16}>
-        <Col span={8}>
-          <Form.Item
-            label="From Page"
-            name="fromPage"
-            rules={[{ required: true, message: "Enter start page!" }]}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item
-            label="To Page"
-            name="toPage"
-            rules={[{ required: true, message: "Enter end page!" }]}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item
-            label="First Number"
-            name="firstNumber"
-            rules={[{ required: true, message: "Enter first number!" }]}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
-        </Col>
-      </Row>
-
-      <Divider orientation="left">Page Number Style</Divider>
-
-      <Row gutter={16}>
-        <Col span={12}>
-          <Form.Item
-            label="Position"
-            name="position"
-          >
-            <Select>
-              <Option value="top-left">Top Left</Option>
-              <Option value="top-right">Top Right</Option>
-              <Option value="bottom-left">Bottom Left</Option>
-              <Option value="bottom-right">Bottom Right</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            label="Margin"
-            name="margin"
-          >
-            <Select>
-              <Option value="small">Small</Option>
-              <Option value="normal">Normal</Option>
-              <Option value="large">Large</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-      </Row>
-
-      <Row gutter={16}>
-        <Col span={8}>
-          <Form.Item
-            label="Text Style"
-            name="textStyle"
-          >
-            <Select>
-              <Option value={0}>Just Number (1)</Option>
-              <Option value={1}>Page Number (Page 1)</Option>
-              <Option value={2}>Page X of Y (Page 1 of N)</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item
-            label="Font Family"
-            name="fontFamily"
-          >
-            <Select>
-              <Option value="Arial">Arial</Option>
-              <Option value="Times New Roman">Times New Roman</Option>
-              <Option value="Courier">Courier</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item
-            label="Font Size"
-            name="fontSize"
-          >
-            <Select>
-              <Option value="small">Small</Option>
-              <Option value="normal">Normal</Option>
-              <Option value="large">Large</Option>
-            </Select>
-          </Form.Item>
-        </Col>
-      </Row>
-
-      <Form.Item
-        label="Text Color"
-        name="textColor"
-      >
-        <ColorPicker
-          value={textColor}
-          onChange={setTextColor}
-          showText
-          presets={[
-            {
-              label: 'Recommended',
-              colors: [
-                '#000000', // Black
-                '#FFFFFF', // White
-                '#FF0000', // Red
-                '#0000FF', // Blue
-                '#008000', // Green
-                '#800080', // Purple
-                '#FFA500', // Orange
-                '#808080', // Gray
-              ],
-            },
-          ]}
-        />
-      </Form.Item>
-
-      {/* Preview Section */}
-      <Form.Item>
-        <div style={{ 
-          padding: '20px', 
-          backgroundColor: '#f6f8fa', 
-          borderRadius: '8px',
-          border: '2px solid #1890ff',
-          textAlign: 'center'
-        }}>
-          <div style={{ 
-            fontSize: '16px', 
-            fontWeight: 'bold', 
-            color: '#1890ff',
-            marginBottom: '16px'
-          }}>
-            <FontSizeOutlined style={{ marginRight: '8px' }} />
-            Page Number Preview
-          </div>
-          
-          <div style={{ 
-            fontSize: '14px', 
-            color: '#333',
-            marginBottom: '8px'
-          }}>
-            Style: <strong>{getTextStylePreview(0, 1)}</strong>
-          </div>
-          
-          <div style={{ 
-            fontSize: '12px', 
-            color: '#666'
-          }}>
-            Position: <strong>Bottom Right</strong> • Font: <strong>Arial</strong> • Size: <strong>Normal</strong>
-          </div>
-        </div>
-      </Form.Item>
-
-      <Form.Item>
-        <Button
-          type="primary"
-          htmlType="submit"
-          block
-          icon={<FileTextOutlined />}
-          size="large"
-          disabled={fileList.length === 0}
-        >
+      <div style={{ padding: "12px 16px", borderTop: "1px solid #f0f0f0", background: "#fff", position: "sticky", bottom: 0, zIndex: 10 }}>
+        <Button type="primary" htmlType="submit" block icon={<FileTextOutlined />} size="large" disabled={!file} onClick={handleFinish}>
           Add Page Numbers to PDF
         </Button>
-      </Form.Item>
-    </Form>
+      </div>
+    </div>
   );
 };
 
