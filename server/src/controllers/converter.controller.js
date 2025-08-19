@@ -13,6 +13,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+import { LIBRE_PATH } from "../constants.js";
+
 const convertDocToPdf = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
@@ -22,8 +24,8 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
   const inputPath = path.resolve(file.path);
   const name = path.basename(inputPath, path.extname(file.originalname));
   const outputName = `${name}.pdf`;
-  const outputDir = path.join(process.cwd(), "public", "processed");
-  const outputPath = path.join(outputDir, outputName);
+  const outputDir = path.join("public", "processed");
+  // const outputPath = path.join(outputDir, outputName);
 
   const libreCmd = [
     LIBRE_PATH,
@@ -44,7 +46,7 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
       new ApiResponse(200, 'File converted successfully to PDF', {
-        file: `${outputPath}`
+        file: `${outputName}`
       })
     );
   });
@@ -142,13 +144,14 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
     }
 
     const name = path.basename(files[0].originalname, path.extname(files[0].originalname));
-    const outputPath = path.join(outputDir, `${uuidv4()}___${name}.pdf`);
+    const outputName = `${uuidv4()}___${name}.pdf`;
+    const outputPath = path.join(outputDir, outputName);
     const pdfBytes = await pdfDoc.save();
     fs.writeFileSync(outputPath, pdfBytes);
 
     return res.status(200).json(
       new ApiResponse(200, "Merged PDF from images successfully", {
-        file: `${outputPath}`,
+        file: `${outputName}`,
       })
     );
   } else {

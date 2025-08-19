@@ -39,7 +39,7 @@ const PdfToolPage = ({
   const [fileList, setFileList] = useState([]);
   const [formValues, setFormValues] = useState({});
   const [rotationMap, setRotationMap] = useState({ byId: {}, byName: {} });
-  
+
   // Progress tracking
   let {
     progress,
@@ -74,7 +74,9 @@ const PdfToolPage = ({
   } = usePdfTools(toolType);
 
   // Get rotation function from usePdfPreview - only pass files when they exist
-  const { rotatePdfBlob } = usePdfPreview(fileList.length > 0 ? fileList : null);
+  const { rotatePdfBlob } = usePdfPreview(
+    fileList.length > 0 ? fileList : null
+  );
 
   // Set current tool in Redux when component mounts
   useEffect(() => {
@@ -112,39 +114,44 @@ const PdfToolPage = ({
       const input = requirements?.multipleFiles ? fileList : fileList[0];
 
       // Start progress tracking
-      startProgress('Preparing files...');
+      startProgress("Preparing files...");
 
       // Apply rotations to PDFs before sending to server
       let processedInput = input;
-      // if (rotationMap.byName && Object.keys(rotationMap.byName).length > 0) {
-      //   setUploadProgress(40);
-      //   if (requirements?.multipleFiles) {
-      //     // Process multiple files
-      //     const processedFiles = await Promise.all(
-      //       fileList.map(async (file) => {
-      //         const rotation = rotationMap.byName[file.name] || 0;
-      //         if (rotation !== 0 && file.type === 'application/pdf') {
-      //           return await rotatePdfBlob(file, rotation);
-      //         }
-      //         return file;
-      //       })
-      //     );
-      //     processedInput = processedFiles;
-      //   } else {
-      //     // Process single file
-      //     const file = fileList[0];
-      //     const rotation = rotationMap.byName[file.name] || 0;
-      //     if (rotation !== 0 && file.type === 'application/pdf') {
-      //       processedInput = await rotatePdfBlob(file, rotation);
-      //     }
-      //   }
-      //   setUploadProgress(60);
-      // }
 
+      if (rotationMap.byName && Object.keys(rotationMap.byName).length > 0) {
+        if (requirements?.multipleFiles) {
+          processedInput = await Promise.all(
+            fileList.map(async (file) => {
+              const rotation = rotationMap.byName[file.name] || 0;
+              if (rotation !== 0 && file.type === "application/pdf") {
+                const rotated = await rotatePdfBlob(file, rotation);
+                return new File([rotated], file.name, {
+                  type: "application/pdf",
+                });
+              }
+              return file;
+            })
+          );
+        } else {
+          const file = fileList[0];
+          const rotation = rotationMap.byName[file.name] || 0;
+          if (rotation !== 0 && file.type === "application/pdf") {
+            const rotated = await rotatePdfBlob(file, rotation);
+            processedInput = new File([rotated], file.name, {
+              type: "application/pdf",
+            });
+          }
+        }
+      }
+      updateProgress(15, "Uploading files...");
       // Process the files with progress tracking
-      const result = await processPdfTool(processedInput, values, updateProgress);
+      const result = await processPdfTool(
+        processedInput,
+        values,
+        updateProgress
+      );
 
-      console.log(result);
       if (result.success) {
         const resultData = result.data;
         // Add to Redux history
@@ -158,7 +165,7 @@ const PdfToolPage = ({
         );
 
         // Redirect to frontend download page with file param, avoid exposing backend URL
-        updateProgress(100, 'Processing completed');
+        updateProgress(100, "Processing completed");
         if (resultData.file || resultData.fileUrl) {
           const serverFile =
             resultData.file ||
@@ -177,12 +184,12 @@ const PdfToolPage = ({
           console.log(`/download?${params.toString()}`);
           window.location.assign(`/download?${params.toString()}`);
         } else {
-          setProgressError(resultData.error || 'Processing failed');
+          setProgressError(resultData.error || "Processing failed");
         }
       }
     } catch (err) {
       console.error("Processing error:", err);
-      setProgressError(err.message || 'An error occurred during processing');
+      setProgressError(err.message || "An error occurred during processing");
     }
   };
 
@@ -264,13 +271,13 @@ const PdfToolPage = ({
         )}
       </div>
       <ProgressModal
-        visible={status !== 'idle'}
+        visible={status !== "idle"}
         progress={progress}
         status={status}
         currentStep={currentStep}
         error={progressError}
         onCancel={() => {
-          if (status === 'uploading' || status === 'processing') {
+          if (status === "uploading" || status === "processing") {
             abort();
           } else {
             resetProgress();
@@ -280,7 +287,7 @@ const PdfToolPage = ({
         elapsedTime={getElapsedTime}
         formatTime={formatTime}
         toolType={toolType}
-        fileName={fileList[0]?.name || 'File'}
+        fileName={fileList[0]?.name || "File"}
       />
       {(!fileList || fileList.length === 0) && <Footer />}
     </>

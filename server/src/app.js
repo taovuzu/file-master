@@ -37,12 +37,6 @@ app.use(express.urlencoded({ extended: true, limit: "32kb" }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.static("public"));
 
-app.use((req, res, next) => {
-  console.log(`Incoming Request: ${req.method} ${req.originalUrl}`);
-  console.log(`Client IP: ${req.clientIp}`);
-  next();
-});
-
 app.use(session({
   secret: process.env.EXPRESS_SESSION_SECRET,
   resave: false,
@@ -58,6 +52,12 @@ app.use(session({
 // Initialize passport after session and environment variables are loaded
 import "./middlewares/passport.js";
 app.use(passport.initialize());
+
+app.use((req, res, next) => {
+  console.log(`Incoming Request: ${req.method} ${req.originalUrl}`);
+  console.log(`Client IP: ${req.clientIp}`);
+  next();
+});
 
 import userRouter from "./routes/user.route.js"
 import converterRouter from "./routes/converter.route.js";

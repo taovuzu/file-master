@@ -52,7 +52,7 @@ export const mergePdfs = async (files, options = {}, onProgress) => {
   const totalFileSize = calculateTotalFileSize(files);
   
   if (onProgress) {
-    onProgress(5, 'Preparing files for merge...');
+    onProgress(20, 'Preparing files for merge...');
   }
   
   const resp = await request.post({ 
@@ -61,8 +61,8 @@ export const mergePdfs = async (files, options = {}, onProgress) => {
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
         // Calculate upload progress based on actual bytes uploaded
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85); // 85% for upload
-        onProgress(5 + uploadProgress, `Uploading files... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75); // 75% for upload
+        onProgress(20 + uploadProgress, `Uploading files... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
       }
     }
   });
@@ -88,7 +88,7 @@ export const splitPdf = async (file, ranges = [], options = {}, onProgress) => {
   console.log(ranges);
   
   if (onProgress) {
-    onProgress(5, 'Preparing file for split...');
+    onProgress(20, 'Preparing file for split...');
   }
   
   const resp = await request.post({ 
@@ -97,8 +97,8 @@ export const splitPdf = async (file, ranges = [], options = {}, onProgress) => {
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
         // Calculate upload progress based on actual bytes uploaded
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85); // 85% for upload
-        onProgress(5 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75); // 75% for upload
+        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
       }
     }
   });
@@ -125,7 +125,7 @@ export const compressPdf = async (file, options = {}, onProgress) => {
   if (level != null) formData.append('compressionLevel', level);
   
   if (onProgress) {
-    onProgress(5, 'Preparing file for compression...');
+    onProgress(20, 'Preparing file for compression...');
   }
   
   const resp = await request.post({ 
@@ -134,8 +134,8 @@ export const compressPdf = async (file, options = {}, onProgress) => {
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
         // Calculate upload progress based on actual bytes uploaded
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85); // 85% for upload
-        onProgress(5 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75); // 75% for upload
+        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
       }
     }
   });
@@ -160,15 +160,15 @@ export const convertPdf = async (input, options = {}, onProgress) => {
   
   if (conversionType === 'doc-to-pdf') {
     const formData = createFormDataWithProgress(input, options, onProgress);
-    if (onProgress) onProgress(5, 'Preparing document for conversion...');
+    if (onProgress) onProgress(20, 'Preparing document for conversion...');
     
     const resp = await request.post({ 
       entity: 'convert/doc-to-pdf', 
       jsonData: formData,
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
-          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85);
-          onProgress(5 + uploadProgress, `Uploading document... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
+          onProgress(20 + uploadProgress, `Uploading document... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
         }
       }
     });
@@ -181,15 +181,15 @@ export const convertPdf = async (input, options = {}, onProgress) => {
 
   if (conversionType === 'pdf-to-jpg') {
     const formData = createFormDataWithProgress(input, options, onProgress);
-    if (onProgress) onProgress(5, 'Preparing PDF for conversion...');
+    if (onProgress) onProgress(20, 'Preparing PDF for conversion...');
     
     const resp = await request.post({ 
       entity: 'convert/pdf-to-jpg', 
       jsonData: formData,
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
-          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85);
-          onProgress(5 + uploadProgress, `Uploading PDF... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
+          onProgress(20 + uploadProgress, `Uploading PDF... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
         }
       }
     });
@@ -202,15 +202,15 @@ export const convertPdf = async (input, options = {}, onProgress) => {
 
   if (conversionType === 'image-to-pdf') {
     const formData = createFormDataWithProgress(input, options, onProgress);
-    if (onProgress) onProgress(5, 'Preparing images for conversion...');
+    if (onProgress) onProgress(20, 'Preparing images for conversion...');
     
     const resp = await request.post({ 
       entity: 'convert/image-to-pdf', 
       jsonData: formData,
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
-          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85);
-          onProgress(5 + uploadProgress, `Uploading images... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
+          onProgress(20 + uploadProgress, `Uploading images... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
         }
       }
     });
@@ -223,15 +223,15 @@ export const convertPdf = async (input, options = {}, onProgress) => {
 
   if (conversionType === 'pdf-to-pptx') {
     const formData = createFormDataWithProgress(input, options, onProgress);
-    if (onProgress) onProgress(5, 'Preparing PDF for conversion...');
+    if (onProgress) onProgress(20, 'Preparing PDF for conversion...');
     
     const resp = await request.post({ 
       entity: 'convert/pdf-to-pptx', 
       jsonData: formData,
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
-          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85);
-          onProgress(5 + uploadProgress, `Uploading PDF... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
+          onProgress(20 + uploadProgress, `Uploading PDF... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
         }
       }
     });
@@ -251,7 +251,7 @@ export const protectPdf = async (file, options = {}, onProgress) => {
   if (options.PASSWORD) formData.append('PASSWORD', options.PASSWORD);
   
   if (onProgress) {
-    onProgress(5, 'Preparing file for protection...');
+    onProgress(20, 'Preparing file for protection...');
   }
   
   const resp = await request.post({ 
@@ -259,8 +259,8 @@ export const protectPdf = async (file, options = {}, onProgress) => {
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85);
-        onProgress(5 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
+        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
       }
     }
   });
@@ -285,7 +285,7 @@ export const unlockPdf = async (file, options = {}, onProgress) => {
   if (options.PASSWORD) formData.append('PASSWORD', options.PASSWORD);
   
   if (onProgress) {
-    onProgress(5, 'Preparing file for unlock...');
+    onProgress(20, 'Preparing file for unlock...');
   }
   
   const resp = await request.post({ 
@@ -293,8 +293,8 @@ export const unlockPdf = async (file, options = {}, onProgress) => {
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85);
-        onProgress(5 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
+        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
       }
     }
   });
@@ -319,7 +319,7 @@ export const rotatePdf = async (file, options = {}, onProgress) => {
   if (options.angle !== undefined) formData.append('angle', options.angle);
   
   if (onProgress) {
-    onProgress(5, 'Preparing file for rotation...');
+    onProgress(20, 'Preparing file for rotation...');
   }
   
   const resp = await request.post({ 
@@ -327,8 +327,8 @@ export const rotatePdf = async (file, options = {}, onProgress) => {
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85);
-        onProgress(5 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
+        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
       }
     }
   });
@@ -365,7 +365,7 @@ export const addWatermark = async (file, options = {}, onProgress) => {
   } = options;
   
   if (onProgress) {
-    onProgress(5, 'Preparing file for watermark...');
+    onProgress(20, 'Preparing file for watermark...');
   }
   
   // Only text watermark supported from current form
@@ -386,8 +386,8 @@ export const addWatermark = async (file, options = {}, onProgress) => {
       jsonData: formData,
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
-          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85);
-          onProgress(5 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
+          onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
         }
       }
     });
@@ -437,7 +437,7 @@ export const addPageNumbers = async (file, options = {}, onProgress) => {
   if (Array.isArray(textColor)) formData.append('textColor', JSON.stringify(textColor));
   
   if (onProgress) {
-    onProgress(5, 'Preparing file for page numbers...');
+    onProgress(20, 'Preparing file for page numbers...');
   }
   
   const resp = await request.post({ 
@@ -445,8 +445,8 @@ export const addPageNumbers = async (file, options = {}, onProgress) => {
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 85);
-        onProgress(5 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
+        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
       }
     }
   });
