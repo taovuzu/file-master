@@ -19,6 +19,7 @@ import { usePdfTools } from "@/hooks/usePdfTools";
 import usePdfPreview from "@/hooks/usePdfPreview";
 import { useProgress } from "@/hooks/useProgress";
 import { useDispatch, useSelector } from "react-redux";
+import notify from '@/utils/notify';
 import { setCurrentTool, addToHistory } from "@/redux/pdfTools";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -87,7 +88,7 @@ const PdfToolPage = ({
   const handleFilesSelected = (files) => {
     const validation = validateFiles(files, requirements);
     if (!validation.valid) {
-      message.error(validation.error);
+      notify.error(validation.error, 'validation');
       return;
     }
 
@@ -103,7 +104,7 @@ const PdfToolPage = ({
   // Handle form submission
   const handleFormSubmit = async (values) => {
     if (fileList.length === 0) {
-      message.error("Please select files to process");
+      notify.error("Please select files to process", 'select-files');
       return;
     }
 
@@ -207,7 +208,7 @@ const PdfToolPage = ({
     setFormValues({});
     reset();
     // keep Redux state serializable; do not store File objects
-    message.info("Tool reset successfully");
+    notify.info("Tool reset successfully", 'tool-reset');
   };
 
   return (

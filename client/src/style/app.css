@@ -166,6 +166,47 @@
   }
 }
 
+/* Custom component styles */
+.help-center-tabs .ant-tabs-content-holder {
+  padding: 0;
+}
+
+.help-center-tabs .ant-tabs-tabpane {
+  padding: 0;
+}
+
+.profile-tabs .ant-tabs-content-holder {
+  padding: 0;
+}
+
+.profile-tabs .ant-tabs-tabpane {
+  padding: 0;
+}
+
+.ant-tabs-tab {
+  @apply font-medium;
+}
+
+.ant-tabs-tab:hover {
+  @apply text-primary-600;
+}
+
+.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  @apply text-primary-600 font-semibold;
+}
+
+.ant-tabs-ink-bar {
+  @apply bg-primary-600;
+}
+
+.ant-collapse-header {
+  @apply font-medium text-gray-900;
+}
+
+.ant-collapse-content-box {
+  @apply text-gray-600;
+}
+
 /* Global margin and padding reset */
 html, body, #root {
   margin: 0 !important;

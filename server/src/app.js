@@ -72,19 +72,20 @@ import unlockPdfRouter from "./routes/unlockPdf.route.js";
 import protectPdfRouter from "./routes/protectPdf.route.js";
 import downloadFileRouter from "./routes/download.route.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
+import { enforceUsageLimits } from "./middlewares/usageLimit.middleware.js";
 
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/convert", converterRouter); // image-to-pdf -> {PDFDocument from "pdf-lib"}, doc-to-pdf -> {libreoffice}
+app.use("/api/v1/convert", enforceUsageLimits, converterRouter); // image-to-pdf -> {PDFDocument from "pdf-lib"}, doc-to-pdf -> {libreoffice}
 // // pdf-to-ppt -> {pptxgenjs, pdf-poppler, pdf-lib}
-app.use("/api/v1/merge", mergePdfRouter); //  PDFMerger from "pdf-merger-js";
-app.use("/api/v1/split", splitPdfRouter); // { PDFDocument } from "pdf-lib";
-app.use("/api/v1/compress", compressPdfRouter); // ghostscript
-app.use("/api/v1/rotate", rotatePdfRouter); // { PDFDocument, degrees } from "pdf-lib";
-app.use("/api/v1/page-numbers", pageNumbersRouter); // { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-app.use("/api/v1/watermark", watermarkRouter); //  { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
+app.use("/api/v1/merge", enforceUsageLimits, mergePdfRouter); //  PDFMerger from "pdf-merger-js";
+app.use("/api/v1/split", enforceUsageLimits, splitPdfRouter); // { PDFDocument } from "pdf-lib";
+app.use("/api/v1/compress", enforceUsageLimits, compressPdfRouter); // ghostscript
+app.use("/api/v1/rotate", enforceUsageLimits, rotatePdfRouter); // { PDFDocument, degrees } from "pdf-lib";
+app.use("/api/v1/page-numbers", enforceUsageLimits, pageNumbersRouter); // { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+app.use("/api/v1/watermark", enforceUsageLimits, watermarkRouter); //  { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
 // app.use("/api/v1/esign", esignPdfRouter); // { PDFDocument } from 'pdf-lib';
-app.use("/api/v1/unlock", unlockPdfRouter); // ghostscript
-app.use("/api/v1/protect", protectPdfRouter); // gostscript
+app.use("/api/v1/unlock", enforceUsageLimits, unlockPdfRouter); // ghostscript
+app.use("/api/v1/protect", enforceUsageLimits, protectPdfRouter); // gostscript
 app.use("/api/v1/download", downloadFileRouter);
 
 

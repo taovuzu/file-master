@@ -13,7 +13,7 @@ import { logUserAction } from '@/utils/logger';
 const FileMasterOs = () => {
   // const dispatch = useDispatch();
   // const { appContextAction } = useAppContext();
-  // const settings = useSelector(selectAllSettings);
+  const settings = useSelector(selectAllSettings);
   const isSettingsLoading = useSelector(selectSettingsLoading);
 
   // useLayoutEffect(() => {

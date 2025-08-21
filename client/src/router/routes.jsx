@@ -14,6 +14,8 @@ const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const AuthCallbackPage = lazy(() => import("@/pages/AuthCallbackPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const StyleDemoPage = lazy(() => import("@/pages/StyleDemoPage"));
+const HelpCenterPage = lazy(() => import("@/pages/HelpCenterPage"));
+const PricingPage = lazy(() => import("@/pages/PricingPage"));
 
 // PDF Tool Pages
 const MergePdfPage = lazy(() => import("@/pages/MergePdfPage"));
@@ -74,6 +76,15 @@ const routes = {
       path: "/auth/callback",
       element: <AuthCallbackPage />,
     },
+    // Help and Support
+    {
+      path: "/help",
+      element: <HelpCenterPage />,
+    },
+    { path: "/contact", element: <HelpCenterPage initialTab="contact" /> },
+    { path: "/privacy", element: <HelpCenterPage initialTab="privacy" /> },
+    { path: "/terms", element: <HelpCenterPage initialTab="terms" /> },
+    { path: "/pricing", element: <PricingPage /> },
     // PDF Tool Routes
     {
       path: "/merge",

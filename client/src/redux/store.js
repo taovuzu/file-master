@@ -5,8 +5,6 @@ import { reducer as authReducer } from './auth';
 import { reducer as settingsReducer } from './settings';
 import { reducer as pdfToolsReducer } from './pdfTools';
 import { reducer as appReducer } from './app';
-import { reducer as profileUiReducer } from './profileUi';
-import { reducer as pdfReducer } from './pdf';
 
 const AUTH_INITIAL_STATE = {
   current: {},
@@ -25,8 +23,6 @@ const store = configureStore({
     settings: settingsReducer,
     pdfTools: pdfToolsReducer,
     app: appReducer,
-    profileUi: profileUiReducer,
-    pdf: pdfReducer,
   },
   preloadedState: initialState,
   devTools: import.meta.env.PROD === false,

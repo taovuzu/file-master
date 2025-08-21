@@ -1,9 +1,8 @@
 import { useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectPdfProcessedFile } from '@/redux/pdf/selectors';
-import { setProcessedFile as setProcessedFileAction } from '@/redux/pdf/actions';
+import { setProcessedFile as setProcessedFileAction } from '@/redux/pdfTools';
 import * as pdfToolsService from '@/services/pdfToolsService';
-import { message } from 'antd';
+import notify from '@/utils/notify';
 
 export const usePdfTools = (toolType) => {
   const [loading, setLoading] = useState(false);
@@ -11,20 +10,17 @@ export const usePdfTools = (toolType) => {
   const [error, setError] = useState(null);
   
   const dispatch = useDispatch();
-  const processedFileFromStore = useSelector(selectPdfProcessedFile);
+  const processedFileFromStore = useSelector((state) => state.pdfTools.processedFile);
   
   // Get auth state from Redux
   const { isLoggedIn, current: user } = useSelector((state) => state.auth);
 
   // Process PDF based on tool type
   const processPdfTool = useCallback(async (files, formValues = {}, onProgress) => {
-    if (!isLoggedIn) {
-      message.error('Please login to use PDF tools');
-      return { success: false, error: 'Authentication required' };
-    }
+    // Allow without login; server will enforce rate/limits
 
     if (!files || (Array.isArray(files) && files.length === 0)) {
-      message.error('Please select files to process');
+      notify.error('Please select files to process', 'select-files');
       return { success: false, error: 'No files selected' };
     }
 
@@ -72,7 +68,7 @@ export const usePdfTools = (toolType) => {
       if (result.success && result.fileUrl) {
         setProcessedFile(result.fileUrl);
         dispatch(setProcessedFileAction(result.fileUrl));
-        message.success(`${toolType} completed successfully!`);
+        notify.success(`${toolType} completed successfully!`, 'tool-success');
 
         return { success: true, data: result };
       } else {
@@ -81,7 +77,7 @@ export const usePdfTools = (toolType) => {
     } catch (err) {
       const errorMessage = err.message || 'An error occurred during processing';
       setError(errorMessage);
-      message.error(errorMessage);
+      notify.error(errorMessage, 'tool-error');
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
@@ -91,7 +87,7 @@ export const usePdfTools = (toolType) => {
   // Download processed file
   const downloadProcessedFile = useCallback(async (fileName) => {
     if (!processedFile) {
-      message.error('No file to download');
+      notify.error('No file to download', 'no-download');
       return;
     }
 
@@ -99,9 +95,9 @@ export const usePdfTools = (toolType) => {
       setLoading(true);
       await pdfToolsService.downloadFile(processedFile, fileName);
 
-      message.success('Download started');
+      notify.success('Download started', 'download-started');
     } catch (err) {
-      message.error('Download failed');
+      notify.error('Download failed', 'download-failed');
       setError(err.message);
     } finally {
       setLoading(false);
