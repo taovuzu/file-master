@@ -37,6 +37,18 @@ const addTextWatermark = asyncHandler(async (req, res) => {
     textColor = [0, 0, 0],
   } = req.body;
 
+  transparency = parseFloat(transparency);
+  rotation = parseFloat(rotation);
+  fromPage = parseInt(fromPage);
+  toPage = parseInt(toPage);
+
+  if (isNaN(transparency) || transparency < 0 || transparency > 1) {
+    transparency = 0.5;
+  }
+
+  if (isNaN(rotation)) rotation = 0;
+
+
   const fromPageIndex = Math.max(0, Number(fromPage) - 1);
   const toPageIndex = Math.min(Number(toPage) - 1, 1000000);
 
@@ -176,7 +188,7 @@ const addImageWatermark = asyncHandler(async (req, res) => {
     layer = "overlay",
     fromPage = 1,
     toPage = 1,
-    scale = 0.25, 
+    scale = 0.25,
   } = req.body;
 
   const fromPageIndex = Math.max(0, Number(fromPage) - 1);

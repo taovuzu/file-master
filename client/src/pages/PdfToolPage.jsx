@@ -145,8 +145,8 @@ const PdfToolPage = ({
           }
         }
       }
+      console.log(processedInput, values, toolType);
       updateProgress(15, "Uploading files...");
-      // Process the files with progress tracking
       const result = await processPdfTool(
         processedInput,
         values,
@@ -155,7 +155,6 @@ const PdfToolPage = ({
 
       if (result.success) {
         const resultData = result.data;
-        // Add to Redux history
         dispatch(
           addToHistory({
             operation: toolType,
@@ -182,8 +181,8 @@ const PdfToolPage = ({
           if (resultData.file) params.set("file", resultData.file);
           else params.set("url", resultData.fileUrl);
           params.set("name", suggestedName);
-          console.log(`/download?${params.toString()}`);
-          window.location.assign(`/download?${params.toString()}`);
+          console.log(`http://localhost:8080/processed/${resultData.file}`);
+          // window.location.assign(`/download?${params.toString()}`);
         } else {
           setProgressError(resultData.error || "Processing failed");
         }
@@ -192,23 +191,6 @@ const PdfToolPage = ({
       console.error("Processing error:", err);
       setProgressError(err.message || "An error occurred during processing");
     }
-  };
-
-  // Handle download
-  const handleDownload = () => {
-    if (processedFile) {
-      const fileName = `processed-${toolType}-${Date.now()}.pdf`;
-      downloadProcessedFile(fileName);
-    }
-  };
-
-  // Handle reset
-  const handleReset = () => {
-    setFileList([]);
-    setFormValues({});
-    reset();
-    // keep Redux state serializable; do not store File objects
-    notify.info("Tool reset successfully", 'tool-reset');
   };
 
   return (

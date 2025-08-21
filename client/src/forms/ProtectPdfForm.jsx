@@ -14,22 +14,17 @@ const ProtectPdfForm = ({ onFinish, file }) => {
       return;
     }
 
-    if (!values.PASSWORD || values.PASSWORD.trim() === "") {
+    if (!confirmPassword || confirmPassword.trim() === "") {
       message.error("Please enter a password!");
       return;
     }
 
-    if (values.PASSWORD !== confirmPassword) {
-      message.error("Passwords do not match!");
-      return;
-    }
-
-    if (values.PASSWORD.length < 6) {
+    if (confirmPassword.length < 6) {
       message.error("Password must be at least 6 characters long!");
       return;
     }
 
-    onFinish({ PASSWORD: values.PASSWORD });
+    onFinish({ PASSWORD: confirmPassword });
   };
 
   const validatePassword = (_, value) => {

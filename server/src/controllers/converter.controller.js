@@ -54,6 +54,7 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
 
 const convertImagesToPdf = asyncHandler(async (req, res) => {
   const files = req.files;
+  console.log(files);
   if (!files || files.length === 0) {
     throw new ApiError(404, "No files were uploaded.");
   }
@@ -205,7 +206,7 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
       new ApiResponse(200, "Images converted to individual PDFs and zipped", {
-        file: `${zipPath}`,
+        file: `${zipName}`,
       })
     );
   }
@@ -265,7 +266,7 @@ const convertPdfToPptx = asyncHandler(async (req, res) => {
 
   return res.status(200).json(
     new ApiResponse(200, 'pdf converted successfully to pptx', {
-      file: `${outputPath}`
+      file: `${outputName}`
     })
   );
 });

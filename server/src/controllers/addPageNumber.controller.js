@@ -45,11 +45,43 @@ const AddPageNumber = asyncHandler(async (req, res) => {
     fontSize = "normal",
     textColor = [0, 0, 0],
   } = req.body;
+  console.log(req.body);
 
-  firstNumber = Number(firstNumber) == NaN ? 1 : Number(firstNumber);
-  console.log(firstNumber);
-  const fromPageIndex = Math.max(0, Number(fromPage) - 1);
-  const toPageIndex = Math.min(Number(toPage) - 1, 1000000);
+  firstPageCover = firstPageCover === true || firstPageCover === "true";
+
+  firstNumber = isNaN(Number(firstNumber)) ? 1 : Number(firstNumber);
+
+  position = position || "bottom-right";
+  margin = margin || "normal";
+
+  if (typeof textColor === "string") {
+    try {
+      textColor = JSON.parse(textColor);
+    } catch (e) {
+      const parts = textColor.split(",").map((p) => p.trim()).filter(Boolean);
+      if (parts.length === 3) {
+        textColor = parts.map((p) => Number(p));
+      } else {
+        textColor = [0, 0, 0];
+      }
+    }
+  }
+
+  const inputPath = path.resolve(file.path);
+  const uint8Array = fs.readFileSync(inputPath);
+  const pdfDoc = await PDFDocument.load(uint8Array);
+  const numberOfPages = pdfDoc.getPages().length;
+
+  const fromPageNum = isNaN(Number(fromPage)) || Number(fromPage) < 1 ? 1 : Number(fromPage);
+  const toPageNum =
+    isNaN(Number(toPage)) || Number(toPage) < 1 ? numberOfPages : Number(toPage);
+
+  const fromPageIndex = Math.max(0, fromPageNum - 1);
+  const toPageIndex = Math.min(toPageNum - 1, numberOfPages - 1);
+
+  if (fromPageIndex > toPageIndex) {
+    throw new ApiError(400, "fromPage cannot be greater than toPage");
+  }
 
   const fontSizeValue = fontSizes[fontSize] || fontSizes.normal;
   const marginValue = marginSizes[margin] || marginSizes.normal;
@@ -57,32 +89,34 @@ const AddPageNumber = asyncHandler(async (req, res) => {
   if (
     !Array.isArray(textColor) ||
     textColor.length !== 3 ||
-    textColor.some((c) => typeof c !== "number" || c < 0 || c > 1)
+    textColor.some((c) => typeof c !== "number" || Number.isNaN(c))
   ) {
     textColor = [0, 0, 0];
-  }
-
-  const inputPath = path.resolve(file.path);
-  const name = path.basename(file.originalname, path.extname(file.originalname));
-  const outputName = `${uuidv4()}___${name}_page_numbered.pdf`;
-  const outputDir = path.join(process.cwd(), "public", "processed");
-  const outputPath = path.join(outputDir, outputName);
-
-  const uint8Array = fs.readFileSync(inputPath);
-  const pdfDoc = await PDFDocument.load(uint8Array);
-  const numberOfPages = pdfDoc.getPages().length;
-
-  if (toPageIndex >= numberOfPages) {
-    throw new ApiError(400, "toPage exceeds total number of pages");
+  } else {
+    textColor = textColor.map((c) => {
+      const n = Number(c);
+      if (n > 1) return Math.max(0, Math.min(1, n / 255));
+      return Math.max(0, Math.min(1, n));
+    });
   }
 
   const fontName = fontChoices[fontFamily] || StandardFonts.Helvetica;
   const selectedFont = await pdfDoc.embedFont(fontName);
 
-  for (let i = fromPageIndex; i <= toPageIndex; i++) {
-    if (firstPageCover && i === 0) continue;
+  const pages = pdfDoc.getPages();
+  if (!pages || pages.length === 0) {
+    throw new ApiError(400, "PDF has no pages");
+  }
 
-    const page = pdfDoc.getPages()[i];
+  for (let i = fromPageIndex; i <= toPageIndex; i++) {
+    if (firstPageCover && i === 0) {
+      continue;
+    }
+
+    const page = pages[i];
+    if (!page) {
+      continue;
+    }
 
     const pageNumber = firstNumber + (i - fromPageIndex);
     const writingStyles = [
@@ -91,7 +125,8 @@ const AddPageNumber = asyncHandler(async (req, res) => {
       `Page ${pageNumber} of ${numberOfPages}`,
     ];
 
-    const style = writingStyles[textStyle] || writingStyles[0];
+    const styleIndex = isNaN(Number(textStyle)) ? 0 : Number(textStyle);
+    const style = writingStyles[styleIndex >= 0 && styleIndex < writingStyles.length ? styleIndex : 0];
 
     const height = page.getHeight();
     const width = page.getWidth();
@@ -135,6 +170,11 @@ const AddPageNumber = asyncHandler(async (req, res) => {
       color: rgb(...textColor),
     });
   }
+
+  const outputName = `${uuidv4()}___${path.basename(file.originalname, path.extname(file.originalname))}_page_numbered.pdf`;
+  const outputDir = path.join(process.cwd(), "public", "processed");
+  fs.mkdirSync(outputDir, { recursive: true });
+  const outputPath = path.join(outputDir, outputName);
 
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync(outputPath, pdfBytes);

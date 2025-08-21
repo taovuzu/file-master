@@ -20,6 +20,7 @@ const splitPdf = asyncHandler(async (req, res) => {
   if (typeof ranges === 'string') {
     try {
       ranges = JSON.parse(ranges);
+      ranges = ranges.ranges;
     } catch (err) {
       throw new ApiError(400, 'Invalid ranges format');
     }
@@ -37,7 +38,8 @@ const splitPdf = asyncHandler(async (req, res) => {
   const pdfDoc = await PDFDocument.load(uint8Array);
   const numberOfPages = pdfDoc.getPages().length;
 
-  const outputPaths = [];
+  let outputPaths = [];
+  console.log(ranges, ranges.length);
 
   for (let i = 0; i < ranges.length; i++) {
     console.log(typeof ranges[i]);
@@ -56,7 +58,6 @@ const splitPdf = asyncHandler(async (req, res) => {
     const subDocumentOutName = `${name}-splited-${start}-${actualEnd}.pdf`;
     const subDocumentOutPath = path.join(baseOutDir, subDocumentOutName);
     const pdfBytes = await subDocument.save();
-    console.log(subDocumentOutPath);
     fs.writeFileSync(subDocumentOutPath, pdfBytes);
 
     outputPaths.push(subDocumentOutPath);
@@ -74,7 +75,7 @@ const splitPdf = asyncHandler(async (req, res) => {
 
   archive.pipe(output);
   archive.directory(baseOutDir, false);
-  archive.finalize();
+  await archive.finalize();
 
   fs.rm(baseOutDir, { recursive: true, force: true }, (err) => {
     if (err) {

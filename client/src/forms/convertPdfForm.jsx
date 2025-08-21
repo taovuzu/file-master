@@ -28,9 +28,9 @@ const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-p
 
     const formData = {
       conversionType,
-      orientation: values.orientation,
-      pagetype: values.pagetype,
-      margin: values.margin,
+      orientation: values.orientation || "portrait",
+      pagetype: values.pagetype || "A4",
+      margin: values.margin || "none",
       mergeImagesInOnePdf: isMultipleImages,
     };
 
@@ -63,7 +63,7 @@ const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-p
       </Form.Item>
 
       <Form.Item label="Merge Images in One PDF" name="mergeImagesInOnePdf" initialValue={true}>
-        <Switch checked={isMultipleImages} onChange={setIsMultipleImages} checkedChildren="Yes" unCheckedChildren="No" />
+        <Switch checked={isMultipleImages} onChange={(checked) => setIsMultipleImages(checked)} checkedChildren="Yes" unCheckedChildren="No" />
       </Form.Item>
     </>
   );
@@ -81,7 +81,7 @@ const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-p
 
       <Alert
         message="Conversion Instructions"
-        description={conversionType === 'image-to-pdf' ? "Configure image to PDF options. Upload your images in the upload area." : "Upload your document or PDF in the upload area and click convert."}
+        description={conversionType === 'image-to-pdf' ? "Configure image to PDF options. Upload your images in the upload area." : "Upload your document in the upload area and click convert."}
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
@@ -91,6 +91,8 @@ const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-p
       <div style={{ padding: "12px 16px", borderTop: "1px solid #f0f0f0", background: "#fff", position: "sticky", bottom: 0, zIndex: 10 }}>
         <Button type="primary" htmlType="submit" block icon={<FilePdfOutlined />} size="large" onClick={handleFinish}>
           {conversionType === "doc-to-pdf" && "Convert to PDF"}
+          {conversionType === "ppt-to-pdf" && "Convert to PDF"}
+          {conversionType === "excel-to-pdf" && "Convert to PDF"}
           {conversionType === "image-to-pdf" && "Convert Images to PDF"}
           {conversionType === "pdf-to-pptx" && "Convert PDF to PowerPoint"}
         </Button>

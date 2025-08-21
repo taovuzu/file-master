@@ -13,7 +13,6 @@ const ChangePasswordPage = lazy(() => import("@/pages/ChangePasswordPage"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const AuthCallbackPage = lazy(() => import("@/pages/AuthCallbackPage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
-const StyleDemoPage = lazy(() => import("@/pages/StyleDemoPage"));
 const HelpCenterPage = lazy(() => import("@/pages/HelpCenterPage"));
 const PricingPage = lazy(() => import("@/pages/PricingPage"));
 
@@ -39,10 +38,6 @@ const routes = {
     {
       path: "/home",
       element: <HomePage />,
-    },
-    {
-      path: "/demo",
-      element: <StyleDemoPage />,
     },
     {
       path: "/login",

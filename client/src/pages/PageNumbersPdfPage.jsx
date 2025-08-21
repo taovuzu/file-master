@@ -7,7 +7,7 @@ const PageNumbersPdfPage = () => {
     <PdfToolPage
       title="Add Page Numbers"
       description="Insert page numbers in your PDF document"
-      toolType="pageNumbers"
+      toolType="page-numbers"
       FormComponent={PageNumbersPdfForm}
       requirements={{
         multipleFiles: false,

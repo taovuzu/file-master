@@ -8,16 +8,13 @@ export const usePdfTools = (toolType) => {
   const [loading, setLoading] = useState(false);
   const [processedFile, setProcessedFile] = useState(null);
   const [error, setError] = useState(null);
-  
+
   const dispatch = useDispatch();
   const processedFileFromStore = useSelector((state) => state.pdfTools.processedFile);
-  
-  // Get auth state from Redux
+
   const { isLoggedIn, current: user } = useSelector((state) => state.auth);
 
-  // Process PDF based on tool type
   const processPdfTool = useCallback(async (files, formValues = {}, onProgress) => {
-    // Allow without login; server will enforce rate/limits
 
     if (!files || (Array.isArray(files) && files.length === 0)) {
       notify.error('Please select files to process', 'select-files');
@@ -45,6 +42,9 @@ export const usePdfTools = (toolType) => {
           break;
         case 'convert':
           result = await pdfToolsService.convertPdf(primaryFile, formValues, onProgress);
+          break;
+        case 'image-to-pdf':
+          result = await pdfToolsService.convertPdf(fileArray, formValues, onProgress);
           break;
         case 'protect':
           result = await pdfToolsService.protectPdf(primaryFile, formValues, onProgress);
@@ -114,17 +114,17 @@ export const usePdfTools = (toolType) => {
   // Validate files
   const validateFiles = useCallback((files, requirements = {}) => {
     const { minFiles = 1, maxFiles = 10, maxSize = 10, allowedTypes = ['application/pdf'] } = requirements;
-    
+
     if (!files || (Array.isArray(files) && files.length === 0)) {
       return { valid: false, error: 'No files selected' };
     }
 
     const fileArray = Array.isArray(files) ? files : [files];
-    
+
     if (fileArray.length < minFiles) {
       return { valid: false, error: `Please select at least ${minFiles} file(s)` };
     }
-    
+
     if (fileArray.length > maxFiles) {
       return { valid: false, error: `Maximum ${maxFiles} files allowed` };
     }
@@ -133,7 +133,7 @@ export const usePdfTools = (toolType) => {
       if (!allowedTypes.includes(file.type)) {
         return { valid: false, error: 'Invalid file type. Only PDF files are allowed.' };
       }
-      
+
       if (file.size / 1024 / 1024 > maxSize) {
         return { valid: false, error: `File size must be less than ${maxSize}MB` };
       }
@@ -149,7 +149,7 @@ export const usePdfTools = (toolType) => {
     error,
     isLoggedIn,
     user,
-    
+
     // Actions
     processPdfTool,
     downloadProcessedFile,

@@ -1,11 +1,29 @@
 // src/components/PageNumbersPdfForm.jsx
 import React, { useState } from "react";
-import { Form, Button, Select, Radio, InputNumber, Switch, message, Alert, Divider, Row, Col, ColorPicker } from "antd";
-import { FileTextOutlined, InfoCircleOutlined, FontSizeOutlined } from "@ant-design/icons";
+import {
+  Form,
+  Button,
+  Select,
+  Radio,
+  InputNumber,
+  Switch,
+  message,
+  Alert,
+  Divider,
+  Row,
+  Col,
+  ColorPicker,
+} from "antd";
+import {
+  FileTextOutlined,
+  InfoCircleOutlined,
+  FontSizeOutlined,
+} from "@ant-design/icons";
 
 const { Option } = Select;
 
 const PageNumbersPdfForm = ({ onFinish, file }) => {
+  const [form] = Form.useForm();
   const [textColor, setTextColor] = useState([0, 0, 0]); // RGB values 0-1
 
   const handleFinish = (values) => {
@@ -19,17 +37,14 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
       return;
     }
 
-    let finalColor = textColor;
-    if (typeof textColor === 'string') {
-      const hex = textColor.replace('#', '');
-      finalColor = [
-        parseInt(hex.substr(0, 2), 16) / 255,
-        parseInt(hex.substr(2, 2), 16) / 255,
-        parseInt(hex.substr(4, 2), 16) / 255
-      ];
+    let finalColor = "#000000"; // default
+    if (typeof textColor === "string") {
+      finalColor = textColor;
+    } else if (textColor && textColor.toHexString) {
+      finalColor = textColor.toHexString();
     }
 
-    onFinish({ 
+    onFinish({
       pageMode: values.pageMode || "All Pages",
       firstPageCover: values.firstPageCover || false,
       position: values.position || "bottom-right",
@@ -40,13 +55,14 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
       textStyle: values.textStyle || 0,
       fontFamily: values.fontFamily || "Arial",
       fontSize: values.fontSize || "normal",
-      textColor: finalColor
+      textColor: finalColor, // ✅ Plain HEX value
     });
   };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Form
+        form={form}
         name="page-numbers-pdf"
         layout="vertical"
         onFinish={handleFinish}
@@ -61,11 +77,13 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
           toPage: 1,
           textStyle: 0,
           fontFamily: "Arial",
-          fontSize: "normal"
+          fontSize: "normal",
         }}
       >
         <Form.Item>
-          <div style={{ fontSize: "18px", fontWeight: 600 }}>Add Page Numbers</div>
+          <div style={{ fontSize: "18px", fontWeight: 600 }}>
+            Add Page Numbers
+          </div>
         </Form.Item>
 
         <Divider orientation="left">Page Range Settings</Divider>
@@ -79,7 +97,11 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
             </Form.Item>
           </Col>
           <Col span={12}>
-            <Form.Item label="First Page is Cover" name="firstPageCover" valuePropName="checked">
+            <Form.Item
+              label="First Page is Cover"
+              name="firstPageCover"
+              valuePropName="checked"
+            >
               <Switch />
             </Form.Item>
           </Col>
@@ -87,18 +109,30 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
 
         <Row gutter={16}>
           <Col span={8}>
-            <Form.Item label="From Page" name="fromPage" rules={[{ required: true, message: "Enter start page!" }]}>
-              <InputNumber min={1} style={{ width: '100%' }} />
+            <Form.Item
+              label="From Page"
+              name="fromPage"
+              rules={[{ required: true, message: "Enter start page!" }]}
+            >
+              <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label="To Page" name="toPage" rules={[{ required: true, message: "Enter end page!" }]}>
-              <InputNumber min={1} style={{ width: '100%' }} />
+            <Form.Item
+              label="To Page"
+              name="toPage"
+              rules={[{ required: true, message: "Enter end page!" }]}
+            >
+              <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item label="First Number" name="firstNumber" rules={[{ required: true, message: "Enter first number!" }]}>
-              <InputNumber min={1} style={{ width: '100%' }} />
+            <Form.Item
+              label="First Number"
+              name="firstNumber"
+              rules={[{ required: true, message: "Enter first number!" }]}
+            >
+              <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
         </Row>
@@ -157,20 +191,57 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
         </Row>
 
         <Form.Item label="Text Color" name="textColor">
-          <ColorPicker value={textColor} onChange={setTextColor} showText presets={[{ label: 'Recommended', colors: ['#000000','#FFFFFF','#FF0000','#0000FF','#008000','#800080','#FFA500','#808080'] }]} />
+          <ColorPicker
+            value={textColor}
+            onChange={setTextColor}
+            showText
+            presets={[
+              {
+                label: "Recommended",
+                colors: [
+                  "#000000",
+                  "#FFFFFF",
+                  "#FF0000",
+                  "#0000FF",
+                  "#008000",
+                  "#800080",
+                  "#FFA500",
+                  "#808080",
+                ],
+              },
+            ]}
+          />
         </Form.Item>
 
         <Form.Item>
-          <div style={{ padding: '20px', backgroundColor: '#f6f8fa', borderRadius: '8px', border: '2px solid #1890ff', textAlign: 'center' }}>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff', marginBottom: '16px' }}>
-              <FontSizeOutlined style={{ marginRight: '8px' }} />
+          <div
+            style={{
+              padding: "20px",
+              backgroundColor: "#f6f8fa",
+              borderRadius: "8px",
+              border: "2px solid #1890ff",
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "16px",
+                fontWeight: "bold",
+                color: "#1890ff",
+                marginBottom: "16px",
+              }}
+            >
+              <FontSizeOutlined style={{ marginRight: "8px" }} />
               Page Number Preview
             </div>
-            <div style={{ fontSize: '14px', color: '#333', marginBottom: '8px' }}>
+            <div
+              style={{ fontSize: "14px", color: "#333", marginBottom: "8px" }}
+            >
               Style: <strong>1</strong>
             </div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
-              Position: <strong>Bottom Right</strong> • Font: <strong>Arial</strong> • Size: <strong>Normal</strong>
+            <div style={{ fontSize: "12px", color: "#666" }}>
+              Position: <strong>Bottom Right</strong> • Font:{" "}
+              <strong>Arial</strong> • Size: <strong>Normal</strong>
             </div>
           </div>
         </Form.Item>
@@ -185,8 +256,25 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
         style={{ marginBottom: 24 }}
       />
 
-      <div style={{ padding: "12px 16px", borderTop: "1px solid #f0f0f0", background: "#fff", position: "sticky", bottom: 0, zIndex: 10 }}>
-        <Button type="primary" htmlType="submit" block icon={<FileTextOutlined />} size="large" disabled={!file} onClick={handleFinish}>
+      <div
+        style={{
+          padding: "12px 16px",
+          borderTop: "1px solid #f0f0f0",
+          background: "#fff",
+          position: "sticky",
+          bottom: 0,
+          zIndex: 10,
+        }}
+      >
+        <Button
+          type="primary"
+          htmlType="submit"
+          block
+          icon={<FileTextOutlined />}
+          size="large"
+          disabled={!file}
+          onClick={() => form.submit()} // Same handler as onFinish
+        >
           Add Page Numbers to PDF
         </Button>
       </div>

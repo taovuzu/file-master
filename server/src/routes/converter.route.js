@@ -5,7 +5,7 @@ import { convertDocToPdf, convertImagesToPdf, convertPdfToPptx} from "../control
 const router = Router();
 
 router.route("/doc-to-pdf").post(upload.single("DOCFILE"), docToPdfValidator, convertDocToPdf);
-router.route("/image-to-pdf").post(upload.array("IMAGEFILE"), convertImagesToPdf);
+router.route("/image-to-pdf").post(upload.array("IMAGEFILE", 20), convertImagesToPdf);
 // router.route("/pdf-to-docx").post(upload.single("PDFFILE"),validateFilePdf, convertPdfToDoc);
 router.route("/pdf-to-pptx").post(upload.single("PDFFILE"), validateFilePdf, convertPdfToPptx);
 // router.route("/pdf-to-xlsx").post(upload.single("PDFFILE"),validateFilePdf, convertPdfToXlsx);

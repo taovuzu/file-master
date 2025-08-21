@@ -5,7 +5,6 @@ import { DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
 const toClientResult = (resp) => {
   // Server returns: { statusCode, data: <message string>, message: { file: <filename> }, success }
   const file = resp?.data?.file || resp?.message?.file || resp?.file;
-  console.log("pdfToolService data -> " , file);
   return file
     ? { success: true, file, fileUrl: `${DOWNLOAD_BASE_URL}${file}` }
     : { success: false, error: resp?.message || 'Processing failed' };
@@ -13,8 +12,9 @@ const toClientResult = (resp) => {
 
 // Helper function to create FormData with progress tracking
 const createFormDataWithProgress = (files, options = {}, onProgress) => {
+  console.log(options);
   const formData = new FormData();
-  
+
   // Add files
   const fileArray = Array.isArray(files) ? files : [files];
   fileArray.forEach((file) => {
@@ -23,20 +23,17 @@ const createFormDataWithProgress = (files, options = {}, onProgress) => {
       formData.append('PDFFILE', file);
     } else if (file.type.includes('image/')) {
       formData.append('IMAGEFILE', file);
-    } else if (file.type.includes('document/') || file.type.includes('word')) {
+    } else if (file.type.includes('document/') ||
+      file.type.includes('word') ||
+      file.type.includes('spreadsheet') ||
+      file.type.includes('presentation')
+    ) {
       formData.append('DOCFILE', file);
     } else {
-      formData.append('PDFFILES', file); // fallback
+      formData.append('PDFFILE', file); // fallback
     }
   });
-  
-  // Add options
-  Object.entries(options).forEach(([k, v]) => {
-    if (v !== undefined && v !== null) {
-      formData.append(k, v);
-    }
-  });
-  
+
   return formData;
 };
 
@@ -50,13 +47,13 @@ const calculateTotalFileSize = (files) => {
 export const mergePdfs = async (files, options = {}, onProgress) => {
   const formData = createFormDataWithProgress(files, options, onProgress);
   const totalFileSize = calculateTotalFileSize(files);
-  
+
   if (onProgress) {
     onProgress(20, 'Preparing files for merge...');
   }
-  
-  const resp = await request.post({ 
-    entity: 'merge/pdf', 
+
+  const resp = await request.post({
+    entity: 'merge/pdf',
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
@@ -66,18 +63,18 @@ export const mergePdfs = async (files, options = {}, onProgress) => {
       }
     }
   });
-  
+
   if (onProgress) {
     onProgress(95, 'Processing files on server...');
   }
-  
+
   // Simulate a small delay for server processing
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   if (onProgress) {
     onProgress(100, 'Merge completed');
   }
-  
+
   return toClientResult(resp);
 };
 
@@ -85,14 +82,13 @@ export const mergePdfs = async (files, options = {}, onProgress) => {
 export const splitPdf = async (file, ranges = [], options = {}, onProgress) => {
   const formData = createFormDataWithProgress(file, options, onProgress);
   formData.append('ranges', JSON.stringify(ranges));
-  console.log(ranges);
-  
+
   if (onProgress) {
     onProgress(20, 'Preparing file for split...');
   }
-  
-  const resp = await request.post({ 
-    entity: 'split/pdf', 
+
+  const resp = await request.post({
+    entity: 'split/pdf',
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
@@ -102,18 +98,18 @@ export const splitPdf = async (file, ranges = [], options = {}, onProgress) => {
       }
     }
   });
-  
+
   if (onProgress) {
     onProgress(95, 'Processing file on server...');
   }
-  
+
   // Simulate a small delay for server processing
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   if (onProgress) {
     onProgress(100, 'Split completed');
   }
-  
+
   return toClientResult(resp);
 };
 
@@ -123,13 +119,13 @@ export const compressPdf = async (file, options = {}, onProgress) => {
   const formData = createFormDataWithProgress(file, options, onProgress);
   const level = options.level ?? options.compressionLevel;
   if (level != null) formData.append('compressionLevel', level);
-  
+
   if (onProgress) {
     onProgress(20, 'Preparing file for compression...');
   }
-  
-  const resp = await request.post({ 
-    entity: 'compress/pdf', 
+
+  const resp = await request.post({
+    entity: 'compress/pdf',
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
@@ -139,31 +135,31 @@ export const compressPdf = async (file, options = {}, onProgress) => {
       }
     }
   });
-  
+
   if (onProgress) {
     onProgress(95, 'Processing file on server...');
   }
-  
+
   // Simulate a small delay for server processing
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   if (onProgress) {
     onProgress(100, 'Compression completed');
   }
-  
+
   return toClientResult(resp);
 };
 
 // Convert PDF
 export const convertPdf = async (input, options = {}, onProgress) => {
   const { conversionType } = options || {};
-  
-  if (conversionType === 'doc-to-pdf') {
+
+  if (conversionType === 'doc-to-pdf' || conversionType === 'ppt-to-pdf' || conversionType === 'excel-to-pdf') {
     const formData = createFormDataWithProgress(input, options, onProgress);
     if (onProgress) onProgress(20, 'Preparing document for conversion...');
-    
-    const resp = await request.post({ 
-      entity: 'convert/doc-to-pdf', 
+
+    const resp = await request.post({
+      entity: 'convert/doc-to-pdf',
       jsonData: formData,
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
@@ -172,40 +168,40 @@ export const convertPdf = async (input, options = {}, onProgress) => {
         }
       }
     });
-    
+
     if (onProgress) onProgress(95, 'Processing document on server...');
     await new Promise(resolve => setTimeout(resolve, 500));
     if (onProgress) onProgress(100, 'Conversion completed');
     return toClientResult(resp);
   }
 
-  if (conversionType === 'pdf-to-jpg') {
-    const formData = createFormDataWithProgress(input, options, onProgress);
-    if (onProgress) onProgress(20, 'Preparing PDF for conversion...');
-    
-    const resp = await request.post({ 
-      entity: 'convert/pdf-to-jpg', 
-      jsonData: formData,
-      onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.total) {
-          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
-          onProgress(20 + uploadProgress, `Uploading PDF... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-        }
-      }
-    });
-    
-    if (onProgress) onProgress(95, 'Processing PDF on server...');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    if (onProgress) onProgress(100, 'Conversion completed');
-    return toClientResult(resp);
-  }
+  // if (conversionType === 'pdf-to-jpg') {
+  //   const formData = createFormDataWithProgress(input, options, onProgress);
+  //   if (onProgress) onProgress(20, 'Preparing PDF for conversion...');
+
+  //   const resp = await request.post({ 
+  //     entity: 'convert/pdf-to-jpg', 
+  //     jsonData: formData,
+  //     onUploadProgress: (progressEvent) => {
+  //       if (onProgress && progressEvent.total) {
+  //         const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
+  //         onProgress(20 + uploadProgress, `Uploading PDF... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+  //       }
+  //     }
+  //   });
+
+  //   if (onProgress) onProgress(95, 'Processing PDF on server...');
+  //   await new Promise(resolve => setTimeout(resolve, 500));
+  //   if (onProgress) onProgress(100, 'Conversion completed');
+  //   return toClientResult(resp);
+  // }
 
   if (conversionType === 'image-to-pdf') {
     const formData = createFormDataWithProgress(input, options, onProgress);
     if (onProgress) onProgress(20, 'Preparing images for conversion...');
-    
-    const resp = await request.post({ 
-      entity: 'convert/image-to-pdf', 
+
+    const resp = await request.post({
+      entity: 'convert/image-to-pdf',
       jsonData: formData,
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
@@ -214,7 +210,7 @@ export const convertPdf = async (input, options = {}, onProgress) => {
         }
       }
     });
-    
+
     if (onProgress) onProgress(95, 'Processing images on server...');
     await new Promise(resolve => setTimeout(resolve, 500));
     if (onProgress) onProgress(100, 'Conversion completed');
@@ -224,9 +220,9 @@ export const convertPdf = async (input, options = {}, onProgress) => {
   if (conversionType === 'pdf-to-pptx') {
     const formData = createFormDataWithProgress(input, options, onProgress);
     if (onProgress) onProgress(20, 'Preparing PDF for conversion...');
-    
-    const resp = await request.post({ 
-      entity: 'convert/pdf-to-pptx', 
+
+    const resp = await request.post({
+      entity: 'convert/pdf-to-pptx',
       jsonData: formData,
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
@@ -235,7 +231,7 @@ export const convertPdf = async (input, options = {}, onProgress) => {
         }
       }
     });
-    
+
     if (onProgress) onProgress(95, 'Processing PDF on server...');
     await new Promise(resolve => setTimeout(resolve, 500));
     if (onProgress) onProgress(100, 'Conversion completed');
@@ -249,13 +245,13 @@ export const convertPdf = async (input, options = {}, onProgress) => {
 export const protectPdf = async (file, options = {}, onProgress) => {
   const formData = createFormDataWithProgress(file, options, onProgress);
   if (options.PASSWORD) formData.append('PASSWORD', options.PASSWORD);
-  
+
   if (onProgress) {
     onProgress(20, 'Preparing file for protection...');
   }
-  
-  const resp = await request.post({ 
-    entity: 'protect/pdf', 
+
+  const resp = await request.post({
+    entity: 'protect/pdf',
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
@@ -264,18 +260,18 @@ export const protectPdf = async (file, options = {}, onProgress) => {
       }
     }
   });
-  
+
   if (onProgress) {
     onProgress(95, 'Processing file on server...');
   }
-  
+
   // Simulate a small delay for server processing
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   if (onProgress) {
     onProgress(100, 'Protection completed');
   }
-  
+
   return toClientResult(resp);
 };
 
@@ -283,13 +279,13 @@ export const protectPdf = async (file, options = {}, onProgress) => {
 export const unlockPdf = async (file, options = {}, onProgress) => {
   const formData = createFormDataWithProgress(file, options, onProgress);
   if (options.PASSWORD) formData.append('PASSWORD', options.PASSWORD);
-  
+
   if (onProgress) {
     onProgress(20, 'Preparing file for unlock...');
   }
-  
-  const resp = await request.post({ 
-    entity: 'unlock/pdf', 
+
+  const resp = await request.post({
+    entity: 'unlock/pdf',
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
@@ -298,18 +294,18 @@ export const unlockPdf = async (file, options = {}, onProgress) => {
       }
     }
   });
-  
+
   if (onProgress) {
     onProgress(95, 'Processing file on server...');
   }
-  
+
   // Simulate a small delay for server processing
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   if (onProgress) {
     onProgress(100, 'Unlock completed');
   }
-  
+
   return toClientResult(resp);
 };
 
@@ -317,13 +313,14 @@ export const unlockPdf = async (file, options = {}, onProgress) => {
 export const rotatePdf = async (file, options = {}, onProgress) => {
   const formData = createFormDataWithProgress(file, options, onProgress);
   if (options.angle !== undefined) formData.append('angle', options.angle);
-  
+
   if (onProgress) {
     onProgress(20, 'Preparing file for rotation...');
   }
-  
-  const resp = await request.post({ 
-    entity: 'rotate/pdf', 
+  console.log(formData);
+
+  const resp = await request.post({
+    entity: 'rotate/pdf',
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
@@ -332,18 +329,18 @@ export const rotatePdf = async (file, options = {}, onProgress) => {
       }
     }
   });
-  
+
   if (onProgress) {
     onProgress(95, 'Processing file on server...');
   }
-  
+
   // Simulate a small delay for server processing
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   if (onProgress) {
     onProgress(100, 'Rotation completed');
   }
-  
+
   return toClientResult(resp);
 };
 
@@ -363,11 +360,11 @@ export const addWatermark = async (file, options = {}, onProgress) => {
     fontSize,
     textColor,
   } = options;
-  
+
   if (onProgress) {
     onProgress(20, 'Preparing file for watermark...');
   }
-  
+
   // Only text watermark supported from current form
   if (watermarkType === 'text') {
     if (text) formData.append('text', text);
@@ -380,9 +377,9 @@ export const addWatermark = async (file, options = {}, onProgress) => {
     if (fontFamily) formData.append('fontFamily', fontFamily);
     if (fontSize) formData.append('fontSize', fontSize);
     if (Array.isArray(textColor)) formData.append('textColor', JSON.stringify(textColor));
-    
-    const resp = await request.post({ 
-      entity: 'watermark/text', 
+
+    const resp = await request.post({
+      entity: 'watermark/text',
       jsonData: formData,
       onUploadProgress: (progressEvent) => {
         if (onProgress && progressEvent.total) {
@@ -391,18 +388,18 @@ export const addWatermark = async (file, options = {}, onProgress) => {
         }
       }
     });
-    
+
     if (onProgress) {
       onProgress(95, 'Processing file on server...');
     }
-    
+
     // Simulate a small delay for server processing
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     if (onProgress) {
       onProgress(100, 'Watermark added');
     }
-    
+
     return toClientResult(resp);
   }
   return { success: false, error: 'Unsupported watermark type' };
@@ -435,13 +432,13 @@ export const addPageNumbers = async (file, options = {}, onProgress) => {
   if (fontFamily) formData.append('fontFamily', fontFamily);
   if (fontSize) formData.append('fontSize', fontSize);
   if (Array.isArray(textColor)) formData.append('textColor', JSON.stringify(textColor));
-  
+
   if (onProgress) {
     onProgress(20, 'Preparing file for page numbers...');
   }
-  
-  const resp = await request.post({ 
-    entity: 'page-numbers/pdf', 
+
+  const resp = await request.post({
+    entity: 'page-numbers/pdf',
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
@@ -450,18 +447,18 @@ export const addPageNumbers = async (file, options = {}, onProgress) => {
       }
     }
   });
-  
+
   if (onProgress) {
     onProgress(95, 'Processing file on server...');
   }
-  
+
   // Simulate a small delay for server processing
   await new Promise(resolve => setTimeout(resolve, 500));
-  
+
   if (onProgress) {
     onProgress(100, 'Page numbers added');
   }
-  
+
   return toClientResult(resp);
 };
 

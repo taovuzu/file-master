@@ -146,7 +146,7 @@ const TOOL_CONFIG = {
     processingTime: '25 seconds',
     users: '1.9M+',
     premium: false,
-    route: '/convert?type=doc-to-pdf&source=powerpoint',
+    route: '/convert?type=ppt-to-pdf',
   },
   'Excel to PDF': {
     title: 'Excel to PDF',
@@ -158,7 +158,7 @@ const TOOL_CONFIG = {
     processingTime: '30 seconds',
     users: '1.6M+',
     premium: false,
-    route: '/convert?type=doc-to-pdf&source=excel',
+    route: '/convert?type=excel-to-pdf',
   },
   'Edit PDF': {
     title: 'Edit PDF',
@@ -170,7 +170,7 @@ const TOOL_CONFIG = {
     processingTime: '40 seconds',
     users: '1.3M+',
     premium: true,
-    route: '/convert',
+    route: '/edit',
   },
   'PDF to JPG': {
     title: 'PDF to JPG',

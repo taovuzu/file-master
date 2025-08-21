@@ -341,7 +341,7 @@ const FileUploadZone = ({
               <span>•</span>
               <div className="flex items-center space-x-1">
                 <Sparkles className="w-4 h-4" />
-                <span>Up to {formatFileSize(maxSize)}</span>
+                <span>Up to {formatFileSize(maxSize)} for Free Users</span>
               </div>
             </div>
           </div>
@@ -371,7 +371,7 @@ const FileUploadZone = ({
             <p className="text-xs text-gray-500 flex items-center justify-center space-x-1">
               <CheckCircle className="w-3 h-3 text-green-500" />
               <span>
-                Your files are secure and will be deleted after processing
+                Your files are secure and will be deleted after 24 hours of processing
               </span>
             </p>
           </div>

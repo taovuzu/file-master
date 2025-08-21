@@ -7,54 +7,52 @@ const { Option } = Select;
 const { TextArea } = Input;
 
 const WatermarkPdfForm = ({ onFinish, file }) => {
+  const [form] = Form.useForm();
   const [watermarkType, setWatermarkType] = useState("text");
-  const [textColor, setTextColor] = useState([0, 0, 0]);
+  const [textColor, setTextColor] = useState("#000000"); // Store HEX string to avoid serialization issues
 
-  const handleFinish = (values) => {
-    if (!file) {
-      message.error("Please upload a PDF file first!");
-      return;
-    }
+  const handleFinish = async () => {
+    try {
+      const values = await form.validateFields();
 
-    if (values.fromPage > values.toPage) {
-      message.error("From page cannot be greater than To page!");
-      return;
-    }
-
-    let finalColor = textColor;
-    if (typeof textColor === 'string') {
-      const hex = textColor.replace('#', '');
-      finalColor = [
-        parseInt(hex.substr(0, 2), 16) / 255,
-        parseInt(hex.substr(2, 2), 16) / 255,
-        parseInt(hex.substr(4, 2), 16) / 255
-      ];
-    }
-
-    const formData = {
-      watermarkType,
-      fromPage: values.fromPage || 1,
-      toPage: values.toPage || 1,
-      position: values.position || "bottom-right",
-      transparency: values.transparency ?? 0.5,
-      rotation: values.rotation ?? 0,
-      layer: values.layer || "overlay",
-    };
-
-    if (watermarkType === "text") {
-      formData.text = values.text || "WATERMARK";
-      formData.fontFamily = values.fontFamily || "Arial";
-      formData.fontSize = values.fontSize || "normal";
-      formData.textColor = finalColor;
-    } else if (watermarkType === "image") {
-      // Expect separate image pick via dedicated UI in the future; for now enforce text mode or rely on upcoming integration
-      if (!values.imageProvided) {
-        message.error("Image watermark requires an image source. Use text watermark or provide image integration.");
+      if (!file) {
+        message.error("Please upload a PDF file first!");
         return;
       }
-    }
 
-    onFinish(formData);
+      if (values.fromPage > values.toPage) {
+        message.error("From page cannot be greater than To page!");
+        return;
+      }
+
+      const finalColor = textColor; // Always HEX string now
+
+      const formData = {
+        watermarkType,
+        fromPage: values.fromPage || 1,
+        toPage: values.toPage || 1,
+        position: values.position || "bottom-right",
+        transparency: values.transparency ?? 0.5,
+        rotation: values.rotation ?? 0,
+        layer: values.layer || "overlay",
+      };
+
+      if (watermarkType === "text") {
+        formData.text = values.text || "WATERMARK";
+        formData.fontFamily = values.fontFamily || "Arial";
+        formData.fontSize = values.fontSize || "normal";
+        formData.textColor = finalColor; // HEX string
+      } else if (watermarkType === "image") {
+        if (!values.imageProvided) {
+          message.error("Image watermark requires an image source.");
+          return;
+        }
+      }
+
+      onFinish(formData);
+    } catch (error) {
+      console.error("Validation failed:", error);
+    }
   };
 
   const getPositionOptions = () => [
@@ -73,6 +71,7 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Form
+        form={form}
         name="watermark-pdf"
         layout="vertical"
         onFinish={handleFinish}
@@ -134,7 +133,26 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
               </Col>
               <Col span={8}>
                 <Form.Item label="Text Color" name="textColor">
-                  <ColorPicker value={textColor} onChange={setTextColor} showText presets={[{ label: 'Recommended', colors: ['#000000','#FFFFFF','#FF0000','#0000FF','#008000','#800080','#FFA500','#808080'] }]} />
+                  <ColorPicker
+                    value={textColor}
+                    onChange={(color) => setTextColor(color.toHexString())} // Convert to HEX
+                    showText
+                    presets={[
+                      {
+                        label: "Recommended",
+                        colors: [
+                          "#000000",
+                          "#FFFFFF",
+                          "#FF0000",
+                          "#0000FF",
+                          "#008000",
+                          "#800080",
+                          "#FFA500",
+                          "#808080",
+                        ],
+                      },
+                    ]}
+                  />
                 </Form.Item>
               </Col>
             </Row>
@@ -145,12 +163,12 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item label="From Page" name="fromPage" rules={[{ required: true, message: "Enter start page!" }]}>
-              <InputNumber min={1} style={{ width: '100%' }} />
+              <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item label="To Page" name="toPage" rules={[{ required: true, message: "Enter end page!" }]}>
-              <InputNumber min={1} style={{ width: '100%' }} />
+              <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
         </Row>
@@ -180,26 +198,35 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
         <Row gutter={16}>
           <Col span={12}>
             <Form.Item label="Transparency" name="transparency" help="0 = Fully transparent, 1 = Fully opaque">
-              <Slider min={0} max={1} step={0.1} marks={{ 0: '0%', 0.5: '50%', 1: '100%' }} />
+              <Slider min={0} max={1} step={0.1} marks={{ 0: "0%", 0.5: "50%", 1: "100%" }} />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item label="Rotation (degrees)" name="rotation" help="Rotation angle in degrees">
-              <InputNumber min={0} max={360} style={{ width: '100%' }} placeholder="0" />
+              <InputNumber min={0} max={360} style={{ width: "100%" }} placeholder="0" />
             </Form.Item>
           </Col>
         </Row>
 
         <Form.Item>
-          <div style={{ padding: '20px', backgroundColor: '#f6f8fa', borderRadius: '8px', border: '2px solid #1890ff', textAlign: 'center' }}>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#1890ff', marginBottom: '16px' }}>
-              <FontSizeOutlined style={{ marginRight: '8px' }} />
+          <div
+            style={{
+              padding: "20px",
+              backgroundColor: "#f6f8fa",
+              borderRadius: "8px",
+              border: "2px solid #1890ff",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: "16px", fontWeight: "bold", color: "#1890ff", marginBottom: "16px" }}>
+              <FontSizeOutlined style={{ marginRight: "8px" }} />
               Watermark Preview
             </div>
-            <div style={{ fontSize: '14px', color: '#333', marginBottom: '8px' }}>
-              Type: <strong>{watermarkType === 'text' ? 'Text' : 'Image'}</strong> • Position: <strong>Bottom Right</strong>
+            <div style={{ fontSize: "14px", color: "#333", marginBottom: "8px" }}>
+              Type: <strong>{watermarkType === "text" ? "Text" : "Image"}</strong> • Position:{" "}
+              <strong>Bottom Right</strong>
             </div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
+            <div style={{ fontSize: "12px", color: "#666" }}>
               Transparency: <strong>50%</strong> • Rotation: <strong>0°</strong> • Layer: <strong>Overlay</strong>
             </div>
           </div>
@@ -215,9 +242,26 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
         style={{ marginBottom: 24 }}
       />
 
-      <div style={{ padding: "12px 16px", borderTop: "1px solid #f0f0f0", background: "#fff", position: "sticky", bottom: 0, zIndex: 10 }}>
-        <Button type="primary" htmlType="submit" block icon={<FileTextOutlined />} size="large" disabled={!file} onClick={handleFinish}>
-          Add {watermarkType === 'text' ? 'Text' : 'Image'} Watermark to PDF
+      <div
+        style={{
+          padding: "12px 16px",
+          borderTop: "1px solid #f0f0f0",
+          background: "#fff",
+          position: "sticky",
+          bottom: 0,
+          zIndex: 10,
+        }}
+      >
+        <Button
+          type="primary"
+          htmlType="submit"
+          block
+          icon={<FileTextOutlined />}
+          size="large"
+          disabled={!file}
+          onClick={handleFinish}
+        >
+          Add {watermarkType === "text" ? "Text" : "Image"} Watermark to PDF
         </Button>
       </div>
     </div>

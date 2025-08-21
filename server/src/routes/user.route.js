@@ -17,12 +17,13 @@ router.route("/login").post(userLoginValidator(), loginUser);
 router.route("/resend-verification").post(resendEmailVerification);
 router.route("/request-password-reset").post(emailValidator(), validate, forgotPasswordRequest);
 router.route("/reset-forgot-password").post(resetForgottenPasswordValidator(), validate, resetForgottenPassword);
-router.route("/refresh-access-token").get(refreshAccessToken);
 
 //secure routes
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/change-password").post(verifyJWT, changeCurrentPasswordValidator(), validate, changeCurrentPassword);
 router.route("/current-user").get(verifyJWT, getCurrentUser);
+router.route("/refresh-access-token").get(refreshAccessToken);
+
 
 //sso
 router.route("/google").get(

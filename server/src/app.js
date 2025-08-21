@@ -49,7 +49,6 @@ app.use(session({
    } 
 }));
 
-// Initialize passport after session and environment variables are loaded
 import "./middlewares/passport.js";
 app.use(passport.initialize());
 
