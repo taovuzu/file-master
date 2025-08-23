@@ -58,34 +58,67 @@ app.use((req, res, next) => {
   next();
 });
 
-import userRouter from "./routes/user.route.js"
-import converterRouter from "./routes/converter.route.js";
-import mergePdfRouter from "./routes/mergePdf.route.js";
-import splitPdfRouter from "./routes/splitPdf.route.js";
-import compressPdfRouter from "./routes/compressPdf.route.js";
-import rotatePdfRouter from "./routes/rotatePdf.route.js";
-import pageNumbersRouter from "./routes/pageNumbers.route.js";
-import watermarkRouter from "./routes/watermark.route.js";
-// import esignPdfRouter from "./routes/esignPdf.route.js";
-import unlockPdfRouter from "./routes/unlockPdf.route.js";
-import protectPdfRouter from "./routes/protectPdf.route.js";
-import downloadFileRouter from "./routes/download.route.js";
+import userRouter from "./routes/user.route.js";
+import pdfToolsRouter from "./routes/pdfTools.route.js";
+// import uploadRouter from "./routes/upload.route.js";
+// import downloadRouter from "./routes/download.route.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 import { enforceUsageLimits } from "./middlewares/usageLimit.middleware.js";
 
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/convert", enforceUsageLimits, converterRouter); // image-to-pdf -> {PDFDocument from "pdf-lib"}, doc-to-pdf -> {libreoffice}
-// // pdf-to-ppt -> {pptxgenjs, pdf-poppler, pdf-lib}
-app.use("/api/v1/merge", enforceUsageLimits, mergePdfRouter); //  PDFMerger from "pdf-merger-js";
-app.use("/api/v1/split", enforceUsageLimits, splitPdfRouter); // { PDFDocument } from "pdf-lib";
-app.use("/api/v1/compress", enforceUsageLimits, compressPdfRouter); // ghostscript
-app.use("/api/v1/rotate", enforceUsageLimits, rotatePdfRouter); // { PDFDocument, degrees } from "pdf-lib";
-app.use("/api/v1/page-numbers", enforceUsageLimits, pageNumbersRouter); // { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-app.use("/api/v1/watermark", enforceUsageLimits, watermarkRouter); //  { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
-// app.use("/api/v1/esign", esignPdfRouter); // { PDFDocument } from 'pdf-lib';
-app.use("/api/v1/unlock", enforceUsageLimits, unlockPdfRouter); // ghostscript
-app.use("/api/v1/protect", enforceUsageLimits, protectPdfRouter); // gostscript
-app.use("/api/v1/download", downloadFileRouter);
+app.use("/api/v1/pdf-tools", enforceUsageLimits, pdfToolsRouter);
+// app.use("/api/v1/upload", uploadRouter);
+// app.use("/api/v1/download", downloadRouter);
+
+app.get('/api/v1/health/redis', async (req, res) => {
+  try {
+    const { healthCheck } = await import('./queues/pdf.queue.js');
+    const isHealthy = await healthCheck();
+    
+    if (isHealthy) {
+      res.status(200).json({
+        status: 'success',
+        message: 'Redis connection is healthy',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(503).json({
+        status: 'error',
+        message: 'Redis connection is not healthy',
+        timestamp: new Date().toISOString()
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to check Redis health',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+app.get('/api/v1/health', (req, res) => {
+  res.json({
+    status: 'success',
+    message: 'Server is running correctly',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// image-to-pdf -> { PDFDocument from "pdf-lib" }
+// doc-to-pdf -> { libreoffice }
+// pdf-to-ppt -> { pptxgenjs, pdf-poppler, pdf-lib }
+// merge -> { PDFMerger from "pdf-merger-js" }
+// split -> { PDFDocument from "pdf-lib" }
+// compress -> { ghostscript }
+// rotate -> { PDFDocument, degrees from "pdf-lib" }
+// page-numbers -> { PDFDocument, StandardFonts, rgb from "pdf-lib" }
+// watermark -> { PDFDocument, rgb, StandardFonts, degrees from "pdf-lib" }
+// esign -> { PDFDocument from "pdf-lib" }
+// unlock -> { ghostscript }
+// protect -> { ghostscript }
 
 
 app.use(errorHandler);
