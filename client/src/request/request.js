@@ -83,9 +83,19 @@ const request = {
 
   post: (p) => {
     const config = {};
+    
+    // Check if this is a file upload (FormData)
+    const isFileUpload = p.jsonData instanceof FormData;
+    
+    if (isFileUpload) {
+      // For file uploads, don't set Content-Type header - let browser set it with boundary
+      config.headers = {};
+    }
+    
     if (p.onUploadProgress) {
       config.onUploadProgress = p.onUploadProgress;
     }
+    
     return sendRequest('post', p.entity, p.jsonData, config);
   },
 

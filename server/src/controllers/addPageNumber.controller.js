@@ -51,54 +51,77 @@ const AddPageNumber = asyncHandler(async (req, res) => {
   const outputDir = path.join(process.cwd(), "public", "processed");
   const outputPath = path.join(outputDir, outputName);
 
-  let retryCount = 0;
-  const maxRetries = 3;
-  while (retryCount < maxRetries) {
-    try {
-      const isHealthy = await healthCheck();
-      if (isHealthy) break;
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-    } catch (error) {
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+  try {
+    // Check Redis health
+    let retryCount = 0;
+    const maxRetries = 3;
+    while (retryCount < maxRetries) {
+      try {
+        const isHealthy = await healthCheck();
+        if (isHealthy) break;
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      } catch (error) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
     }
+    if (retryCount > maxRetries) {
+      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+    }
+
+    // Initialize job status
+    await updateJobStatus(jobId, 'queued', 0, {
+      createdAt: new Date().toISOString(),
+      operation: 'addPageNumbers',
+      originalFileName: file.originalname,
+      pageMode,
+      position,
+      margin,
+      firstNumber,
+      fromPage,
+      toPage,
+      textStyle,
+      fontFamily,
+      fontSize
+    });
+
+    // Add job to queue
+    await pdfProcessingQueue.add('add-page-numbers', {
+      jobId,
+      operation: 'addPageNumbers',
+      inputPath,
+      outputPath,
+      pageMode,
+      firstPageCover,
+      position,
+      margin,
+      firstNumber,
+      fromPage,
+      toPage,
+      textStyle,
+      fontFamily,
+      fontSize,
+      textColor,
+      originalFileName: file.originalname
+    });
+
+  } catch (error) {
+    console.error(`Failed to queue page numbering job ${jobId}:`, error);
+    
+    // Update job status to failed if job was created
+    try {
+      await updateJobStatus(jobId, 'failed', 0, {
+        message: error.message || 'Failed to queue page numbering job',
+        error: error.stack,
+        failedAt: new Date().toISOString()
+      });
+    } catch (redisError) {
+      console.error(`Failed to update job status for ${jobId}:`, redisError);
+    }
+    
+    throw error;
   }
-  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
-
-  await updateJobStatus(jobId, 'queued', 0, {
-    createdAt: new Date().toISOString(),
-    operation: 'addPageNumbers',
-    originalFileName: file.originalname,
-    pageMode,
-    position,
-    margin,
-    firstNumber,
-    fromPage,
-    toPage,
-    textStyle,
-    fontFamily,
-    fontSize
-  });
-
-  await pdfProcessingQueue.add('add-page-numbers', {
-    jobId,
-    operation: 'addPageNumbers',
-    inputPath,
-    outputPath,
-    pageMode,
-    firstPageCover,
-    position,
-    margin,
-    firstNumber,
-    fromPage,
-    toPage,
-    textStyle,
-    fontFamily,
-    fontSize,
-    textColor,
-    originalFileName: file.originalname
-  });
 
   return res.status(200).json({
     success: true,

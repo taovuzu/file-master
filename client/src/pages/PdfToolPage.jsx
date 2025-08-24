@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   Button,
@@ -14,6 +15,7 @@ import {
   DownloadOutlined,
   ReloadOutlined,
   FileTextOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import { usePdfTools } from "@/hooks/usePdfTools";
 import usePdfPreview from "@/hooks/usePdfPreview";
@@ -37,6 +39,7 @@ const PdfToolPage = ({
   requirements = null,
   children,
 }) => {
+  const navigate = useNavigate();
   const [fileList, setFileList] = useState([]);
   const [formValues, setFormValues] = useState({});
   const [rotationMap, setRotationMap] = useState({ byId: {}, byName: {} });
@@ -47,14 +50,21 @@ const PdfToolPage = ({
     status,
     currentStep,
     error: progressError,
+    isPolling,
+    pollingAttempts,
+    maxPollingAttempts,
     startProgress,
     updateProgress,
     setProgressError,
+    startPolling,
+    updatePollingAttempts,
+    setPollingFailed,
     resetProgress,
     abort,
     getElapsedTime,
     formatTime,
     isAborted,
+    abortSignal,
   } = useProgress();
 
   const dispatch = useDispatch();
@@ -68,8 +78,10 @@ const PdfToolPage = ({
     loading,
     processedFile,
     error: hookError,
+    jobId,
     processPdfTool,
     downloadProcessedFile,
+    checkJobStatus,
     reset,
     validateFiles,
   } = usePdfTools(toolType);
@@ -145,51 +157,116 @@ const PdfToolPage = ({
           }
         }
       }
+
       console.log(processedInput, values, toolType);
+      console.log('Debug - Files being processed:', {
+        processedInput,
+        processedInputType: typeof processedInput,
+        isArray: Array.isArray(processedInput),
+        fileList,
+        values,
+        toolType
+      });
       updateProgress(15, "Uploading files...");
+      
       const result = await processPdfTool(
         processedInput,
         values,
-        updateProgress
+        updateProgress,
+        () => startPolling(150), // Start polling with max 150 attempts
+        abortSignal // Pass the abort signal to stop polling on errors
       );
+
+      // Handle error case from usePdfTools
+      if (!result.success) {
+        console.error("Processing failed:", result.error);
+        setProgressError(result.error || "Processing failed");
+        return;
+      }
 
       if (result.success) {
         const resultData = result.data;
+        
+        // Add to history with better metadata
         dispatch(
           addToHistory({
             operation: toolType,
             files: fileList.map((f) => f.name),
             result: resultData.fileUrl,
             options: values,
+            jobId: jobId,
+            originalFileName: resultData.originalFileName,
+            timestamp: new Date().toISOString(),
           })
         );
 
-        // Redirect to frontend download page with file param, avoid exposing backend URL
-        updateProgress(100, "Processing completed");
+        // Show completion message
+        updateProgress(100, "Processing completed successfully!");
+        
+        // Check if there are any errors before proceeding with download
+        if (resultData.error) {
+          console.error("API returned error:", resultData.error);
+          setProgressError(resultData.error);
+          return; // Don't proceed with download if there's an error
+        }
+        
+        // Provide download information and redirect to download page
         if (resultData.file || resultData.fileUrl) {
-          const serverFile =
-            resultData.file ||
-            (resultData.fileUrl
-              ? decodeURIComponent(resultData.fileUrl.split("/").pop() || "")
-              : "");
-          const extMatch =
-            serverFile && serverFile.includes(".")
-              ? serverFile.substring(serverFile.lastIndexOf("."))
-              : ".pdf";
-          const suggestedName = `processed-${toolType}-${Date.now()}${extMatch}`;
-          const params = new URLSearchParams();
-          if (resultData.file) params.set("file", resultData.file);
-          else params.set("url", resultData.fileUrl);
-          params.set("name", suggestedName);
-          console.log(`http://localhost:8080/processed/${resultData.file}`);
-          // window.location.assign(`/download?${params.toString()}`);
+          const serverFile = resultData.file || 
+            (resultData.fileUrl ? decodeURIComponent(resultData.fileUrl.split("/").pop() || "") : "");
+          
+          const extMatch = serverFile && serverFile.includes(".")
+            ? serverFile.substring(serverFile.lastIndexOf("."))
+            : ".pdf";
+          
+          const suggestedName = resultData.originalFileName || 
+            `processed-${toolType}-${Date.now()}${extMatch}`;
+
+          // Show success notification
+          notify.success(
+            `Your ${toolType} operation completed successfully! Redirecting to download page...`,
+            'operation-complete'
+          );
+
+          console.log(`File ready for download: ${resultData.fileUrl}`);
+          
+          // Wait a moment for the user to see the success message, then redirect
+          setTimeout(() => {
+            // Update progress to show redirecting state
+            updateProgress(100, "Redirecting to download page...");
+            
+            // Navigate to download page with file information
+            const downloadParams = new URLSearchParams({
+              file: resultData.file || '',
+              url: resultData.fileUrl || '',
+              name: resultData.originalFileName || suggestedName,
+              operation: toolType
+            });
+            
+            navigate(`/download?${downloadParams.toString()}`);
+          }, 1500); // 1.5 second delay to show success message
         } else {
           setProgressError(resultData.error || "Processing failed");
         }
       }
     } catch (err) {
       console.error("Processing error:", err);
-      setProgressError(err.message || "An error occurred during processing");
+      
+      // Handle different types of errors
+      let errorMessage = err.message || "An error occurred during processing";
+      
+      if (errorMessage.includes('Job polling timeout exceeded')) {
+        errorMessage = 'Processing took too long and timed out. Please try again with a smaller file or contact support.';
+      } else if (errorMessage.includes('Unable to check job status')) {
+        errorMessage = 'Connection issue detected. Please check your internet connection and try again.';
+      } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network Error')) {
+        errorMessage = 'Network connection failed. Please check your internet connection and try again.';
+      } else if (errorMessage.includes('API returned error')) {
+        errorMessage = 'Server processing failed. Please try again or contact support if the issue persists.';
+      }
+      
+      // Set error and prevent any download attempts
+      setProgressError(errorMessage);
     }
   };
 
@@ -227,6 +304,7 @@ const PdfToolPage = ({
               acceptedTypes={requirements.acceptedTypes || ["application/pdf"]}
             />
           </div>
+          
           {/* Children */}
           {children && (
             <>
@@ -253,6 +331,7 @@ const PdfToolPage = ({
           />
         )}
       </div>
+      
       <ProgressModal
         visible={status !== "idle"}
         progress={progress}
@@ -271,7 +350,11 @@ const PdfToolPage = ({
         formatTime={formatTime}
         toolType={toolType}
         fileName={fileList[0]?.name || "File"}
+        isPolling={isPolling}
+        pollingAttempts={pollingAttempts}
+        maxPollingAttempts={maxPollingAttempts}
       />
+      
       {(!fileList || fileList.length === 0) && <Footer />}
     </>
   );

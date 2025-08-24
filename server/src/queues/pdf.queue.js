@@ -93,15 +93,37 @@ async function updateJobStatus(jobId, status, progress, additionalData = {}) {
   try {
     if (!(await healthCheck())) throw new Error('Redis not healthy');
 
-    const jobData = {
+    // Only store essential job information to prevent Redis encoding issues
+    const essentialJobData = {
       status,
       progress: progress || 0,
-      updatedAt: new Date().toISOString(),
-      ...additionalData
+      updatedAt: new Date().toISOString()
     };
 
+    // Add only essential additional data (avoid large objects)
+    if (additionalData) {
+      // Only include specific essential fields
+      if (additionalData.outputFilePath) essentialJobData.outputFilePath = additionalData.outputFilePath;
+      if (additionalData.message) essentialJobData.message = additionalData.message;
+      if (additionalData.operation) essentialJobData.operation = additionalData.operation;
+      if (additionalData.originalFileName) essentialJobData.originalFileName = additionalData.originalFileName;
+      if (additionalData.completedAt) essentialJobData.completedAt = additionalData.completedAt;
+      if (additionalData.numberOfPages) essentialJobData.numberOfPages = additionalData.numberOfPages;
+      if (additionalData.filesCount) essentialJobData.filesCount = additionalData.filesCount;
+      if (additionalData.error) essentialJobData.error = additionalData.error;
+      if (additionalData.failedAt) essentialJobData.failedAt = additionalData.failedAt;
+    }
+
     // Use hSet for better structure and add expiration
-    await redisClient.hSet(`job:${jobId}`, jobData);
+    // Ensure all values are strings or numbers for Redis compatibility
+    const sanitizedJobData = {};
+    Object.entries(essentialJobData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        sanitizedJobData[key] = typeof value === 'object' ? JSON.stringify(value) : String(value);
+      }
+    });
+    
+    await redisClient.hSet(`job:${jobId}`, sanitizedJobData);
     await redisClient.expire(`job:${jobId}`, 86400); // 24 hours
   } catch (error) {
     console.error('Failed to update job status:', error);

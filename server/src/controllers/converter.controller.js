@@ -20,36 +20,56 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
   const outputDir = path.join(process.cwd(), "public", "processed");
   const outputPath = path.join(outputDir, outputName);
 
-  let retryCount = 0;
-  const maxRetries = 3;
-  while (retryCount < maxRetries) {
-    try {
-      const isHealthy = await healthCheck();
-      if (isHealthy) break;
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-    } catch (error) {
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+  try {
+    let retryCount = 0;
+    const maxRetries = 3;
+    while (retryCount < maxRetries) {
+      try {
+        const isHealthy = await healthCheck();
+        if (isHealthy) break;
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      } catch (error) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
     }
+    if (retryCount > maxRetries) {
+      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+    }
+
+    await updateJobStatus(jobId, 'queued', 0, {
+      createdAt: new Date().toISOString(),
+      operation: 'convertDocToPdf',
+      originalFileName: file.originalname
+    });
+
+    await pdfProcessingQueue.add('convert-doc-to-pdf', {
+      jobId,
+      operation: 'convertDocToPdf',
+      inputPath,
+      outputName,
+      outputDir,
+      outputPath,
+      originalFileName: file.originalname
+    });
+
+  } catch (error) {
+    console.error(`Failed to queue doc to pdf conversion job ${jobId}:`, error);
+    
+    // Update job status to failed if job was created
+    try {
+      await updateJobStatus(jobId, 'failed', 0, {
+        message: error.message || 'Failed to queue doc to pdf conversion job',
+        error: error.stack,
+        failedAt: new Date().toISOString()
+      });
+    } catch (redisError) {
+      console.error(`Failed to update job status for ${jobId}:`, redisError);
+    }
+    
+    throw error;
   }
-  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
-
-  await updateJobStatus(jobId, 'queued', 0, {
-    createdAt: new Date().toISOString(),
-    operation: 'convertDocToPdf',
-    originalFileName: file.originalname
-  });
-
-  await pdfProcessingQueue.add('convert-doc-to-pdf', {
-    jobId,
-    operation: 'convertDocToPdf',
-    inputPath,
-    outputName,
-    outputDir,
-    outputPath,
-    originalFileName: file.originalname
-  });
 
   return res.status(200).json({
     success: true,
@@ -87,42 +107,62 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
   const outputDir = path.join(process.cwd(), "public", "processed");
   const outputPath = path.join(outputDir, outputName);
 
-  let retryCount = 0;
-  const maxRetries = 3;
-  while (retryCount < maxRetries) {
-    try {
-      const isHealthy = await healthCheck();
-      if (isHealthy) break;
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-    } catch (error) {
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+  try {
+    let retryCount = 0;
+    const maxRetries = 3;
+    while (retryCount < maxRetries) {
+      try {
+        const isHealthy = await healthCheck();
+        if (isHealthy) break;
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      } catch (error) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
     }
+    if (retryCount > maxRetries) {
+      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+    }
+
+    await updateJobStatus(jobId, 'queued', 0, {
+      createdAt: new Date().toISOString(),
+      operation: 'convertImagesToPdf',
+      originalFileNames: files.map(f => f.originalname),
+      orientation,
+      pagetype,
+      margin,
+      mergeImagesInOnePdf
+    });
+
+    await pdfProcessingQueue.add('convert-images-to-pdf', {
+      jobId,
+      operation: 'convertImagesToPdf',
+      files,
+      outputPath,
+      orientation,
+      pagetype,
+      margin,
+      mergeImagesInOnePdf,
+      originalFileNames: files.map(f => f.originalname)
+    });
+
+  } catch (error) {
+    console.error(`Failed to queue images to pdf conversion job ${jobId}:`, error);
+    
+    // Update job status to failed if job was created
+    try {
+      await updateJobStatus(jobId, 'failed', 0, {
+        message: error.message || 'Failed to queue images to pdf conversion job',
+        error: error.stack,
+        failedAt: new Date().toISOString()
+      });
+    } catch (redisError) {
+      console.error(`Failed to update job status for ${jobId}:`, redisError);
+    }
+    
+    throw error;
   }
-  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
-
-  await updateJobStatus(jobId, 'queued', 0, {
-    createdAt: new Date().toISOString(),
-    operation: 'convertImagesToPdf',
-    originalFileNames: files.map(f => f.originalname),
-    orientation,
-    pagetype,
-    margin,
-    mergeImagesInOnePdf
-  });
-
-  await pdfProcessingQueue.add('convert-images-to-pdf', {
-    jobId,
-    operation: 'convertImagesToPdf',
-    files,
-    outputPath,
-    orientation,
-    pagetype,
-    margin,
-    mergeImagesInOnePdf,
-    originalFileNames: files.map(f => f.originalname)
-  });
 
   return res.status(200).json({
     success: true,
@@ -158,34 +198,54 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
   const outputDir = path.join(process.cwd(), "public", "processed");
   const outputPath = path.join(outputDir, outputName);
 
-  let retryCount = 0;
-  const maxRetries = 3;
-  while (retryCount < maxRetries) {
-    try {
-      const isHealthy = await healthCheck();
-      if (isHealthy) break;
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-    } catch (error) {
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+  try {
+    let retryCount = 0;
+    const maxRetries = 3;
+    while (retryCount < maxRetries) {
+      try {
+        const isHealthy = await healthCheck();
+        if (isHealthy) break;
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      } catch (error) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
     }
+    if (retryCount > maxRetries) {
+      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+    }
+
+    await updateJobStatus(jobId, 'queued', 0, {
+      createdAt: new Date().toISOString(),
+      operation: 'convertPdfToDoc',
+      originalFileName: file.originalname
+    });
+
+    await pdfProcessingQueue.add('convert-pdf-to-doc', {
+      jobId,
+      operation: 'convertPdfToDoc',
+      inputPath,
+      outputPath,
+      originalFileName: file.originalname
+    });
+
+  } catch (error) {
+    console.error(`Failed to queue pdf to doc conversion job ${jobId}:`, error);
+    
+    // Update job status to failed if job was created
+    try {
+      await updateJobStatus(jobId, 'failed', 0, {
+        message: error.message || 'Failed to queue pdf to doc conversion job',
+        error: error.stack,
+        failedAt: new Date().toISOString()
+      });
+    } catch (redisError) {
+      console.error(`Failed to update job status for ${jobId}:`, redisError);
+    }
+    
+    throw error;
   }
-  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
-
-  await updateJobStatus(jobId, 'queued', 0, {
-    createdAt: new Date().toISOString(),
-    operation: 'convertPdfToDoc',
-    originalFileName: file.originalname
-  });
-
-  await pdfProcessingQueue.add('convert-pdf-to-doc', {
-    jobId,
-    operation: 'convertPdfToDoc',
-    inputPath,
-    outputPath,
-    originalFileName: file.originalname
-  });
 
   return res.status(200).json({
     success: true,
@@ -217,34 +277,54 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
   const outputDir = path.join(process.cwd(), "public", "processed");
   const outputPath = path.join(outputDir, outputName);
 
-  let retryCount = 0;
-  const maxRetries = 3;
-  while (retryCount < maxRetries) {
-    try {
-      const isHealthy = await healthCheck();
-      if (isHealthy) break;
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-    } catch (error) {
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+  try {
+    let retryCount = 0;
+    const maxRetries = 3;
+    while (retryCount < maxRetries) {
+      try {
+        const isHealthy = await healthCheck();
+        if (isHealthy) break;
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      } catch (error) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
     }
+    if (retryCount > maxRetries) {
+      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+    }
+
+    await updateJobStatus(jobId, 'queued', 0, {
+      createdAt: new Date().toISOString(),
+      operation: 'convertPdfToPpt',
+      originalFileName: file.originalname
+    });
+
+    await pdfProcessingQueue.add('convert-pdf-to-ppt', {
+      jobId,
+      operation: 'convertPdfToPpt',
+      inputPath,
+      outputPath,
+      originalFileName: file.originalname
+    });
+
+  } catch (error) {
+    console.error(`Failed to queue pdf to ppt conversion job ${jobId}:`, error);
+    
+    // Update job status to failed if job was created
+    try {
+      await updateJobStatus(jobId, 'failed', 0, {
+        message: error.message || 'Failed to queue pdf to ppt conversion job',
+        error: error.stack,
+        failedAt: new Date().toISOString()
+      });
+    } catch (redisError) {
+      console.error(`Failed to update job status for ${jobId}:`, redisError);
+    }
+    
+    throw error;
   }
-  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
-
-  await updateJobStatus(jobId, 'queued', 0, {
-    createdAt: new Date().toISOString(),
-    operation: 'convertPdfToPpt',
-    originalFileName: file.originalname
-  });
-
-  await pdfProcessingQueue.add('convert-pdf-to-ppt', {
-    jobId,
-    operation: 'convertPdfToPpt',
-    inputPath,
-    outputPath,
-    originalFileName: file.originalname
-  });
 
   return res.status(200).json({
     success: true,

@@ -10,11 +10,12 @@ import { rotatePdf } from "../controllers/rotatePdf.controller.js";
 import { splitPdf } from "../controllers/splitPdf.controller.js";
 import { protectPdf } from "../controllers/protectPdf.controller.js";
 import { unlockPdf } from "../controllers/unlockPdf.controller.js";
+import { ApiError } from "../utils/ApiError.js";
 
 const router = Router();
 
-router.post("/compress", upload.single("PDFFILE"), compressPdf);
-router.post("/merge", upload.array("PDFFILES"), mergePdfFiles);
+router.post("/compress", upload.single("PDFFILE") ,compressPdf);
+router.post("/merge", upload.array("PDFFILE"), mergePdfFiles);
 router.post("/watermark/text", upload.single("PDFFILE"), addTextWatermark);
 // router.post("/watermark/image", upload.fields([
 //   { name: 'PDFFILE', maxCount: 1 },

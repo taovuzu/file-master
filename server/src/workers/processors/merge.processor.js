@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import PDFMerger from "pdf-merger-js";
 import { updateJobStatus } from '../../queues/pdf.queue.js';
+import { ApiError } from '../../utils/ApiError.js';
 
 export async function mergeProcessor(jobId, jobData) {
   const { inputPaths, outputPath, originalFileNames } = jobData;
@@ -55,7 +56,7 @@ export async function mergeProcessor(jobId, jobData) {
       }
     }
 
-    // Update Redis with final job data including filename
+    throw new ApiError(500, "");
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
       message: `Successfully merged ${inputPaths.length} PDF files`,
@@ -74,6 +75,14 @@ export async function mergeProcessor(jobId, jobData) {
 
   } catch (error) {
     console.error(`Merge failed for job ${jobId}:`, error);
+    
+    // Update job status with error information before re-throwing
+    await updateJobStatus(jobId, 'failed', 0, {
+      message: error.message || 'Merge processing failed',
+      error: error.stack,
+      failedAt: new Date().toISOString()
+    });
+    
     throw error;
   }
 }

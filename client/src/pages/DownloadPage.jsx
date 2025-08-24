@@ -18,6 +18,8 @@ const DownloadPage = () => {
     const file = params.get('file');
     const url = params.get('url');
     const name = params.get('name');
+    const operation = params.get('operation');
+    
     if (file || url) {
       // Derive a nice filename using server-provided file name or url
       const deriveName = () => {
@@ -32,7 +34,12 @@ const DownloadPage = () => {
         }
       };
 
-      setReadyFile({ file: file || undefined, url: url || undefined, name: name || deriveName() });
+      setReadyFile({ 
+        file: file || undefined, 
+        url: url || undefined, 
+        name: name || deriveName(),
+        operation: operation || undefined
+      });
       // Clean query params to avoid stale state if user refreshes later
       window.history.replaceState({}, '', window.location.pathname);
     }
@@ -66,6 +73,11 @@ const DownloadPage = () => {
               <Space direction="vertical" size="middle" style={{ width: '100%', alignItems: 'center' }}>
                 <FileDoneOutlined style={{ fontSize: 40, color: '#52c41a' }} />
                 <Title level={4} style={{ margin: 0 }}>Your file is ready</Title>
+                {readyFile.operation && (
+                  <Text type="secondary" style={{ fontSize: '14px', textTransform: 'capitalize' }}>
+                    {readyFile.operation.replace('-', ' ')} operation completed successfully
+                  </Text>
+                )}
                 <Text type="secondary">{readyFile.name}</Text>
                 <Space size="middle">
                   <Button
@@ -83,6 +95,14 @@ const DownloadPage = () => {
                   >
                     Go to Home
                   </Button>
+                  {readyFile.operation && (
+                    <Button
+                      size="large"
+                      onClick={() => window.location.assign(`/${readyFile.operation}`)}
+                    >
+                      Process Another {readyFile.operation.replace('-', ' ')}
+                    </Button>
+                  )}
                 </Space>
               </Space>
             </Card>

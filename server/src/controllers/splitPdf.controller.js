@@ -30,38 +30,59 @@ const splitPdf = asyncHandler(async (req, res) => {
   const outputDir = path.join(process.cwd(), "public", "processed");
   const outputPath = path.join(outputDir, outputName);
 
-  let retryCount = 0;
-  const maxRetries = 3;
-  while (retryCount < maxRetries) {
-    try {
-      const isHealthy = await healthCheck();
-      if (isHealthy) break;
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-    } catch (error) {
-      retryCount++;
-      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+  try {
+    // Check Redis health
+    let retryCount = 0;
+    const maxRetries = 3;
+    while (retryCount < maxRetries) {
+      try {
+        const isHealthy = await healthCheck();
+        if (isHealthy) break;
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      } catch (error) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
     }
+    if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+
+    // Initialize job status
+    await updateJobStatus(jobId, 'queued', 0, {
+      createdAt: new Date().toISOString(),
+      operation: 'split',
+      originalFileName: file.originalname,
+      ranges
+    });
+
+    // Add job to queue
+    await pdfProcessingQueue.add('split-pdf', {
+      jobId,
+      operation: 'split',
+      inputPath,
+      outputPath,
+      outputDir,
+      name,
+      ranges,
+      originalFileName: file.originalname
+    });
+
+  } catch (error) {
+    console.error(`Failed to queue split job ${jobId}:`, error);
+    
+    // Update job status to failed if job was created
+    try {
+      await updateJobStatus(jobId, 'failed', 0, {
+        message: error.message || 'Failed to queue split job',
+        error: error.stack,
+        failedAt: new Date().toISOString()
+      });
+    } catch (redisError) {
+      console.error(`Failed to update job status for ${jobId}:`, redisError);
+    }
+    
+    throw error;
   }
-  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
-
-  await updateJobStatus(jobId, 'queued', 0, {
-    createdAt: new Date().toISOString(),
-    operation: 'split',
-    originalFileName: file.originalname,
-    ranges
-  });
-
-  await pdfProcessingQueue.add('split-pdf', {
-    jobId,
-    operation: 'split',
-    inputPath,
-    outputPath,
-    outputDir,
-    name,
-    ranges,
-    originalFileName: file.originalname
-  });
 
   return res.status(200).json({
     success: true,
