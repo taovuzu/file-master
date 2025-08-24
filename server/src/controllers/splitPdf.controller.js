@@ -9,7 +9,7 @@ import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.
 const splitPdf = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError(404, "File could not be found on server");
+    throw new ApiError.notFound("File could not be found on server");
   }
 
   let { ranges } = req.body;
@@ -19,7 +19,7 @@ const splitPdf = asyncHandler(async (req, res) => {
       ranges = JSON.parse(ranges);
       ranges = ranges.ranges;
     } catch (err) {
-      throw new ApiError(400, 'Invalid ranges format');
+      throw new ApiError.badRequest('Invalid ranges format');
     }
   }
 
@@ -43,9 +43,15 @@ const splitPdf = asyncHandler(async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
   }
-  if (retryCount > maxRetries) throw new ApiError(500, "Unable to establish Redis connection");
+  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
 
-  await updateJobStatus(jobId, 'queued', 0);
+  await updateJobStatus(jobId, 'queued', 0, {
+    createdAt: new Date().toISOString(),
+    operation: 'split',
+    originalFileName: file.originalname,
+    ranges
+  });
+
   await pdfProcessingQueue.add('split-pdf', {
     jobId,
     operation: 'split',
@@ -57,14 +63,22 @@ const splitPdf = asyncHandler(async (req, res) => {
     originalFileName: file.originalname
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, "PDF split job queued successfully", {
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: "PDF split job queued successfully",
+    data: {
       jobId,
       message: "Your PDF split job has been queued. Use the job ID to track progress.",
-      statusUrl: `/api/v1/pdf-tools/status/${jobId}`,
-      downloadUrl: `/api/v1/pdf-tools/download/${jobId}`
-    })
-  );
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'split',
+      originalFileName: file.originalname,
+      ranges
+    },
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl
+  });
 });
 
 export { splitPdf };

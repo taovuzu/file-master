@@ -10,16 +10,30 @@ router.get("/redis", asyncHandler(async (req, res) => {
 
   if (isHealthy) {
     return res.status(200).json({
-      status: "success",
+      success: true,
+      statusCode: 200,
       message: "Redis connection is healthy",
+      data: {
+        redis: true,
+        timestamp: new Date().toISOString()
+      },
       timestamp: new Date().toISOString(),
+      path: req.originalUrl
     });
   }
 
   res.status(503).json({
-    status: "error",
+    success: false,
+    statusCode: 503,
     message: "Redis connection is not healthy",
+    code: "REDIS_UNHEALTHY",
+    errors: [],
+    data: {
+      redis: false,
+      timestamp: new Date().toISOString()
+    },
     timestamp: new Date().toISOString(),
+    path: req.originalUrl
   });
 }));
 
@@ -28,16 +42,30 @@ router.get("/mongodb", asyncHandler(async (req, res) => {
 
   if (mongoStatus) {
     return res.status(200).json({
-      status: "success",
+      success: true,
+      statusCode: 200,
       message: "MongoDB connection is healthy",
+      data: {
+        mongodb: true,
+        timestamp: new Date().toISOString()
+      },
       timestamp: new Date().toISOString(),
+      path: req.originalUrl
     });
   }
 
   res.status(503).json({
-    status: "error",
+    success: false,
+    statusCode: 503,
     message: "MongoDB connection is not healthy",
+    code: "MONGODB_UNHEALTHY",
+    errors: [],
+    data: {
+      mongodb: false,
+      timestamp: new Date().toISOString()
+    },
     timestamp: new Date().toISOString(),
+    path: req.originalUrl
   });
 }));
 
@@ -48,25 +76,36 @@ router.get("/all", asyncHandler(async (req, res) => {
   const allHealthy = redisHealthy && mongoHealthy;
 
   res.status(allHealthy ? 200 : 503).json({
-    status: allHealthy ? "success" : "error",
+    success: allHealthy,
+    statusCode: allHealthy ? 200 : 503,
     message: allHealthy ? "All systems are healthy" : "Some systems are unhealthy",
+    code: allHealthy ? "ALL_SYSTEMS_HEALTHY" : "SYSTEMS_UNHEALTHY",
+    errors: allHealthy ? [] : ["Some systems are not responding"],
+    data: {
+      environment: process.env.NODE_ENV || "development",
+      systems: {
+        server: true,
+        redis: redisHealthy,
+        mongodb: mongoHealthy,
+      },
+      timestamp: new Date().toISOString()
+    },
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
-    systems: {
-      server: true,
-      redis: redisHealthy,
-      mongodb: mongoHealthy,
-    }
+    path: req.originalUrl
   });
 }));
 
-
 router.get("/", asyncHandler(async (req, res) => {
   res.json({
-    status: "success",
+    success: true,
+    statusCode: 200,
     message: "Server is running correctly",
+    data: {
+      environment: process.env.NODE_ENV || "development",
+      timestamp: new Date().toISOString()
+    },
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
+    path: req.originalUrl
   });
 }));
 

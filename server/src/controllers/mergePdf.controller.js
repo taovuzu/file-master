@@ -9,7 +9,7 @@ import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.
 const mergePdfFiles = asyncHandler(async (req, res) => {
   const files = req.files; 
   if (!files || files.length === 0) {
-    throw new ApiError(404, "No files were uploaded.");
+    throw new ApiError.notFound("No files were uploaded.");
   }
 
   const jobId = uuidv4();
@@ -36,10 +36,15 @@ const mergePdfFiles = asyncHandler(async (req, res) => {
   }
 
   if (retryCount > maxRetries) {
-    throw new ApiError(500, "Unable to establish Redis connection");
+    throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
   }
 
-  await updateJobStatus(jobId, 'queued', 0);
+  await updateJobStatus(jobId, 'queued', 0, {
+    createdAt: new Date().toISOString(),
+    operation: 'merge',
+    filesCount: files.length,
+    originalFileNames
+  });
 
   await pdfProcessingQueue.add('merge-pdfs', {
     jobId,
@@ -49,16 +54,22 @@ const mergePdfFiles = asyncHandler(async (req, res) => {
     originalFileNames
   });
 
-
-  return res.status(200).json(
-    new ApiResponse(200, "PDF merge job queued successfully", {
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: "PDF merge job queued successfully",
+    data: {
       jobId,
       message: "Your PDF merge job has been queued. Use the job ID to track progress.",
-      statusUrl: `/api/v1/pdf-tools/status/${jobId}`,
-      downloadUrl: `/api/v1/pdf-tools/download/${jobId}`,
-      filesCount: files.length
-    })
-  );
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'merge',
+      filesCount: files.length,
+      originalFileNames
+    },
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl
+  });
 });
 
 export { mergePdfFiles };

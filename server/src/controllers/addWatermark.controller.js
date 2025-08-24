@@ -10,7 +10,7 @@ import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.
 
 const addTextWatermark = asyncHandler(async (req, res) => {
   const file = req.file;
-  if (!file) throw new ApiError(404, "File could not be found on server");
+  if (!file) throw new ApiError.notFound("File could not be found on server");
 
   let {
     text,
@@ -46,9 +46,21 @@ const addTextWatermark = asyncHandler(async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
   }
-  if (retryCount > maxRetries) throw new ApiError(500, "Unable to establish Redis connection");
+  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
 
-  await updateJobStatus(jobId, 'queued', 0);
+  await updateJobStatus(jobId, 'queued', 0, {
+    createdAt: new Date().toISOString(),
+    operation: 'addTextWatermark',
+    originalFileName: file.originalname,
+    text,
+    position,
+    transparency,
+    rotation,
+    fromPage,
+    toPage,
+    fontFamily,
+    fontSize
+  });
 
   await pdfProcessingQueue.add('add-text-watermark', {
     jobId,
@@ -68,19 +80,34 @@ const addTextWatermark = asyncHandler(async (req, res) => {
     originalFileName: file.originalname
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, "PDF text watermark job queued successfully", {
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: "PDF text watermark job queued successfully",
+    data: {
       jobId,
       message: "Your PDF watermark job has been queued. Use the job ID to track progress.",
-      statusUrl: `/api/v1/pdf-tools/status/${jobId}`,
-      downloadUrl: `/api/v1/pdf-tools/download/${jobId}`
-    })
-  );
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'addTextWatermark',
+      originalFileName: file.originalname,
+      text,
+      position,
+      transparency,
+      rotation,
+      fromPage,
+      toPage,
+      fontFamily,
+      fontSize
+    },
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl
+  });
 });
 
 const addImageWatermark = asyncHandler(async (req, res) => {
   const { pdfFile, imageFile } = req.files;
-  if (!pdfFile || !imageFile) throw new ApiError(404, "Both PDF and image files are required");
+  if (!pdfFile || !imageFile) throw new ApiError.notFound("Both PDF and image files are required");
 
   let {
     position = "bottom-right",
@@ -128,9 +155,19 @@ const addImageWatermark = asyncHandler(async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
   }
-  if (retryCount > maxRetries) throw new ApiError(500, "Unable to establish Redis connection");
+  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
 
-  await updateJobStatus(jobId, 'queued', 0);
+  await updateJobStatus(jobId, 'queued', 0, {
+    createdAt: new Date().toISOString(),
+    operation: 'addImageWatermark',
+    originalFileName: pdfFile.originalname,
+    position,
+    transparency,
+    rotation,
+    fromPage,
+    toPage,
+    scale
+  });
 
   await pdfProcessingQueue.add('add-image-watermark', {
     jobId,
@@ -148,14 +185,27 @@ const addImageWatermark = asyncHandler(async (req, res) => {
     originalFileName: pdfFile.originalname
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, "PDF image watermark job queued successfully", {
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: "PDF image watermark job queued successfully",
+    data: {
       jobId,
       message: "Your PDF image watermark job has been queued. Use the job ID to track progress.",
-      statusUrl: `/api/v1/pdf-tools/status/${jobId}`,
-      downloadUrl: `/api/v1/pdf-tools/download/${jobId}`
-    })
-  );
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'addImageWatermark',
+      originalFileName: pdfFile.originalname,
+      position,
+      transparency,
+      rotation,
+      fromPage,
+      toPage,
+      scale
+    },
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl
+  });
 });
 
 export { addTextWatermark, addImageWatermark };

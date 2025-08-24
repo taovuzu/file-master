@@ -38,7 +38,9 @@ export async function addPageNumbersProcessor(jobId, jobData) {
 
   try {
 
-    await updateJobStatus(jobId, 'processing', 20);
+    await updateJobStatus(jobId, 'processing', 20, {
+      message: 'Starting page numbers addition process...'
+    });
     firstPageCover = firstPageCover === true || firstPageCover === "true";
     firstNumber = isNaN(Number(firstNumber)) ? 1 : Number(firstNumber);
     position = position || "bottom-right";
@@ -60,7 +62,9 @@ export async function addPageNumbersProcessor(jobId, jobData) {
     const pdfBytes = await fs.readFile(inputPath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
 
-    await updateJobStatus(jobId, 'processing', 40);
+    await updateJobStatus(jobId, 'processing', 40, {
+      message: 'Analyzing PDF structure...'
+    });
 
     const numberOfPages = pdfDoc.getPages().length;
 
@@ -72,7 +76,7 @@ export async function addPageNumbersProcessor(jobId, jobData) {
     const toPageIndex = Math.min(toPageNum - 1, numberOfPages - 1);
 
     if (fromPageIndex > toPageIndex) {
-      throw new ApiError(400, "fromPage cannot be greater than toPage");
+      throw new Error("fromPage cannot be greater than toPage");
     }
 
     const fontSizeValue = fontSizes[fontSize] || fontSizes.normal;
@@ -97,8 +101,12 @@ export async function addPageNumbersProcessor(jobId, jobData) {
 
     const pages = pdfDoc.getPages();
     if (!pages || pages.length === 0) {
-      throw new ApiError(400, "PDF has no pages");
+      throw new Error("PDF has no pages");
     }
+
+    await updateJobStatus(jobId, 'processing', 50, {
+      message: 'Adding page numbers to PDF pages...'
+    });
 
     for (let i = fromPageIndex; i <= toPageIndex; i++) {
       if (firstPageCover && i === 0) {
@@ -162,10 +170,14 @@ export async function addPageNumbersProcessor(jobId, jobData) {
         color: rgb(...textColor),
       });
       const progress = 50 + (i * 30 / numberOfPages);
-      await updateJobStatus(jobId, 'processing', Math.round(progress));
+      await updateJobStatus(jobId, 'processing', Math.round(progress), {
+        message: `Processing page ${i + 1} of ${numberOfPages}...`
+      });
     }
 
-    await updateJobStatus(jobId, 'processing', 90);
+    await updateJobStatus(jobId, 'processing', 90, {
+      message: 'Saving PDF with page numbers...'
+    });
 
     const numberedPdfBytes = await pdfDoc.save();
     await fs.writeFile(outputPath, numberedPdfBytes);
@@ -175,6 +187,17 @@ export async function addPageNumbersProcessor(jobId, jobData) {
     } catch (unlinkError) {
       console.error(`Error deleting input file ${inputPath}:`, unlinkError);
     }
+
+    // Update Redis with final job data including filename
+    await updateJobStatus(jobId, 'completed', 100, {
+      outputFilePath: outputPath,
+      message: `Successfully added page numbers to ${numberOfPages} pages`,
+      completedAt: new Date().toISOString(),
+      originalFileName: originalFileName,
+      operation: 'addPageNumbers',
+      numberOfPages: numberOfPages,
+      options: { fontSize, position, fromPageIndex, color: 'black' }
+    });
 
     return {
       outputPath,

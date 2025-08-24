@@ -33,7 +33,9 @@ export async function addWatermarkProcessor(jobId, jobData) {
   } = jobData;
 
   try {
-    await updateJobStatus(jobId, 'processing', 20);
+    await updateJobStatus(jobId, 'processing', 20, {
+      message: 'Starting watermark addition process...'
+    });
     const uint8Array = await fs.readFile(inputPath);
     const pdfDoc = await PDFDocument.load(uint8Array);
     const numberOfPages = pdfDoc.getPages().length;
@@ -60,10 +62,16 @@ export async function addWatermarkProcessor(jobId, jobData) {
       ? textColor.map(c => Math.min(1, Math.max(0, Number(c))))
       : [0, 0, 0];
 
-    await updateJobStatus(jobId, 'processing', 40);
+    await updateJobStatus(jobId, 'processing', 40, {
+      message: 'Processing watermark settings...'
+    });
 
     /** ---------------- TEXT WATERMARK ---------------- **/
     if (operation === 'addTextWatermark') {
+      await updateJobStatus(jobId, 'processing', 45, {
+        message: 'Adding text watermark to PDF pages...'
+      });
+
       const fontName = fontChoices[fontFamily] || StandardFonts.Helvetica;
       const selectedFont = await pdfDoc.embedFont(fontName);
 
@@ -195,7 +203,9 @@ export async function addWatermarkProcessor(jobId, jobData) {
     //   }
     // }
 
-    await updateJobStatus(jobId, 'processing', 90);
+    await updateJobStatus(jobId, 'processing', 90, {
+      message: 'Saving PDF with watermark...'
+    });
 
     const pdfBytes = await pdfDoc.save();
     await fs.writeFile(outputPath, pdfBytes);
@@ -205,6 +215,15 @@ export async function addWatermarkProcessor(jobId, jobData) {
       console.error(`Error deleting input file ${inputPath}:`, unlinkError);
     }
 
+    // Update Redis with final job data including filename
+    await updateJobStatus(jobId, 'completed', 100, {
+      outputFilePath: outputPath,
+      message: `Successfully processed ${operation} for ${numberOfPages} pages`,
+      completedAt: new Date().toISOString(),
+      originalFileName: originalFileName,
+      operation: operation,
+      numberOfPages: numberOfPages
+    });
 
     return {
       outputPath,
@@ -221,5 +240,7 @@ export async function addWatermarkProcessor(jobId, jobData) {
 
 async function reportProgress(jobId, currentPage, startPage, endPage) {
   const progress = 40 + ((currentPage - startPage + 1) / (endPage - startPage + 1)) * 50;
-  await updateJobStatus(jobId, 'processing', Math.round(progress));
+  await updateJobStatus(jobId, 'processing', Math.round(progress), {
+    message: `Processing page ${currentPage + 1}...`
+  });
 }

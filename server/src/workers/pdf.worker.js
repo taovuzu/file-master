@@ -16,7 +16,7 @@ import { protectProcessor } from './processors/protect.processor.js';
 import { convertProcessor } from './processors/convert.processor.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(import.meta.url);
 
 const QUEUE_NAME = process.env.PDF_QUEUE_NAME || 'pdf-processing-queue';
 
@@ -52,13 +52,23 @@ async function initializePdfWorker() {
           break;
       }
 
-      await updateJobStatus(jobId, 'completed', 100);
+      // Update job status with completion data including output file path
+      await updateJobStatus(jobId, 'completed', 100, {
+        outputFilePath: result?.outputPath || null,
+        message: result?.message || 'File processed successfully',
+        completedAt: new Date().toISOString()
+      });
+
       console.log(`Job ${jobId} completed successfully`);
       return result;
 
     } catch (error) {
       console.error(`Job ${jobId} failed:`, error);
-      await updateJobStatus(jobId, 'failed', 0);
+      await updateJobStatus(jobId, 'failed', 0, {
+        message: error.message || 'Processing failed',
+        error: error.stack,
+        failedAt: new Date().toISOString()
+      });
       throw error;
     }
   }, {
@@ -97,7 +107,9 @@ async function processFileFallback(jobId, filePath, originalName, mimeType) {
 
   for (const step of steps) {
     await new Promise(resolve => setTimeout(resolve, 1000));
-    await updateJobStatus(jobId, 'processing', step.progress);
+    await updateJobStatus(jobId, 'processing', step.progress, {
+      message: step.message
+    });
     console.log(`Job ${jobId}: ${step.message}`);
   }
 
@@ -107,6 +119,7 @@ async function processFileFallback(jobId, filePath, originalName, mimeType) {
   await fs.writeFile(outputPath, content, 'utf8');
 
   console.log(`Fallback output created at: ${outputPath}`);
+  return { outputPath, message: 'File processed with fallback method' };
 }
 
 async function uploadFileStream(jobId, { streamData, originalName }) {
@@ -124,21 +137,28 @@ async function uploadFileStream(jobId, { streamData, originalName }) {
       bytesWritten += chunk.length;
       if (totalSize) {
         const progress = Math.min(95, Math.floor((bytesWritten / totalSize) * 100));
-        await updateJobStatus(jobId, 'uploading', progress);
+        await updateJobStatus(jobId, 'uploading', progress, {
+          message: `Uploading: ${Math.round(progress)}%`
+        });
       }
     });
 
     streamData.pipe(writeStream);
 
     streamData.on('end', async () => {
-      await updateJobStatus(jobId, 'processing', 98);
+      await updateJobStatus(jobId, 'processing', 98, {
+        message: 'Upload complete, processing...'
+      });
       console.log(`Upload complete for job ${jobId}, saved at ${filePath}`);
       resolve({ filePath, message: 'Upload successful' });
     });
 
     streamData.on('error', async (err) => {
       console.error(`Stream upload failed for job ${jobId}`, err);
-      await updateJobStatus(jobId, 'failed', 0);
+      await updateJobStatus(jobId, 'failed', 0, {
+        message: 'Upload failed',
+        error: err.message
+      });
       reject(err);
     });
   });

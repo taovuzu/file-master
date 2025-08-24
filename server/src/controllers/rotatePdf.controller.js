@@ -9,13 +9,13 @@ import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.
 const rotatePdf = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError(404, "File could not be found on server");
+    throw new ApiError.notFound("File could not be found on server");
   }
 
   const angle = Number(req.body.angle); // 1 -> 90 clockwise, 2 -> 180 clockwise, 3 -> 270 clockwise, 
   // -1 -> 90 antiClockwise, -2 -> 180 antiClockwise, -3 -> 270 antiClockwise
   if (![1, 2, 3, -1, -2, -3].includes(angle)) {
-    throw new ApiError(404, "angle of rotation value should be one of 1, 2, 3, -1, -2 , -3")
+    throw new ApiError.badRequest("angle of rotation value should be one of 1, 2, 3, -1, -2 , -3")
   }
 
   const jobId = uuidv4();
@@ -38,9 +38,15 @@ const rotatePdf = asyncHandler(async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
   }
-  if (retryCount > maxRetries) throw new ApiError(500, "Unable to establish Redis connection");
+  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
 
-  await updateJobStatus(jobId, 'queued', 0);
+  await updateJobStatus(jobId, 'queued', 0, {
+    createdAt: new Date().toISOString(),
+    operation: 'rotate',
+    originalFileName: file.originalname,
+    angle: angle
+  });
+
   await pdfProcessingQueue.add('rotate-pdf', {
     jobId,
     operation: 'rotate',
@@ -50,14 +56,22 @@ const rotatePdf = asyncHandler(async (req, res) => {
     originalFileName: file.originalname
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, "PDF rotation job queued successfully", {
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: "PDF rotation job queued successfully",
+    data: {
       jobId,
       message: "Your PDF rotation job has been queued. Use the job ID to track progress.",
-      statusUrl: `/api/v1/pdf-tools/status/${jobId}`,
-      downloadUrl: `/api/v1/pdf-tools/download/${jobId}`
-    })
-  );
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'rotate',
+      angle: angle,
+      originalFileName: file.originalname
+    },
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl
+  });
 });
 
 export { rotatePdf };

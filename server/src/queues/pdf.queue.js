@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(import.meta.url);
 
 const bullConnection = new IORedis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
@@ -68,7 +68,7 @@ async function healthCheck() {
   }
 }
 
-let pdfProcessingQueue, pdfQueueEvents;;
+let pdfProcessingQueue, pdfQueueEvents;
 
 async function initializeQueue() {
   await connectRedis();
@@ -89,19 +89,20 @@ async function initializeQueue() {
   }
 }
 
-const JOB_KEY_PREFIX = 'pdf-job';
-
-async function updateJobStatus(jobId, status, progress) {
+async function updateJobStatus(jobId, status, progress, additionalData = {}) {
   try {
     if (!(await healthCheck())) throw new Error('Redis not healthy');
 
     const jobData = {
       status,
-      progress,
+      progress: progress || 0,
       updatedAt: new Date().toISOString(),
+      ...additionalData
     };
 
-    await redisClient.set(`${JOB_KEY_PREFIX}:${jobId}`, JSON.stringify(jobData), { EX: 600 });
+    // Use hSet for better structure and add expiration
+    await redisClient.hSet(`job:${jobId}`, jobData);
+    await redisClient.expire(`job:${jobId}`, 86400); // 24 hours
   } catch (error) {
     console.error('Failed to update job status:', error);
     throw error;
@@ -112,8 +113,8 @@ async function getJobStatus(jobId) {
   try {
     if (!(await healthCheck())) return null;
 
-    const jobData = await redisClient.get(`${JOB_KEY_PREFIX}:${jobId}`);
-    return jobData ? JSON.parse(jobData) : null;
+    const jobData = await redisClient.hGetAll(`job:${jobId}`);
+    return Object.keys(jobData).length > 0 ? jobData : null;
   } catch (error) {
     console.error('Failed to get job status:', error);
     return null;
@@ -123,10 +124,9 @@ async function getJobStatus(jobId) {
 async function deleteJobData(jobId) {
   try {
     if (!(await healthCheck())) throw new Error('Redis not healthy');
-    await redisClient.del(`${JOB_KEY_PREFIX}:${jobId}`);
+    await redisClient.del(`job:${jobId}`);
   } catch (error) {
     console.error('Failed to delete job data:', error);
-    throw error;
   }
 }
 

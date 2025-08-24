@@ -11,7 +11,7 @@ import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.
 const compressPdf = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError(404, "File could not be found on server");
+    throw new ApiError.notFound("File could not be found on server");
   }
 
   let compressionLevel = req.body.compressionLevel;
@@ -43,10 +43,14 @@ const compressPdf = asyncHandler(async (req, res) => {
   }
 
   if (retryCount > maxRetries) {
-    throw new ApiError(500, "Unable to establish Redis connection");
+    throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
   }
 
-  await updateJobStatus(jobId, 'queued', 0);
+  await updateJobStatus(jobId, 'queued', 0, {
+    createdAt: new Date().toISOString(),
+    operation: 'compress',
+    originalFileName: file.originalname
+  });
 
   await pdfProcessingQueue.add('compress-pdf', {
     jobId,
@@ -57,14 +61,22 @@ const compressPdf = asyncHandler(async (req, res) => {
     originalFileName: file.originalname
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, "PDF compression job queued successfully", {
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: "PDF compression job queued successfully",
+    data: {
       jobId,
       message: "Your PDF compression job has been queued. Use the job ID to track progress.",
-      statusUrl: `/api/v1/pdf-tools/status/${jobId}`,
-      downloadUrl: `/api/v1/pdf-tools/download/${jobId}`
-    })
-  );
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'compress',
+      compressionLevel,
+      originalFileName: file.originalname
+    },
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl
+  });
 });
 
 export { compressPdf }

@@ -15,7 +15,9 @@ export async function convertProcessor(jobId, jobData) {
   const { inputPath, files, outputName, outputDir, outputPath, operation, orientation, pagetype, margin, mergeImagesInOnePdf, originalFileName } = jobData;
 
   try {
-    await updateJobStatus(jobId, 'processing', 20);
+    await updateJobStatus(jobId, 'processing', 20, {
+      message: 'Starting file conversion process...'
+    });
 
     let result;
 
@@ -47,13 +49,24 @@ export async function convertProcessor(jobId, jobData) {
         throw new Error(`Unsupported target format: ${operation}`);
     }
 
-    await updateJobStatus(jobId, 'processing', 90);
+    await updateJobStatus(jobId, 'processing', 90, {
+      message: 'Finalizing conversion and cleaning up...'
+    });
 
     try {
       await fs.unlink(inputPath);
     } catch (unlinkError) {
       console.error(`Error deleting input file ${inputPath}:`, unlinkError);
     }
+
+    // Update Redis with final job data including filename
+    await updateJobStatus(jobId, 'completed', 100, {
+      outputFilePath: outputPath,
+      message: `Successfully converted to ${operation.toUpperCase()}`,
+      completedAt: new Date().toISOString(),
+      originalFileName: originalFileName,
+      operation: operation
+    });
 
     return {
       outputPath,
@@ -69,7 +82,9 @@ export async function convertProcessor(jobId, jobData) {
 }
 
 async function convertDocToPdf(jobId, inputPath, outputDir) {
-  await updateJobStatus(jobId, 'processing', 30);
+  await updateJobStatus(jobId, 'processing', 30, {
+    message: 'Converting document to PDF using LibreOffice...'
+  });
 
   const libreCmd = [
     LIBRE_PATH,
@@ -90,11 +105,15 @@ async function convertDocToPdf(jobId, inputPath, outputDir) {
     });
   });
 
-  await updateJobStatus(jobId, 'processing', 70);
+  await updateJobStatus(jobId, 'processing', 70, {
+    message: 'Document conversion completed...'
+  });
 }
 
 async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetype, margin, mergeImagesInOnePdf) {
-  await updateJobStatus(jobId, 'processing', 30);
+  await updateJobStatus(jobId, 'processing', 30, {
+    message: 'Processing images for PDF conversion...'
+  });
 
   const marginMap = {
     none: 0,
@@ -145,6 +164,10 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
   };
 
   if (mergeImagesInOnePdf === "true" || mergeImagesInOnePdf === true) {
+    await updateJobStatus(jobId, 'processing', 40, {
+      message: 'Merging images into single PDF...'
+    });
+
     const pdfDoc = await PDFDocument.create();
 
     for (let file of files) {
@@ -176,6 +199,10 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
     await fs.writeFile(outputPath, pdfBytes);
 
   } else {
+    await updateJobStatus(jobId, 'processing', 40, {
+      message: 'Converting images to individual PDFs...'
+    });
+
     const baseOutDir = path.join(process.cwd(), 'temp', `image_to_pdf___${uuidv4()}`);
     await fs.mkdir(baseOutDir, { recursive: true });
     for (let file of files) {
@@ -210,10 +237,14 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
       await fs.unlink(file.path);
     }
 
+    await updateJobStatus(jobId, 'processing', 60, {
+      message: 'Creating ZIP archive of PDFs...'
+    });
+
     const output = fss.createWriteStream(outputPath);
     const archive = archiver("zip", { zlib: { level: 2 } });
 
-    archive.on("error", (err) => { throw new ApiError(500, err); });
+    archive.on("error", (err) => { throw new Error(err); });
     archive.pipe(output);
     archive.directory(baseOutDir, false);
     await archive.finalize();
@@ -224,11 +255,15 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
 
   }
 
-  await updateJobStatus(jobId, 'processing', 70);
+  await updateJobStatus(jobId, 'processing', 70, {
+    message: 'Image conversion completed...'
+  });
 }
 
 async function convertToWord(jobId, inputPath, outputPath) {
-  await updateJobStatus(jobId, 'processing', 30);
+  await updateJobStatus(jobId, 'processing', 30, {
+    message: 'Converting to Word document...'
+  });
 
   const libreOfficeCmd = [
     'soffice',
@@ -248,14 +283,22 @@ async function convertToWord(jobId, inputPath, outputPath) {
     });
   });
 
-  await updateJobStatus(jobId, 'processing', 70);
+  await updateJobStatus(jobId, 'processing', 70, {
+    message: 'Word conversion completed...'
+  });
 }
 
 async function convertToPowerPoint(jobId, inputPath, outputPath) {
-  await updateJobStatus(jobId, 'processing', 30);
+  await updateJobStatus(jobId, 'processing', 30, {
+    message: 'Converting PDF to PowerPoint...'
+  });
 
   const baseOutDir = path.join(process.cwd(), "temp", `pdf_to_image_${uuidv4()}`);
   await fs.mkdir(baseOutDir, { recursive: true });
+
+  await updateJobStatus(jobId, 'processing', 40, {
+    message: 'Extracting images from PDF...'
+  });
 
   const options = {
     format: 'png',
@@ -266,9 +309,13 @@ async function convertToPowerPoint(jobId, inputPath, outputPath) {
 
   await pdf.convert(inputPath, options);
 
+  await updateJobStatus(jobId, 'processing', 50, {
+    message: 'Creating PowerPoint slides...'
+  });
+
   const imageFiles = (await fs.readdir(baseOutDir)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   if (imageFiles.length == 0) {
-    throw new ApiError(400, "no image was generated from pdf");
+    throw new Error("no image was generated from pdf");
   }
   const dimensions = await imageSizeFromFile(path.join(baseOutDir, imageFiles[0]));
   const slideWidth = dimensions.width / 72;
@@ -293,11 +340,15 @@ async function convertToPowerPoint(jobId, inputPath, outputPath) {
     }
   });
 
-  await updateJobStatus(jobId, 'processing', 70);
+  await updateJobStatus(jobId, 'processing', 70, {
+    message: 'PowerPoint conversion completed...'
+  });
 }
 
 async function convertToExcel(jobId, inputPath, outputPath) {
-  await updateJobStatus(jobId, 'processing', 30);
+  await updateJobStatus(jobId, 'processing', 30, {
+    message: 'Converting to Excel spreadsheet...'
+  });
 
   const libreOfficeCmd = [
     'soffice',
@@ -317,11 +368,15 @@ async function convertToExcel(jobId, inputPath, outputPath) {
     });
   });
 
-  await updateJobStatus(jobId, 'processing', 70);
+  await updateJobStatus(jobId, 'processing', 70, {
+    message: 'Excel conversion completed...'
+  });
 }
 
 async function convertToHtml(jobId, inputPath, outputPath) {
-  await updateJobStatus(jobId, 'processing', 30);
+  await updateJobStatus(jobId, 'processing', 30, {
+    message: 'Converting to HTML...'
+  });
 
   // Use pdf-poppler for HTML conversion
   const { pdfToHtml } = await import('pdf-poppler');
@@ -334,11 +389,15 @@ async function convertToHtml(jobId, inputPath, outputPath) {
 
   await pdfToHtml(inputPath, options);
 
-  await updateJobStatus(jobId, 'processing', 70);
+  await updateJobStatus(jobId, 'processing', 70, {
+    message: 'HTML conversion completed...'
+  });
 }
 
 async function convertToText(jobId, inputPath, outputPath) {
-  await updateJobStatus(jobId, 'processing', 30);
+  await updateJobStatus(jobId, 'processing', 30, {
+    message: 'Extracting text from PDF...'
+  });
 
   // Use pdf-poppler for text extraction
   const { pdfToText } = await import('pdf-poppler');
@@ -351,5 +410,7 @@ async function convertToText(jobId, inputPath, outputPath) {
 
   await pdfToText(inputPath, options);
 
-  await updateJobStatus(jobId, 'processing', 70);
+  await updateJobStatus(jobId, 'processing', 70, {
+    message: 'Text extraction completed...'
+  });
 }

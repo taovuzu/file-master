@@ -10,7 +10,7 @@ import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.
 const convertDocToPdf = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError(404, "No files were uploaded.");
+    throw new ApiError.notFound("No files were uploaded.");
   }
 
   const jobId = uuidv4();
@@ -33,9 +33,14 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
   }
-  if (retryCount > maxRetries) throw new ApiError(500, "Unable to establish Redis connection");
+  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
 
-  await updateJobStatus(jobId, 'queued', 0);
+  await updateJobStatus(jobId, 'queued', 0, {
+    createdAt: new Date().toISOString(),
+    operation: 'convertDocToPdf',
+    originalFileName: file.originalname
+  });
+
   await pdfProcessingQueue.add('convert-doc-to-pdf', {
     jobId,
     operation: 'convertDocToPdf',
@@ -46,20 +51,27 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
     originalFileName: file.originalname
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, 'Document conversion job queued successfully', {
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: 'Document conversion job queued successfully',
+    data: {
       jobId,
       message: "Your document conversion job has been queued. Use the job ID to track progress.",
-      statusUrl: `/api/v1/pdf-tools/status/${jobId}`,
-      downloadUrl: `/api/v1/pdf-tools/download/${jobId}`
-    })
-  );
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'convertDocToPdf',
+      originalFileName: file.originalname
+    },
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl
+  });
 });
 
 const convertImagesToPdf = asyncHandler(async (req, res) => {
   const files = req.files;
   if (!files || files.length === 0) {
-    throw new ApiError(404, "No files were uploaded.");
+    throw new ApiError.notFound("No files were uploaded.");
   }
 
   const {
@@ -88,9 +100,18 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
   }
-  if (retryCount > maxRetries) throw new ApiError(500, "Unable to establish Redis connection");
+  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
 
-  await updateJobStatus(jobId, 'queued', 0);
+  await updateJobStatus(jobId, 'queued', 0, {
+    createdAt: new Date().toISOString(),
+    operation: 'convertImagesToPdf',
+    originalFileNames: files.map(f => f.originalname),
+    orientation,
+    pagetype,
+    margin,
+    mergeImagesInOnePdf
+  });
+
   await pdfProcessingQueue.add('convert-images-to-pdf', {
     jobId,
     operation: 'convertImagesToPdf',
@@ -103,20 +124,31 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
     originalFileNames: files.map(f => f.originalname)
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, 'Image conversion job queued successfully', {
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: 'Image conversion job queued successfully',
+    data: {
       jobId,
       message: "Your image conversion job has been queued. Use the job ID to track progress.",
-      statusUrl: `/api/v1/pdf-tools/status/${jobId}`,
-      downloadUrl: `/api/v1/pdf-tools/download/${jobId}`
-    })
-  );
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'convertImagesToPdf',
+      originalFileNames: files.map(f => f.originalname),
+      orientation,
+      pagetype,
+      margin,
+      mergeImagesInOnePdf
+    },
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl
+  });
 });
 
 const convertPdfToDoc = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError(404, "No files were uploaded.");
+    throw new ApiError.notFound("No files were uploaded.");
   }
 
   const jobId = uuidv4();
@@ -139,9 +171,14 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
   }
-  if (retryCount > maxRetries) throw new ApiError(500, "Unable to establish Redis connection");
+  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
 
-  await updateJobStatus(jobId, 'queued', 0);
+  await updateJobStatus(jobId, 'queued', 0, {
+    createdAt: new Date().toISOString(),
+    operation: 'convertPdfToDoc',
+    originalFileName: file.originalname
+  });
+
   await pdfProcessingQueue.add('convert-pdf-to-doc', {
     jobId,
     operation: 'convertPdfToDoc',
@@ -150,20 +187,27 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
     originalFileName: file.originalname
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, 'PDF to DOC conversion job queued successfully', {
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: 'PDF to DOC conversion job queued successfully',
+    data: {
       jobId,
       message: "Your PDF to DOC conversion job has been queued. Use the job ID to track progress.",
-      statusUrl: `/api/v1/pdf-tools/status/${jobId}`,
-      downloadUrl: `/api/v1/pdf-tools/download/${jobId}`
-    })
-  );
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'convertPdfToDoc',
+      originalFileName: file.originalname
+    },
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl
+  });
 });
 
 const convertPdfToPpt = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError(404, "No files were uploaded.");
+    throw new ApiError.notFound("No files were uploaded.");
   }
 
   const jobId = uuidv4();
@@ -186,9 +230,14 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
   }
-  if (retryCount > maxRetries) throw new ApiError(500, "Unable to establish Redis connection");
+  if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
 
-  await updateJobStatus(jobId, 'queued', 0);
+  await updateJobStatus(jobId, 'queued', 0, {
+    createdAt: new Date().toISOString(),
+    operation: 'convertPdfToPpt',
+    originalFileName: file.originalname
+  });
+
   await pdfProcessingQueue.add('convert-pdf-to-ppt', {
     jobId,
     operation: 'convertPdfToPpt',
@@ -197,14 +246,21 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
     originalFileName: file.originalname
   });
 
-  return res.status(200).json(
-    new ApiResponse(200, 'PDF to PPT conversion job queued successfully', {
+  return res.status(200).json({
+    success: true,
+    statusCode: 200,
+    message: 'PDF to PPT conversion job queued successfully',
+    data: {
       jobId,
       message: "Your PDF to PPT conversion job has been queued. Use the job ID to track progress.",
-      statusUrl: `/api/v1/pdf-tools/status/${jobId}`,
-      downloadUrl: `/api/v1/pdf-tools/download/${jobId}`
-    })
-  );
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'convertPdfToPpt',
+      originalFileName: file.originalname
+    },
+    timestamp: new Date().toISOString(),
+    path: req.originalUrl
+  });
 });
 
 export { convertDocToPdf, convertImagesToPdf, convertPdfToDoc, convertPdfToPpt };

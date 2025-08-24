@@ -1,10 +1,24 @@
 class ApiResponse {
-  constructor(statusCode, data="", message = "Success") {
+  constructor(statusCode, data = null, message = "Success", success = true) {
+    this.success = success !== false;
     this.statusCode = statusCode;
-    this.data = data;
     this.message = message;
-    this.success = statusCode < 400;
+    this.data = data;
+    this.timestamp = new Date().toISOString();
+    this.path = null; // Will be set by middleware
+  }
+
+  static success(data = null, message = "Success", statusCode = 200) {
+    return new ApiResponse(statusCode, data, message, true);
+  }
+
+  static created(data = null, message = "Resource created successfully") {
+    return new ApiResponse(201, data, message, true);
+  }
+
+  static noContent(message = "No content") {
+    return new ApiResponse(204, null, message, true);
   }
 }
 
-export {ApiResponse};
+export { ApiResponse };
