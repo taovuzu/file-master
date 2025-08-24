@@ -6,12 +6,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const cleanupTargets = [
-  { path: join(__dirname, '..', '..', 'temp', 'uploads'), maxAge: 5 * 60 * 1000 }, // 5 mins
-  { path: join(__dirname, '..', '..', 'public', 'processed'), maxAge: 10 * 60 * 1000 } // 10 mins
+  { path: join(__dirname, '..', '..', 'temp', 'uploads'), maxAge: 1 * 60 * 1000 }, // 5 mins
+  { path: join(__dirname, '..', '..', 'temp'), maxAge: 1 * 60 * 1000 }, // 10 mins
+  { path: join(__dirname, '..', '..', 'public', 'processed'), maxAge: 5 * 60 * 1000 } // 10 mins
 ];
 
-const excludedDirs = ['important-job', 'do-not-delete'];
-let isCleaning = false; 
+const excludedDirs = ['important-job', 'do-not-delete', 'uploads'];
+let isCleaning = false;
 
 async function ensureDir(dirPath) {
   try {
@@ -51,7 +52,7 @@ export async function cleanupExpiredAll() {
 
   isCleaning = true;
   console.log('Running scheduled cleanup...');
-  
+
   for (const target of cleanupTargets) {
     await cleanupDirectory(target.path, target.maxAge);
   }
@@ -60,7 +61,7 @@ export async function cleanupExpiredAll() {
   console.log('Cleanup cycle completed');
 }
 
-export function scheduleCleanup(interval = 5 * 60 * 1000) {
+export function scheduleCleanup(interval = 3 * 60 * 1000) {
   setInterval(cleanupExpiredAll, interval);
 }
 

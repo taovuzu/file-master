@@ -1,4 +1,4 @@
-import { Queue } from 'bullmq';
+import { Queue, QueueEvents } from 'bullmq';
 import IORedis from 'ioredis';
 import { createClient } from 'redis';
 import { fileURLToPath } from 'url';
@@ -68,7 +68,7 @@ async function healthCheck() {
   }
 }
 
-let pdfProcessingQueue;
+let pdfProcessingQueue, pdfQueueEvents;;
 
 async function initializeQueue() {
   await connectRedis();
@@ -78,11 +78,14 @@ async function initializeQueue() {
       defaultJobOptions: {
         removeOnComplete: 100,
         removeOnFail: 100,
-        attempts: 2,
+        attempts: 1,
         backoff: { type: 'exponential', delay: 2000 },
       },
     });
-    console.log('PDF processing queue initialized successfully');
+    pdfQueueEvents = new QueueEvents('pdf-processing-queue', {
+      connection: bullConnection,
+    });
+    console.log('PDF processing queue + queue events initialized successfully');
   }
 }
 
@@ -127,13 +130,18 @@ async function deleteJobData(jobId) {
   }
 }
 
+async function getWaitingJobsCount() {
+  if (!pdfProcessingQueue) return 0;
+  try {
+    const waitingCount = await pdfProcessingQueue.getWaitingCount();
+    const activeCount = await pdfProcessingQueue.getActiveCount();
+    return (waitingCount || 0) + (activeCount || 0);
+  } catch (err) {
+    console.error('[pdf.queue] Failed to get waiting+active jobs count:', err);
+    return 0;
+  }
+}
+
 export {
-  pdfProcessingQueue,
-  initializeQueue,
-  updateJobStatus,
-  getJobStatus,
-  deleteJobData,
-  healthCheck,
-  redisClient,
-  bullConnection,
+  pdfProcessingQueue, pdfQueueEvents, initializeQueue, updateJobStatus, getJobStatus, deleteJobData, healthCheck, getWaitingJobsCount, redisClient, bullConnection
 };

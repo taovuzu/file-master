@@ -46,7 +46,7 @@ app.use(session({
     secure: false,
     httpOnly: true,
     sameSite: 'lax'
-   } 
+  }
 }));
 
 import "./middlewares/passport.js";
@@ -60,52 +60,20 @@ app.use((req, res, next) => {
 
 import userRouter from "./routes/user.route.js";
 import pdfToolsRouter from "./routes/pdfTools.route.js";
-// import uploadRouter from "./routes/upload.route.js";
-// import downloadRouter from "./routes/download.route.js";
+import downloadRouter from "./routes/download.route.js";
+import healthRouter from "./routes/health.routes.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 import { enforceUsageLimits } from "./middlewares/usageLimit.middleware.js";
+import { uploadLimitMiddleware } from "./middlewares/uploadLimit.middleware.js"
 
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/pdf-tools", enforceUsageLimits, pdfToolsRouter);
-// app.use("/api/v1/upload", uploadRouter);
-// app.use("/api/v1/download", downloadRouter);
+app.use("/api/v1/pdf-tools", enforceUsageLimits, uploadLimitMiddleware, pdfToolsRouter);
+app.use("/api/v1/download", downloadRouter);
+app.use("/api/v1/health", healthRouter);
 
-app.get('/api/v1/health/redis', async (req, res) => {
-  try {
-    const { healthCheck } = await import('./queues/pdf.queue.js');
-    const isHealthy = await healthCheck();
-    
-    if (isHealthy) {
-      res.status(200).json({
-        status: 'success',
-        message: 'Redis connection is healthy',
-        timestamp: new Date().toISOString()
-      });
-    } else {
-      res.status(503).json({
-        status: 'error',
-        message: 'Redis connection is not healthy',
-        timestamp: new Date().toISOString()
-      });
-    }
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to check Redis health',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
+app.use(errorHandler);
 
-app.get('/api/v1/health', (req, res) => {
-  res.json({
-    status: 'success',
-    message: 'Server is running correctly',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
+export { app };
 
 // image-to-pdf -> { PDFDocument from "pdf-lib" }
 // doc-to-pdf -> { libreoffice }
@@ -119,8 +87,3 @@ app.get('/api/v1/health', (req, res) => {
 // esign -> { PDFDocument from "pdf-lib" }
 // unlock -> { ghostscript }
 // protect -> { ghostscript }
-
-
-app.use(errorHandler);
-
-export { app };

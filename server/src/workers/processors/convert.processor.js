@@ -21,7 +21,8 @@ export async function convertProcessor(jobId, jobData) {
 
     switch (operation) {
       case 'convertDocToPdf':
-        result = await convertDocToPdf(jobId, inputPath, outputDir)
+        result = await convertDocToPdf(jobId, inputPath, outputDir);
+        break;
       case 'convertPdfToPpt':
         result = await convertToPowerPoint(jobId, inputPath, outputPath);
         break;

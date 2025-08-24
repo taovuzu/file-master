@@ -37,12 +37,7 @@ connectDB()
     await initCleanup();
     await initializeQueue();
     await initializePdfWorker();
-
-    try {
-      healthCheck();
-    } catch (error) {
-      console.error('Error checking Redis connections:', error);
-    }
+    healthCheck();
 
     const PORT = process.env.PORT || 8080;
     server = app.listen(PORT, () => {
