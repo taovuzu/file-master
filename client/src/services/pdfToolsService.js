@@ -3,7 +3,7 @@ import { API_BASE_URL, DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
 
 // Job status polling configuration
 const POLLING_INTERVAL = 2000; // 2 seconds
-const MAX_POLLING_ATTEMPTS = 150; // 5 minutes max
+const MAX_POLLING_ATTEMPTS = 5; // 5 minutes max
 const POLLING_TIMEOUT = 300000; // 5 minutes
 
 // Job status enum
@@ -38,27 +38,15 @@ const pollJobStatus = async (statusUrl, onProgress, maxAttempts = MAX_POLLING_AT
       // Extract the job ID from the status URL
       const jobId = statusUrl.split('/').pop();
       const response = await request.get({ entity: `download/status/${jobId}` });
-      console.log("poll -> ", response);
       
-      if (!response.success) {
+      // Check for API-level errors first
+      if (!response.success || response.statusCode >= 400 || response.success == "false") {
         throw new Error(response.message || 'Failed to check job status');
-      }
-
-      // Check if response indicates an error even if marked as successful
-      if (response.data && response.data.status === 'failed') {
-        throw new Error(response.data.message || 'Job processing failed');
-      }
-
-      // Check if the job status indicates failure regardless of API success
-      if (response.data && response.data.status && response.data.status === 'failed') {
-        throw new Error(response.data.message || 'Job processing failed');
       }
 
       const { status, progress, message, outputFilePath, error: jobError } = response.data;
       
-
-      
-      // Check for job errors first
+      // Check for job-level errors
       if (jobError) {
         throw new Error(jobError);
       }
@@ -79,53 +67,15 @@ const pollJobStatus = async (statusUrl, onProgress, maxAttempts = MAX_POLLING_AT
         };
       }
 
-      // Check if job failed
-      if (status === JOB_STATUS.FAILED) {
+      // Check for job failure states
+      if (status === JOB_STATUS.FAILED || status === 'failed' || status === 'error' || status === 'error_processing') {
         throw new Error(message || 'Job processing failed');
       }
 
       // Check if job was cancelled
-      if (status === JOB_STATUS.CANCELLED) {
+      if (status === JOB_STATUS.CANCELLED || status === 'cancelled') {
         throw new Error('Job was cancelled');
       }
-
-      // Check for other error conditions
-      if (status === 'error' || status === 'failed' || status === 'error_processing') {
-        throw new Error(message || 'Job processing failed');
-      }
-
-      // Check if the response indicates an error even if status doesn't
-      if (response.data && response.data.error) {
-        throw new Error(response.data.error);
-      }
-
-      // Check for HTTP error status codes in the response
-      if (response.statusCode && response.statusCode >= 400) {
-        throw new Error(`Server error: ${response.statusCode} - ${message || 'Job processing failed'}`);
-      }
-
-      // Check for error codes in the response
-      if (response.data && response.data.code && (response.data.code.startsWith('HTTP_4') || response.data.code.startsWith('HTTP_5'))) {
-        throw new Error(`Server error: ${response.data.code} - ${message || 'Job processing failed'}`);
-      }
-
-      // Check for any error indicators in the response
-      if (response.data && (response.data.success === false || response.data.error || response.data.failed)) {
-        throw new Error(response.data.error || response.data.message || 'Job processing failed');
-      }
-
-      // Check if the job status indicates an error
-      if (status && (status.includes('error') || status.includes('failed') || status.includes('cancelled'))) {
-        throw new Error(message || `Job status: ${status}`);
-      }
-
-      // Additional check for failed status specifically
-      if (status === 'failed') {
-        throw new Error(message || 'Job processing failed');
-      }
-
-      // Job is still processing, wait and poll again
-      attempts++;
       
       // Check if operation was aborted before waiting
       if (abortSignal && abortSignal.aborted) {
@@ -142,22 +92,10 @@ const pollJobStatus = async (statusUrl, onProgress, maxAttempts = MAX_POLLING_AT
         throw new Error(`Connection failed while checking job status`);
       }
       
-      // If the error indicates the job has failed, don't retry
+      // If the error indicates the job has failed or was cancelled, don't retry
       if (error.message.includes('Job processing failed') || 
           error.message.includes('Job was cancelled') ||
-          error.message.includes('ApiError') ||
-          error.message.includes('HTTP_400') ||
-          error.message.includes('Server error:') ||
-          error.message.includes('Job status:') ||
-          error.message.includes('HTTP_4') ||
-          error.message.includes('HTTP_5') ||
-          error.message.includes('failed') ||
-          error.message.includes('error') ||
-          error.message.includes('cancelled') ||
-          error.message.includes('Server error:') ||
-          error.message.includes('HTTP_') ||
-          error.message.includes('statusCode') ||
-          error.message.includes('Job status:')) {
+          error.message.includes('ApiError')) {
         throw error; // Re-throw immediately without retrying
       }
       
@@ -286,24 +224,15 @@ const processPdfToolWithPolling = async (endpoint, files, options, onProgress, o
         // Poll for job completion
         const jobResult = await pollJobStatus(result.statusUrl, onProgress, undefined, abortSignal);
         
-        if (jobResult.success) {
-          // Double-check that the job actually completed successfully
-          if (jobResult.status === JOB_STATUS.COMPLETED) {
-            const downloadUrl = `${DOWNLOAD_BASE_URL}${result.jobId}`;
-            return {
-              success: true,
-              file: result.jobId,
-              fileUrl: downloadUrl,
-              originalFileName: result.originalFileName,
-              operation: result.operation
-            };
-          } else {
-            // Job didn't complete successfully, throw error
-            throw new Error(jobResult.message || 'Job processing failed');
-          }
-        } else {
-          throw new Error(jobResult.message || 'Job processing failed');
-        }
+        // pollJobStatus already handles error cases, so if we get here, the job completed successfully
+        const downloadUrl = `${DOWNLOAD_BASE_URL}${result.jobId}`;
+        return {
+          success: true,
+          file: result.jobId,
+          fileUrl: downloadUrl,
+          originalFileName: result.originalFileName,
+          operation: result.operation
+        };
       } catch (error) {
         // Handle specific polling errors
         if (error.message.includes('Connection failed') || error.message.includes('Failed to fetch')) {
@@ -362,25 +291,16 @@ export const splitPdf = async (file, ranges = [], options = {}, onProgress, onPo
 
     try {
       const jobResult = await pollJobStatus(result.statusUrl, onProgress, undefined, abortSignal);
-      
-      if (jobResult.success) {
-        // Double-check that the job actually completed successfully
-        if (jobResult.status === JOB_STATUS.COMPLETED) {
-          const downloadUrl = `${DOWNLOAD_BASE_URL}${result.jobId}`;
-          return {
-            success: true,
-            file: result.jobId,
-            fileUrl: downloadUrl,
-            originalFileName: result.originalFileName,
-            operation: result.operation
-          };
-        } else {
-          // Job didn't complete successfully, throw error
-          throw new Error(jobResult.message || 'Job processing failed');
-        }
-      } else {
-        throw new Error(jobResult.message || 'Job processing failed');
-      }
+      console.log("jobResult * ", jobResult);
+      // pollJobStatus already handles error cases, so if we get here, the job completed successfully
+      const downloadUrl = `${DOWNLOAD_BASE_URL}${result.jobId}`;
+      return {
+        success: true,
+        file: result.jobId,
+        fileUrl: downloadUrl,
+        originalFileName: result.originalFileName,
+        operation: result.operation
+      };
     } catch (error) {
       // Handle specific polling errors
       if (error.message.includes('Connection failed') || error.message.includes('Failed to fetch')) {
