@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { message, Form, Input, Button } from "antd";
 import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import AuthLayout from "@/layout/AuthLayout";
 import { requestPasswordReset } from "@/redux/auth/actions";
 
@@ -9,6 +10,7 @@ const ForgotPasswordPage = () => {
   const [linkSent, setLinkSent] = useState(false);
   const [email, setEmail] = useState("");
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const handleForgotPassword = async (values) => {
     setLoading(true);
@@ -17,6 +19,8 @@ const ForgotPasswordPage = () => {
       if (result.meta.requestStatus === "fulfilled") {
         setEmail(values.email);
         setLinkSent(true);
+        message.success("Reset link sent. Check your email.");
+        navigate("/login", { replace: true });
       } else {
         message.error("Failed to send reset link. Please try again.");
       }

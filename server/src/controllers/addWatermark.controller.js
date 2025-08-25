@@ -107,11 +107,8 @@ const addTextWatermark = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  return res.status(200).json({
-    success: true,
-    statusCode: 200,
-    message: "PDF text watermark job queued successfully",
-    data: {
+  return ApiResponse
+    .success({
       jobId,
       message: "Your PDF watermark job has been queued. Use the job ID to track progress.",
       statusUrl: `/api/v1/download/status/${jobId}`,
@@ -126,10 +123,9 @@ const addTextWatermark = asyncHandler(async (req, res) => {
       toPage,
       fontFamily,
       fontSize
-    },
-    timestamp: new Date().toISOString(),
-    path: req.originalUrl
-  });
+    }, "PDF text watermark job queued successfully", 200)
+    .withRequest(req)
+    .send(res);
 });
 
 const addImageWatermark = asyncHandler(async (req, res) => {
@@ -235,11 +231,8 @@ const addImageWatermark = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  return res.status(200).json({
-    success: true,
-    statusCode: 200,
-    message: "PDF image watermark job queued successfully",
-    data: {
+  return ApiResponse
+    .success({
       jobId,
       message: "Your PDF image watermark job has been queued. Use the job ID to track progress.",
       statusUrl: `/api/v1/download/status/${jobId}`,
@@ -252,10 +245,9 @@ const addImageWatermark = asyncHandler(async (req, res) => {
       fromPage,
       toPage,
       scale
-    },
-    timestamp: new Date().toISOString(),
-    path: req.originalUrl
-  });
+    }, "PDF image watermark job queued successfully", 200)
+    .withRequest(req)
+    .send(res);
 });
 
 export { addTextWatermark, addImageWatermark };

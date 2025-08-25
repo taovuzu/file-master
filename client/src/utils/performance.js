@@ -47,7 +47,7 @@ class PerformanceMonitor {
     this.observers = new Map();
     this.budgets = PERFORMANCE_BUDGETS;
     this.enabled = true;
-    this.debug = process.env.NODE_ENV === 'development';
+    this.debug = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV;
   }
 
 

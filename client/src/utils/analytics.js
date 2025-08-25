@@ -51,7 +51,7 @@ class AnalyticsConfig {
   constructor() {
     this.providers = new Map();
     this.enabled = true;
-    this.debug = process.env.NODE_ENV === 'development';
+    this.debug = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.DEV;
     this.userId = null;
     this.sessionId = this.generateSessionId();
   }

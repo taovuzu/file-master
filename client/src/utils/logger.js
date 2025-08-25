@@ -12,7 +12,7 @@ const LOG_LEVELS = {
 };
 
 
-const CURRENT_LOG_LEVEL = process.env.NODE_ENV === 'production' ?
+const CURRENT_LOG_LEVEL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.PROD) ?
 LOG_LEVELS.ERROR :
 LOG_LEVELS.DEBUG;
 
@@ -49,7 +49,7 @@ class Logger {
       console.error(logMessage);
 
 
-      if (process.env.NODE_ENV === 'production') {
+      if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.PROD) {
         this.sendToLoggingService('error', message, error);
       }
     }

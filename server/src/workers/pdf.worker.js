@@ -17,7 +17,7 @@ import { convertProcessor } from './processors/convert.processor.js';
 import { ApiError } from '../utils/ApiError.js';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(import.meta.url);
+const __dirname = dirname(__filename);
 
 const QUEUE_NAME = process.env.PDF_QUEUE_NAME || 'pdf-processing-queue';
 

@@ -158,15 +158,7 @@ const PdfToolPage = ({
         }
       }
 
-      console.log(processedInput, values, toolType);
-      console.log('Debug - Files being processed:', {
-        processedInput,
-        processedInputType: typeof processedInput,
-        isArray: Array.isArray(processedInput),
-        fileList,
-        values,
-        toolType
-      });
+      // Avoid logging file payloads/values in production to protect privacy
       updateProgress(15, "Uploading files...");
 
       const result = await processPdfTool(

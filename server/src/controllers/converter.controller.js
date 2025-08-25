@@ -71,21 +71,17 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  return res.status(200).json({
-    success: true,
-    statusCode: 200,
-    message: 'Document conversion job queued successfully',
-    data: {
+  return ApiResponse
+    .success({
       jobId,
       message: "Your document conversion job has been queued. Use the job ID to track progress.",
       statusUrl: `/api/v1/download/status/${jobId}`,
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'convertDocToPdf',
       originalFileName: file.originalname
-    },
-    timestamp: new Date().toISOString(),
-    path: req.originalUrl
-  });
+    }, 'Document conversion job queued successfully', 200)
+    .withRequest(req)
+    .send(res);
 });
 
 const convertImagesToPdf = asyncHandler(async (req, res) => {
@@ -164,11 +160,8 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  return res.status(200).json({
-    success: true,
-    statusCode: 200,
-    message: 'Image conversion job queued successfully',
-    data: {
+  return ApiResponse
+    .success({
       jobId,
       message: "Your image conversion job has been queued. Use the job ID to track progress.",
       statusUrl: `/api/v1/download/status/${jobId}`,
@@ -179,10 +172,9 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
       pagetype,
       margin,
       mergeImagesInOnePdf
-    },
-    timestamp: new Date().toISOString(),
-    path: req.originalUrl
-  });
+    }, 'Image conversion job queued successfully', 200)
+    .withRequest(req)
+    .send(res);
 });
 
 const convertPdfToDoc = asyncHandler(async (req, res) => {
@@ -247,21 +239,17 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  return res.status(200).json({
-    success: true,
-    statusCode: 200,
-    message: 'PDF to DOC conversion job queued successfully',
-    data: {
+  return ApiResponse
+    .success({
       jobId,
       message: "Your PDF to DOC conversion job has been queued. Use the job ID to track progress.",
       statusUrl: `/api/v1/download/status/${jobId}`,
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'convertPdfToDoc',
       originalFileName: file.originalname
-    },
-    timestamp: new Date().toISOString(),
-    path: req.originalUrl
-  });
+    }, 'PDF to DOC conversion job queued successfully', 200)
+    .withRequest(req)
+    .send(res);
 });
 
 const convertPdfToPpt = asyncHandler(async (req, res) => {
@@ -326,21 +314,17 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  return res.status(200).json({
-    success: true,
-    statusCode: 200,
-    message: 'PDF to PPT conversion job queued successfully',
-    data: {
+  return ApiResponse
+    .success({
       jobId,
       message: "Your PDF to PPT conversion job has been queued. Use the job ID to track progress.",
       statusUrl: `/api/v1/download/status/${jobId}`,
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'convertPdfToPpt',
       originalFileName: file.originalname
-    },
-    timestamp: new Date().toISOString(),
-    path: req.originalUrl
-  });
+    }, 'PDF to PPT conversion job queued successfully', 200)
+    .withRequest(req)
+    .send(res);
 });
 
 export { convertDocToPdf, convertImagesToPdf, convertPdfToDoc, convertPdfToPpt };

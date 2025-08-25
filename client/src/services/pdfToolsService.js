@@ -163,7 +163,6 @@ const processPdfToolWithPolling = async (endpoint, files, options, onProgress, o
   const fileArray = Array.isArray(files) ? files : [files];
   fileArray.forEach((file) => {
     formData.append(fieldName, file);
-    console.log(`Added file to FormData:`, { fieldName, fileName: file.name, fileSize: file.size, fileType: file.type });
   });
 
 
@@ -171,21 +170,14 @@ const processPdfToolWithPolling = async (endpoint, files, options, onProgress, o
     if (value !== undefined && value !== null) {
       if (typeof value === 'object') {
         formData.append(key, JSON.stringify(value));
-        console.log(`Added option to FormData:`, { key, value: JSON.stringify(value) });
       } else {
         formData.append(key, value);
-        console.log(`Added option to FormData:`, { key, value });
       }
     }
   });
 
 
-  console.log(`FormData created for ${endpoint}:`, {
-    fieldName,
-    fileCount: fileArray.length,
-    optionsCount: Object.keys(options).length,
-    formDataEntries: Array.from(formData.entries())
-  });
+  // Avoid logging FormData entries to protect privacy and reduce noise
 
   if (onProgress) {
     onProgress(10, 'Preparing files...');
@@ -204,7 +196,6 @@ const processPdfToolWithPolling = async (endpoint, files, options, onProgress, o
   });
 
   const result = toClientResult(resp);
-  console.log(result);
   if (!result.success) {
     throw new Error(result.error);
   }

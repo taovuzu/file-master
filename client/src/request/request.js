@@ -14,10 +14,16 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Avoid retry/refresh loop if the 401 came from the refresh endpoint itself
+      const isRefreshRequest = typeof originalRequest.url === 'string' && originalRequest.url.includes('users/refresh');
+      if (isRefreshRequest) {
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       try {
-        await axiosInstance.get(`${API_BASE_URL}/users/refresh-access-token`);
+        await axiosInstance.get('users/refresh-access-token');
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         return Promise.reject(refreshError);

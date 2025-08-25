@@ -8,6 +8,9 @@ import passport from "passport";
 import { ApiError } from "./utils/ApiError.js";
 
 const app = express();
+
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
   credentials: true
@@ -43,9 +46,9 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     maxAge: 3600000,
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   }
 }));
 
@@ -74,3 +77,16 @@ app.use("/api/v1/health", healthRouter);
 app.use(errorHandler);
 
 export { app };
+
+// image-to-pdf -> { PDFDocument from "pdf-lib" }
+// doc-to-pdf -> { libreoffice }
+// pdf-to-ppt -> { pptxgenjs, pdf-poppler, pdf-lib }
+// merge -> { PDFMerger from "pdf-merger-js" }
+// split -> { PDFDocument from "pdf-lib" }
+// compress -> { ghostscript }
+// rotate -> { PDFDocument, degrees from "pdf-lib" }
+// page-numbers -> { PDFDocument, StandardFonts, rgb from "pdf-lib" }
+// watermark -> { PDFDocument, rgb, StandardFonts, degrees from "pdf-lib" }
+// esign -> { PDFDocument from "pdf-lib" }
+// unlock -> { ghostscript }
+// protect -> { ghostscript }

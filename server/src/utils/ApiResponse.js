@@ -19,6 +19,28 @@ class ApiResponse {
   static noContent(message = "No content") {
     return new ApiResponse(204, null, message, true);
   }
+
+  withRequest(req) {
+    this.path = req && (req.originalUrl || req.url) ? (req.originalUrl || req.url) : null;
+    // Refresh timestamp as close to send time as possible
+    this.timestamp = new Date().toISOString();
+    return this;
+  }
+
+  toJSON() {
+    return {
+      success: this.success,
+      statusCode: this.statusCode,
+      message: this.message,
+      data: this.data,
+      timestamp: this.timestamp,
+      path: this.path
+    };
+  }
+
+  send(res) {
+    return res.status(this.statusCode).json(this.toJSON());
+  }
 }
 
 export { ApiResponse };

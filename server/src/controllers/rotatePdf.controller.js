@@ -79,11 +79,8 @@ const rotatePdf = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  return res.status(200).json({
-    success: true,
-    statusCode: 200,
-    message: "PDF rotation job queued successfully",
-    data: {
+  return ApiResponse
+    .success({
       jobId,
       message: "Your PDF rotation job has been queued. Use the job ID to track progress.",
       statusUrl: `/api/v1/download/status/${jobId}`,
@@ -91,10 +88,9 @@ const rotatePdf = asyncHandler(async (req, res) => {
       operation: 'rotate',
       angle: angle,
       originalFileName: file.originalname
-    },
-    timestamp: new Date().toISOString(),
-    path: req.originalUrl
-  });
+    }, "PDF rotation job queued successfully", 200)
+    .withRequest(req)
+    .send(res);
 });
 
 export { rotatePdf };

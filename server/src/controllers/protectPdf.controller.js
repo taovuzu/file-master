@@ -77,21 +77,17 @@ const protectPdf = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  return res.status(200).json({
-    success: true,
-    statusCode: 200,
-    message: "PDF protection job queued successfully",
-    data: {
+  return ApiResponse
+    .success({
       jobId,
       message: "Your PDF protection job has been queued. Use the job ID to track progress.",
       statusUrl: `/api/v1/download/status/${jobId}`,
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'protect',
       originalFileName: file.originalname
-    },
-    timestamp: new Date().toISOString(),
-    path: req.originalUrl
-  });
+    }, "PDF protection job queued successfully", 200)
+    .withRequest(req)
+    .send(res);
 });
 
 export { protectPdf };

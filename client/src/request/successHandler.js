@@ -13,7 +13,7 @@ options = { notifyOnSuccess: false, notifyOnFailed: true }) =>
   const { data, status } = response || {};
   const message = data?.message || codeMessage[status] || '';
 
-  console.log(data.success, data);
+  // Avoid logging full response payloads in production
   if (data?.success) {
     if (options.notifyOnSuccess) {
       notify('success', 'Request success', message, 2);

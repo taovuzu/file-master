@@ -53,14 +53,11 @@ export const checkJobStatus = asyncHandler(async (req, res) => {
       responseData.failed = true;
     }
 
-    return res.json({
-      success: responseSuccess,
-      statusCode: responseSuccess ? 200 : 400,
-      message: statusMessage,
-      data: responseData,
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl
-    });
+    const statusCode = responseSuccess ? 200 : 400;
+    const resp = responseSuccess
+      ? ApiResponse.success(responseData, statusMessage, statusCode)
+      : new ApiResponse(statusCode, responseData, statusMessage, false);
+    return resp.withRequest(req).send(res);
   } catch (error) {
     console.error('Error checking job status:', error);
     throw new ApiError.internal('Internal server error while checking job status');
@@ -148,14 +145,10 @@ export const listProcessedFiles = asyncHandler(async (req, res) => {
     try {
       await fs.access(processedDir);
     } catch (error) {
-      return res.json({
-        success: true,
-        statusCode: 200,
-        message: 'No processed files found',
-        data: [],
-        timestamp: new Date().toISOString(),
-        path: req.originalUrl
-      });
+      return ApiResponse
+        .success([], 'No processed files found', 200)
+        .withRequest(req)
+        .send(res);
     }
 
     const files = await fs.readdir(processedDir);
@@ -183,14 +176,10 @@ export const listProcessedFiles = asyncHandler(async (req, res) => {
       }
     }
 
-    return res.json({
-      success: true,
-      statusCode: 200,
-      message: 'Processed files retrieved successfully',
-      data: fileList,
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl
-    });
+    return ApiResponse
+      .success(fileList, 'Processed files retrieved successfully', 200)
+      .withRequest(req)
+      .send(res);
   } catch (error) {
     console.error('Error listing processed files:', error);
     throw new ApiError.internal('Internal server error while listing processed files');
@@ -215,14 +204,10 @@ export const deleteProcessedFile = asyncHandler(async (req, res) => {
 
     await fs.unlink(filePath);
 
-    return res.json({
-      success: true,
-      statusCode: 200,
-      message: 'File deleted successfully',
-      data: { deletedFile: file },
-      timestamp: new Date().toISOString(),
-      path: req.originalUrl
-    });
+    return ApiResponse
+      .success({ deletedFile: file }, 'File deleted successfully', 200)
+      .withRequest(req)
+      .send(res);
   } catch (error) {
     console.error('Error deleting file:', error);
     throw new ApiError.internal('Internal server error while deleting file');

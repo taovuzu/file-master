@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { GoogleOutlined } from "@ant-design/icons";
 import { Button, Space } from "antd";
 import { useNavigate } from "react-router-dom";
@@ -7,10 +7,11 @@ import AuthForm from "@/forms/AuthForm";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "@/redux/auth/actions";
 import { googleLogin } from "@/redux/auth/actions";
-import { selectAuthState } from "@/redux/auth/selectors";
+import { selectAuthState, selectIsLoggedIn } from "@/redux/auth/selectors";
 
 const LoginPage = () => {
-  const { isLoading, isSuccess } = useSelector(selectAuthState);
+  const { isLoading } = useSelector(selectAuthState);
+  const isLoggedIn = useSelector(selectIsLoggedIn);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -22,9 +23,11 @@ const LoginPage = () => {
     dispatch(googleLogin());
   };
 
-
-
-
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/home", { replace: true });
+    }
+  }, [isLoggedIn, navigate]);
 
   return (
     <AuthLayout
