@@ -27,6 +27,36 @@ const usePdfPreview = (input) => {
   const inputsArray = useMemo(() => (Array.isArray(input) ? input : input ? [input] : []), [input]);
   useEffect(() => { itemsRef.current = inputsArray; }, [inputsArray]);
 
+  // Helpers: type detection
+  const getMimeType = useCallback((src) => {
+    const maybe = src && src.file ? src.file : src;
+    const type = maybe?.type || maybe?.file?.type || "";
+    if (type) return type;
+    const name = maybe?.name || maybe?.file?.name || "";
+    const ext = (name.split(".").pop() || "").toLowerCase();
+    const map = {
+      pdf: "application/pdf",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      gif: "image/gif",
+      webp: "image/webp",
+      bmp: "image/bmp",
+      svg: "image/svg+xml",
+    };
+    return map[ext] || "";
+  }, []);
+
+  const isPdfType = useCallback((src) => {
+    const t = getMimeType(src);
+    return t === "application/pdf";
+  }, [getMimeType]);
+
+  const isImageType = useCallback((src) => {
+    const t = getMimeType(src);
+    return typeof t === "string" && t.startsWith("image/");
+  }, [getMimeType]);
+
   // Helper: normalize to ArrayBuffer
   const toArrayBuffer = useCallback(async (src) => {
     try {
@@ -51,7 +81,7 @@ const usePdfPreview = (input) => {
     }
   }, []);
 
-  // Load PDF document when file changes
+  // Load PDF document when file changes (only for PDFs)
   useEffect(() => {
     if (!input) {
       // Reset state when no input is provided
@@ -73,6 +103,16 @@ const usePdfPreview = (input) => {
           return; // Silently return instead of throwing error
         }
 
+        // If not a PDF, skip creating pdf-lib/pdfjs documents
+        if (!isPdfType(first)) {
+          setPdfDocLib(null);
+          setPdfDocJs(null);
+          setTotalPages(0);
+          setCurrentPage(1);
+          setLoading(false);
+          return;
+        }
+
         // Read file
         const arrayBuffer = await toArrayBuffer(first);
         if (!arrayBuffer) {
@@ -92,17 +132,16 @@ const usePdfPreview = (input) => {
         setCurrentPage(1);
       } catch (err) {
         console.error("PDF loading error:", err);
-        // Don't show error message for expected cases (no file selected)
-        if (input && input.length > 0) {
-          message.error("Failed to load PDF file.");
-        }
+        // Avoid noisy errors for non-PDFs or images; only show for actual PDF failures
+        const first = Array.isArray(input) ? input[0] : input;
+        if (first && isPdfType(first)) message.error("Failed to load PDF file.");
       } finally {
         setLoading(false);
       }
     };
 
     loadPdf();
-  }, [input, toArrayBuffer]);
+  }, [input, toArrayBuffer, isPdfType]);
 
   // Render one page → return as base64 image
   const renderPage = useCallback(async (pageNum, rotationDeg = 0) => {
@@ -190,7 +229,7 @@ const usePdfPreview = (input) => {
     }
   }, [pdfDocLib]);
 
-  // Generate compact preview thumbnails for each input item (first page)
+  // Generate compact preview thumbnails for each input item (first page or image)
   useEffect(() => {
     const maybeWrapperArray = Array.isArray(input) ? input : (input ? [input] : []);
     if (!maybeWrapperArray.length) {
@@ -204,80 +243,155 @@ const usePdfPreview = (input) => {
       for (const item of maybeWrapperArray) {
         const id = item?.id || item?.name || Math.random().toString(36).slice(2);
         try {
-          const ab = await toArrayBuffer(item);
-          if (!ab) continue;
-          const doc = await getDocument({ data: ab }).promise;
-          const page = await doc.getPage(1);
-          const viewport = page.getViewport({ scale: 0.8 });
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          await page.render({ canvasContext: ctx, viewport }).promise;
-          newPreviews[id] = canvas.toDataURL();
+          if (isPdfType(item)) {
+            const ab = await toArrayBuffer(item);
+            if (!ab) continue;
+            const doc = await getDocument({ data: ab }).promise;
+            const page = await doc.getPage(1);
+            const viewport = page.getViewport({ scale: 0.8 });
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            newPreviews[id] = canvas.toDataURL();
+          } else if (isImageType(item)) {
+            const srcObj = item?.file || item;
+            const imgUrl = typeof srcObj === "string" ? srcObj : URL.createObjectURL(srcObj);
+            const img = await new Promise((resolve, reject) => {
+              const i = new Image();
+              i.onload = () => resolve(i);
+              i.onerror = reject;
+              i.src = imgUrl;
+            });
+            const maxW = 600;
+            const scale = Math.min(1, maxW / img.width);
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = Math.max(1, Math.floor(img.width * scale));
+            canvas.height = Math.max(1, Math.floor(img.height * scale));
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            newPreviews[id] = canvas.toDataURL();
+            if (typeof srcObj !== "string") URL.revokeObjectURL(imgUrl);
+          } else {
+            newPreviews[id] = { fallback: true };
+          }
         } catch (e) {
-          // ignore per-item errors, keep others
+          newPreviews[id] = { fallback: true };
         }
       }
       if (!isCancelled) setPreviews(newPreviews);
     })();
 
     return () => { isCancelled = true; };
-  }, [input, toArrayBuffer]);
+  }, [input, toArrayBuffer, isPdfType, isImageType]);
 
   // Regenerate a specific preview (with rotation)
   const generatePreview = useCallback(async (fileId, rotationDeg = 0) => {
     try {
       const item = itemsRef.current.find((x) => (x?.id || x?.name) === fileId);
       if (!item) return;
-      const ab = await toArrayBuffer(item);
-      if (!ab) return;
-      const doc = await getDocument({ data: ab }).promise;
-      const page = await doc.getPage(1);
-      const viewport = page.getViewport({ scale: 0.8 });
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
+      if (isPdfType(item)) {
+        const ab = await toArrayBuffer(item);
+        if (!ab) return;
+        const doc = await getDocument({ data: ab }).promise;
+        const page = await doc.getPage(1);
+        const viewport = page.getViewport({ scale: 0.8 });
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
 
-      let width = viewport.width;
-      let height = viewport.height;
-      let deg = ((rotationDeg % 360) + 360) % 360;
-      if (deg === 90 || deg === 270) {
-        canvas.width = height;
-        canvas.height = width;
+        let width = viewport.width;
+        let height = viewport.height;
+        let deg = ((rotationDeg % 360) + 360) % 360;
+        if (deg === 90 || deg === 270) {
+          canvas.width = height;
+          canvas.height = width;
+        } else {
+          canvas.width = width;
+          canvas.height = height;
+        }
+
+        ctx.save();
+        switch (deg) {
+          case 90:
+            ctx.translate(canvas.width, 0);
+            ctx.rotate(Math.PI / 2);
+            break;
+          case 180:
+            ctx.translate(canvas.width, canvas.height);
+            ctx.rotate(Math.PI);
+            break;
+          case 270:
+            ctx.translate(0, canvas.height);
+            ctx.rotate((3 * Math.PI) / 2);
+            break;
+          default:
+            break;
+        }
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        ctx.restore();
+        setPreviews((prev) => ({ ...prev, [fileId]: canvas.toDataURL() }));
+      } else if (isImageType(item)) {
+        const srcObj = item?.file || item;
+        const imgUrl = typeof srcObj === "string" ? srcObj : URL.createObjectURL(srcObj);
+        const img = await new Promise((resolve, reject) => {
+          const i = new Image();
+          i.onload = () => resolve(i);
+          i.onerror = reject;
+          i.src = imgUrl;
+        });
+
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        let deg = ((rotationDeg % 360) + 360) % 360;
+        const maxW = 600;
+        const scale = Math.min(1, maxW / img.width);
+        const w = Math.max(1, Math.floor(img.width * scale));
+        const h = Math.max(1, Math.floor(img.height * scale));
+
+        if (deg === 90 || deg === 270) {
+          canvas.width = h;
+          canvas.height = w;
+        } else {
+          canvas.width = w;
+          canvas.height = h;
+        }
+
+        ctx.save();
+        switch (deg) {
+          case 90:
+            ctx.translate(canvas.width, 0);
+            ctx.rotate(Math.PI / 2);
+            break;
+          case 180:
+            ctx.translate(canvas.width, canvas.height);
+            ctx.rotate(Math.PI);
+            break;
+          case 270:
+            ctx.translate(0, canvas.height);
+            ctx.rotate((3 * Math.PI) / 2);
+            break;
+          default:
+            break;
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        ctx.restore();
+        setPreviews((prev) => ({ ...prev, [fileId]: canvas.toDataURL() }));
+        if (typeof srcObj !== "string") URL.revokeObjectURL(imgUrl);
       } else {
-        canvas.width = width;
-        canvas.height = height;
+        setPreviews((prev) => ({ ...prev, [fileId]: { fallback: true } }));
       }
-
-      ctx.save();
-      switch (deg) {
-        case 90:
-          ctx.translate(canvas.width, 0);
-          ctx.rotate(Math.PI / 2);
-          break;
-        case 180:
-          ctx.translate(canvas.width, canvas.height);
-          ctx.rotate(Math.PI);
-          break;
-        case 270:
-          ctx.translate(0, canvas.height);
-          ctx.rotate((3 * Math.PI) / 2);
-          break;
-        default:
-          break;
-      }
-
-      await page.render({ canvasContext: ctx, viewport }).promise;
-      ctx.restore();
-
-      setPreviews((prev) => ({ ...prev, [fileId]: canvas.toDataURL() }));
     } catch (e) {
-      // ignore
+      setPreviews((prev) => ({ ...prev, [fileId]: { fallback: true } }));
     }
-  }, [toArrayBuffer]);
+  }, [toArrayBuffer, isPdfType, isImageType]);
 
   const rotatePdfBlob = async (fileOrBlob, rotationDeg = 0) => {
-    if (!rotationDeg || rotationDeg % 360 === 0) return fileOrBlob;
+    // Only rotate real PDFs here; pass through images/others
+    const type = fileOrBlob?.type || "";
+    const looksPdf = type === "application/pdf";
+    if (!looksPdf || !rotationDeg || rotationDeg % 360 === 0) return fileOrBlob;
     const ab = await (fileOrBlob.arrayBuffer ? fileOrBlob.arrayBuffer() : fileOrBlob);
     const pdfDoc = await PDFDocument.load(ab);
     const pages = pdfDoc.getPages();

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Card, Tooltip, Empty, Spin } from "antd";
+import { FileWordTwoTone } from "@ant-design/icons";
 import {
   DeleteOutlined,
   RotateLeftOutlined,
@@ -70,11 +71,11 @@ const PdfPreview = ({
           >
             <div className="relative mb-3">
               <div className="w-full h-32 bg-gray-100 rounded-md overflow-hidden flex items-center justify-center">
-                {previews && pdf?.id && previews[pdf.id] ? (
-                  <img src={previews[pdf.id]} alt={pdf.name} />
-                ) : (
-                  <Spin size="small" />
-                )}
+                {previews && pdf?.id && previews[pdf.id]
+                  ? (previews[pdf.id]?.fallback
+                    ? <FileWordTwoTone style={{ fontSize: 36 }} />
+                    : <img src={previews[pdf.id]} alt={pdf.name} />)
+                  : <Spin size="small" />}
               </div>
 
               <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-1 truncate">
@@ -141,11 +142,11 @@ const PdfPreview = ({
             style={{ width: 180 }}
             cover={
               <div className="h-40 bg-gray-100 flex items-center justify-center">
-                {previews[pdf.id] ? (
-                  <img src={previews[pdf.id]} alt={pdf.name} />
-                ) : (
-                  <Spin size="large" />
-                )}
+                {previews[pdf.id]
+                  ? (previews[pdf.id]?.fallback
+                    ? <FileWordTwoTone style={{ fontSize: 48 }} />
+                    : <img src={previews[pdf.id]} alt={pdf.name} />)
+                  : <Spin size="large" />}
               </div>
             }
             actions={[
