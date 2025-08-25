@@ -342,6 +342,32 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .send(res);
 });
 
+const updateUserProfile = asyncHandler(async (req, res) => {
+  const { fullName, profile, preferences } = req.body;
+  const userId = req.user._id;
+
+  const updateData = {};
+  
+  if (fullName) updateData.fullName = fullName;
+  if (profile) updateData.profile = profile;
+  if (preferences) updateData.preferences = preferences;
+
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { $set: updateData },
+    { new: true, runValidators: true }
+  ).select("-password -refreshToken -forgetPasswordToken -forgetPasswordExpiry");
+
+  if (!updatedUser) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return ApiResponse
+    .success(updatedUser, "Profile updated successfully", 200)
+    .withRequest(req)
+    .send(res);
+});
+
 const sendRegistrationTokens = async (email, req) => {
   const otp = crypto.randomInt(100000, 999999);
 
@@ -370,4 +396,4 @@ const sendRegistrationTokens = async (email, req) => {
   });
 };
 
-export { registerUser, registerEmail, verifyEmailByLink, verifyEmailByOTP, loginUser, refreshAccessToken, logoutUser, userSocialLogin, changeCurrentPassword, forgotPasswordRequest, resetForgottenPassword, getCurrentUser, resendEmailVerification };
+export { registerUser, registerEmail, verifyEmailByLink, verifyEmailByOTP, loginUser, refreshAccessToken, logoutUser, userSocialLogin, changeCurrentPassword, forgotPasswordRequest, resetForgottenPassword, getCurrentUser, resendEmailVerification, updateUserProfile };

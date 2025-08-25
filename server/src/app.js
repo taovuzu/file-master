@@ -65,6 +65,7 @@ import userRouter from "./routes/user.route.js";
 import pdfToolsRouter from "./routes/pdfTools.route.js";
 import downloadRouter from "./routes/download.route.js";
 import healthRouter from "./routes/health.routes.js";
+import subscriptionRouter from "./routes/subscription.route.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 import { enforceUsageLimits } from "./middlewares/usageLimit.middleware.js";
 import { uploadLimitMiddleware } from "./middlewares/uploadLimit.middleware.js";
@@ -73,6 +74,7 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/pdf-tools", enforceUsageLimits, uploadLimitMiddleware, pdfToolsRouter);
 app.use("/api/v1/download", downloadRouter);
 app.use("/api/v1/health", healthRouter);
+app.use("/api/v1/subscriptions", subscriptionRouter);
 
 app.use(errorHandler);
 

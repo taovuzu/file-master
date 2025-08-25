@@ -16,6 +16,25 @@ export const clearEmailRegistrationStep = createAsyncThunk(
   }
 );
 
+export const updateUserProfile = createAsyncThunk(
+  'auth/updateUserProfile',
+  async ({ profileData }, { rejectWithValue }) => {
+    try {
+      const data = await authService.updateUserProfile({ profileData });
+      
+      if (data.success) {
+        const authState = buildAuthState(data.result);
+        window.localStorage.setItem('auth', JSON.stringify(authState));
+        return data.result;
+      }
+      
+      return rejectWithValue(data?.error || 'Profile update failed');
+    } catch (error) {
+      return rejectWithValue(error.message || 'Profile update failed');
+    }
+  }
+);
+
 export const registerEmail = createAsyncThunk(
   'auth/registerEmail',
   async ({ email }, { rejectWithValue }) => {

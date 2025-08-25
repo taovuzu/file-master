@@ -43,6 +43,7 @@
     "pdf-merger-js": "^5.1.2",
     "pdf-poppler": "^0.2.1",
     "pptxgenjs": "^4.0.1",
+    "razorpay": "^2.9.2",
     "redis": "^5.8.2",
     "request-ip": "^3.3.0",
     "sanitize-filename": "^1.6.3",

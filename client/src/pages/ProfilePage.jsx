@@ -20,8 +20,10 @@ import {
   Progress,
   List,
   Tag,
-  Space } from
-'antd';
+  Space,
+  Modal,
+  Alert
+} from 'antd';
 import {
   UserOutlined,
   SettingOutlined,
@@ -37,15 +39,22 @@ import {
   CrownOutlined,
   SecurityScanOutlined,
   NotificationOutlined,
-  EyeOutlined } from
-'@ant-design/icons';
+  EyeOutlined,
+  CreditCardOutlined,
+  CalendarOutlined,
+  BarChartOutlined,
+  StarOutlined
+} from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectCurrentUser } from '@/redux/auth/selectors';
-
+import { getSubscriptionDetails, cancelSubscription } from '@/redux/subscription';
+import { selectCurrentSubscription, selectSubscriptionLoading } from '@/redux/subscription/selectors';
+import { updateUserProfile } from '@/redux/auth/actions';
 import MainLayout from '@/layout/MainLayout';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
+const { TextArea } = Input;
 
 const ProfilePage = () => {
   const [form] = Form.useForm();
@@ -53,8 +62,12 @@ const ProfilePage = () => {
   const [settingsForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  
   const currentUser = useSelector(selectCurrentUser);
   const processingHistory = useSelector((state) => state.pdfTools.history) || [];
+  const currentSubscription = useSelector(selectCurrentSubscription);
+  const subscriptionLoading = useSelector(selectSubscriptionLoading);
   const dispatch = useDispatch();
 
   const [userStats] = useState({
@@ -88,20 +101,46 @@ const ProfilePage = () => {
   useEffect(() => {
     if (currentUser) {
       form.setFieldsValue({
-        name: currentUser.name || '',
+        fullName: currentUser.fullName || '',
         email: currentUser.email || '',
-        phone: currentUser.phone || '',
-        company: currentUser.company || '',
-        role: currentUser.role || ''
+        phone: currentUser.profile?.phone || '',
+        company: currentUser.profile?.company || '',
+        jobTitle: currentUser.profile?.jobTitle || '',
+        country: currentUser.profile?.country || '',
+        timezone: currentUser.profile?.timezone || '',
+        bio: currentUser.profile?.bio || ''
       });
+
+      // Load subscription details
+      dispatch(getSubscriptionDetails());
     }
-  }, [currentUser, form]);
+  }, [currentUser, form, dispatch]);
+
+  useEffect(() => {
+    if (currentUser?.preferences) {
+      setUserSettings(prev => ({
+        ...prev,
+        ...currentUser.preferences
+      }));
+    }
+  }, [currentUser]);
 
   const handleProfileUpdate = async (values) => {
     setLoading(true);
     try {
+      const profileData = {
+        fullName: values.fullName,
+        profile: {
+          phone: values.phone,
+          company: values.company,
+          jobTitle: values.jobTitle,
+          country: values.country,
+          timezone: values.timezone,
+          bio: values.bio
+        }
+      };
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await dispatch(updateUserProfile({ profileData })).unwrap();
       message.success('Profile updated successfully!');
       setEditMode(false);
     } catch (error) {
@@ -114,7 +153,6 @@ const ProfilePage = () => {
   const handlePasswordChange = async (values) => {
     setLoading(true);
     try {
-
       await new Promise((resolve) => setTimeout(resolve, 1000));
       message.success('Password changed successfully!');
       passwordForm.resetFields();
@@ -138,46 +176,73 @@ const ProfilePage = () => {
     }
   };
 
-  const recentActivity = [
-  { tool: 'Merge PDF', files: 3, date: '2 hours ago', status: 'completed' },
-  { tool: 'Compress PDF', files: 1, date: '1 day ago', status: 'completed' },
-  { tool: 'Convert PDF', files: 2, date: '3 days ago', status: 'completed' },
-  { tool: 'Split PDF', files: 1, date: '1 week ago', status: 'completed' }];
+  const handleCancelSubscription = async () => {
+    try {
+      await dispatch(cancelSubscription()).unwrap();
+      message.success('Subscription cancelled successfully');
+      setShowCancelModal(false);
+    } catch (error) {
+      message.error('Failed to cancel subscription');
+    }
+  };
 
+  const getPlanColor = (plan) => {
+    switch (plan) {
+      case 'PRO': return 'blue';
+      case 'BUSINESS': return 'purple';
+      default: return 'default';
+    }
+  };
+
+  const getPlanIcon = (plan) => {
+    switch (plan) {
+      case 'PRO': return <CrownOutlined />;
+      case 'BUSINESS': return <StarOutlined />;
+      default: return <UserOutlined />;
+    }
+  };
+
+  const recentActivity = [
+    { tool: 'Merge PDF', files: 3, date: '2 hours ago', status: 'completed' },
+    { tool: 'Compress PDF', files: 1, date: '1 day ago', status: 'completed' },
+    { tool: 'Convert PDF', files: 2, date: '3 days ago', status: 'completed' },
+    { tool: 'Split PDF', files: 1, date: '1 week ago', status: 'completed' }
+  ];
 
   const profileTabItems = [
-  {
-    key: 'profile',
-    label:
-    <span className="flex items-center gap-2">
+    {
+      key: 'profile',
+      label: (
+        <span className="flex items-center gap-2">
           <UserOutlined />
           Profile
-        </span>,
-
-    children:
-    <div className="space-y-6">
-          {}
+        </span>
+      ),
+      children: (
+        <div className="space-y-6">
+          {/* Profile Header */}
           <Card className="card-modern border border-gray-200 rounded-2xl shadow-sm">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               <div className="relative">
                 <Avatar
-              size={120}
-              src={currentUser?.avatar}
-              className="ring-4 ring-primary-100 bg-gradient-to-r from-primary-600 to-primary-700"
-              icon={<UserOutlined />} />
-            
+                  size={120}
+                  src={currentUser?.profile?.avatar}
+                  className="ring-4 ring-primary-100 bg-gradient-to-r from-primary-600 to-primary-700"
+                  icon={<UserOutlined />}
+                />
+                
                 <Upload
-              showUploadList={false}
-              beforeUpload={() => false}
-              className="absolute bottom-0 right-0">
-              
+                  showUploadList={false}
+                  beforeUpload={() => false}
+                  className="absolute bottom-0 right-0"
+                >
                   <Button
-                type="primary"
-                shape="circle"
-                size="small"
-                icon={<UploadOutlined />}
-                className="shadow-lg hover:scale-105 transition-transform" />
-              
+                    type="primary"
+                    shape="circle"
+                    size="small"
+                    icon={<UploadOutlined />}
+                    className="shadow-lg hover:scale-105 transition-transform"
+                  />
                 </Upload>
               </div>
               
@@ -185,24 +250,32 @@ const ProfilePage = () => {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
                     <Title level={3} className="text-gray-900 mb-1">
-                      {currentUser?.name || 'User Name'}
+                      {currentUser?.fullName || 'User Name'}
                     </Title>
                     <Text className="text-gray-600 text-base">
                       {currentUser?.email || 'user@example.com'}
                     </Text>
+                    
+                    {/* Plan Badge */}
                     <div className="flex items-center gap-2 mt-2">
-                      <Badge status="success" />
-                      <Text className="text-gray-500">Active Account</Text>
+                      <Badge 
+                        status="success" 
+                        text={
+                          <Tag color={getPlanColor(currentUser?.plan)} icon={getPlanIcon(currentUser?.plan)}>
+                            {currentUser?.plan || 'FREE'} Plan
+                          </Tag>
+                        }
+                      />
                     </div>
                   </div>
                   
                   <div className="flex gap-3">
                     <Button
-                  type={editMode ? "default" : "primary"}
-                  icon={editMode ? <SaveOutlined /> : <EditOutlined />}
-                  onClick={() => setEditMode(!editMode)}
-                  className={editMode ? "btn-secondary" : "btn-primary shadow-sm"}>
-                  
+                      type={editMode ? "default" : "primary"}
+                      icon={editMode ? <SaveOutlined /> : <EditOutlined />}
+                      onClick={() => setEditMode(!editMode)}
+                      className={editMode ? "btn-secondary" : "btn-primary shadow-sm"}
+                    >
                       {editMode ? 'Cancel' : 'Edit Profile'}
                     </Button>
                   </div>
@@ -211,84 +284,141 @@ const ProfilePage = () => {
             </div>
           </Card>
 
-          {}
+          {/* Subscription Status */}
+          {currentSubscription && (
+            <Card 
+              title={
+                <span className="flex items-center gap-2">
+                  <CreditCardOutlined />
+                  Subscription Status
+                </span>
+              }
+              className="card-modern border border-gray-200"
+            >
+              <Row gutter={[16, 16]}>
+                <Col xs={24} md={8}>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <Text className="text-sm text-gray-600">Current Plan</Text>
+                    <div className="text-2xl font-bold text-gray-900 mt-1">
+                      {currentSubscription.plan}
+                    </div>
+                  </div>
+                </Col>
+                <Col xs={24} md={8}>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <Text className="text-sm text-gray-600">Status</Text>
+                    <div className="mt-1">
+                      <Tag color={currentSubscription.status === 'ACTIVE' ? 'green' : 'red'}>
+                        {currentSubscription.status}
+                      </Tag>
+                    </div>
+                  </div>
+                </Col>
+                <Col xs={24} md={8}>
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <Text className="text-sm text-gray-600">Next Billing</Text>
+                    <div className="text-lg font-semibold text-gray-900 mt-1">
+                      {currentSubscription.endDate ? 
+                        new Date(currentSubscription.endDate).toLocaleDateString() : 
+                        'N/A'
+                      }
+                    </div>
+                  </div>
+                </Col>
+              </Row>
+              
+              {currentSubscription.status === 'ACTIVE' && (
+                <div className="mt-4 text-center">
+                  <Button 
+                    danger 
+                    onClick={() => setShowCancelModal(true)}
+                    loading={subscriptionLoading}
+                  >
+                    Cancel Subscription
+                  </Button>
+                </div>
+              )}
+            </Card>
+          )}
+
+          {/* Usage Statistics */}
           <Row gutter={[16, 16]}>
             <Col xs={12} sm={6}>
               <Card className="card-modern text-center border border-gray-200">
                 <Statistic
-              title="Files Processed"
-              value={userStats.filesProcessed}
-              valueStyle={{ color: '#3b82f6' }} />
-            
+                  title="Files Processed"
+                  value={userStats.filesProcessed}
+                  valueStyle={{ color: '#3b82f6' }}
+                />
               </Card>
             </Col>
             <Col xs={12} sm={6}>
               <Card className="card-modern text-center border border-gray-200">
                 <Statistic
-              title="Total Size"
-              value={userStats.totalSize}
-              valueStyle={{ color: '#059669' }} />
-            
+                  title="Total Size"
+                  value={userStats.totalSize}
+                  valueStyle={{ color: '#059669' }}
+                />
               </Card>
             </Col>
             <Col xs={12} sm={6}>
               <Card className="card-modern text-center border border-gray-200">
                 <Statistic
-              title="Tools Used"
-              value={userStats.toolsUsed}
-              valueStyle={{ color: '#dc2626' }} />
-            
+                  title="Tools Used"
+                  value={userStats.toolsUsed}
+                  valueStyle={{ color: '#dc2626' }}
+                />
               </Card>
             </Col>
             <Col xs={12} sm={6}>
               <Card className="card-modern text-center border border-gray-200">
                 <Statistic
-              title="Member Since"
-              value={userStats.memberSince}
-              valueStyle={{ color: '#7c3aed' }} />
-            
+                  title="Member Since"
+                  value={userStats.memberSince}
+                  valueStyle={{ color: '#7c3aed' }}
+                />
               </Card>
             </Col>
           </Row>
 
-          {}
+          {/* Personal Information Form */}
           <Card
-        title={<span className="text-gray-900 font-semibold">Personal Information</span>}
-        className="card-modern border border-gray-200">
-        
+            title={<span className="text-gray-900 font-semibold">Personal Information</span>}
+            className="card-modern border border-gray-200"
+          >
             <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleProfileUpdate}
-          disabled={!editMode}>
-          
+              form={form}
+              layout="vertical"
+              onFinish={handleProfileUpdate}
+              disabled={!editMode}
+            >
               <Row gutter={[16, 0]}>
                 <Col xs={24} md={12}>
                   <Form.Item
-                name="name"
-                label={<span className="text-gray-700 font-medium">Full Name</span>}
-                rules={[{ required: true, message: 'Please enter your name!' }]}>
-                
+                    name="fullName"
+                    label={<span className="text-gray-700 font-medium">Full Name</span>}
+                    rules={[{ required: true, message: 'Please enter your name!' }]}
+                  >
                     <Input
-                  placeholder="Enter your full name"
-                  className="input-modern h-12" />
-                
+                      placeholder="Enter your full name"
+                      className="input-modern h-12"
+                    />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
                   <Form.Item
-                name="email"
-                label={<span className="text-gray-700 font-medium">Email Address</span>}
-                rules={[
-                { required: true, message: 'Please enter your email!' },
-                { type: 'email', message: 'Please enter a valid email!' }]
-                }>
-                
+                    name="email"
+                    label={<span className="text-gray-700 font-medium">Email Address</span>}
+                    rules={[
+                      { required: true, message: 'Please enter your email!' },
+                      { type: 'email', message: 'Please enter a valid email!' }
+                    ]}
+                  >
                     <Input
-                  placeholder="Enter your email"
-                  className="input-modern h-12"
-                  disabled />
-                
+                      placeholder="Enter your email"
+                      className="input-modern h-12"
+                      disabled
+                    />
                   </Form.Item>
                 </Col>
               </Row>
@@ -296,62 +426,91 @@ const ProfilePage = () => {
               <Row gutter={[16, 0]}>
                 <Col xs={24} md={12}>
                   <Form.Item
-                name="phone"
-                label={<span className="text-gray-700 font-medium">Phone Number</span>}>
-                
+                    name="phone"
+                    label={<span className="text-gray-700 font-medium">Phone Number</span>}
+                  >
                     <Input
-                  placeholder="Enter your phone number"
-                  className="input-modern h-12" />
-                
+                      placeholder="Enter your phone number"
+                      className="input-modern h-12"
+                    />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
                   <Form.Item
-                name="company"
-                label={<span className="text-gray-700 font-medium">Company</span>}>
-                
+                    name="company"
+                    label={<span className="text-gray-700 font-medium">Company</span>}
+                  >
                     <Input
-                  placeholder="Enter your company name"
-                  className="input-modern h-12" />
-                
+                      placeholder="Enter your company name"
+                      className="input-modern h-12"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row gutter={[16, 0]}>
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    name="jobTitle"
+                    label={<span className="text-gray-700 font-medium">Job Title</span>}
+                  >
+                    <Input
+                      placeholder="Enter your job title"
+                      className="input-modern h-12"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} md={12}>
+                  <Form.Item
+                    name="country"
+                    label={<span className="text-gray-700 font-medium">Country</span>}
+                  >
+                    <Select placeholder="Select your country" className="h-12">
+                      <Option value="US">United States</Option>
+                      <Option value="IN">India</Option>
+                      <Option value="UK">United Kingdom</Option>
+                      <Option value="CA">Canada</Option>
+                      <Option value="AU">Australia</Option>
+                    </Select>
                   </Form.Item>
                 </Col>
               </Row>
 
               <Form.Item
-            name="role"
-            label={<span className="text-gray-700 font-medium">Job Title</span>}>
-            
-                <Input
-              placeholder="Enter your job title"
-              className="input-modern h-12" />
-            
+                name="bio"
+                label={<span className="text-gray-700 font-medium">Bio</span>}
+              >
+                <TextArea
+                  placeholder="Tell us about yourself..."
+                  rows={4}
+                  className="input-modern"
+                />
               </Form.Item>
 
-              {editMode &&
-          <Form.Item>
+              {editMode && (
+                <Form.Item>
                   <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              className="btn-primary h-12 px-8">
-              
+                    type="primary"
+                    htmlType="submit"
+                    loading={loading}
+                    className="btn-primary h-12 px-8"
+                  >
                     Save Changes
                   </Button>
                 </Form.Item>
-          }
+              )}
             </Form>
           </Card>
 
-          {}
+          {/* Recent Activity */}
           <Card
-        title={<span className="text-gray-900 font-semibold">Recent Activity</span>}
-        className="card-modern border border-gray-200">
-        
+            title={<span className="text-gray-900 font-semibold">Recent Activity</span>}
+            className="card-modern border border-gray-200"
+          >
             <List
-          dataSource={recentActivity}
-          renderItem={(item) =>
-          <List.Item className="border-b border-gray-100 last:border-b-0 py-4">
+              dataSource={recentActivity}
+              renderItem={(item) => (
+                <List.Item className="border-b border-gray-100 last:border-b-0 py-4">
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
@@ -370,85 +529,185 @@ const ProfilePage = () => {
                     </div>
                   </div>
                 </List.Item>
-          } />
-        
+              )}
+            />
           </Card>
         </div>
+      )
+    },
+    {
+      key: 'subscription',
+      label: (
+        <span className="flex items-center gap-2">
+          <CreditCardOutlined />
+          Subscription
+        </span>
+      ),
+      children: (
+        <div className="space-y-6">
+          {currentSubscription ? (
+            <Card className="card-modern border border-gray-200">
+              <div className="space-y-6">
+                <div className="text-center">
+                  <Title level={3} className="text-gray-900 mb-2">
+                    Your {currentSubscription.plan} Subscription
+                  </Title>
+                  <Text className="text-gray-600">
+                    Manage your subscription and billing preferences
+                  </Text>
+                </div>
 
-  },
-  {
-    key: 'security',
-    label:
-    <span className="flex items-center gap-2">
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={8}>
+                    <Card className="text-center bg-blue-50 border-blue-200">
+                      <Title level={4} className="text-blue-900">Plan</Title>
+                      <Text className="text-2xl font-bold text-blue-900">
+                        {currentSubscription.plan}
+                      </Text>
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card className="text-center bg-green-50 border-green-200">
+                      <Title level={4} className="text-green-900">Status</Title>
+                      <Tag color="green" size="large" className="text-lg">
+                        {currentSubscription.status}
+                      </Tag>
+                    </Card>
+                  </Col>
+                  <Col xs={24} md={8}>
+                    <Card className="text-center bg-purple-50 border-purple-200">
+                      <Title level={4} className="text-purple-900">Next Billing</Title>
+                      <Text className="text-lg font-semibold text-purple-900">
+                        {currentSubscription.endDate ? 
+                          new Date(currentSubscription.endDate).toLocaleDateString() : 
+                          'N/A'
+                        }
+                      </Text>
+                    </Card>
+                  </Col>
+                </Row>
+
+                <div className="text-center space-y-4">
+                  <Button 
+                    type="primary" 
+                    size="large"
+                    onClick={() => window.location.href = '/pricing'}
+                  >
+                    Manage Subscription
+                  </Button>
+                  
+                  {currentSubscription.status === 'ACTIVE' && (
+                    <div>
+                      <Button 
+                        danger 
+                        size="large"
+                        onClick={() => setShowCancelModal(true)}
+                        loading={subscriptionLoading}
+                      >
+                        Cancel Subscription
+                      </Button>
+                      <div className="mt-2 text-sm text-gray-500">
+                        Your subscription will remain active until the end of the current billing period
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ) : (
+            <Card className="card-modern border border-gray-200 text-center">
+              <div className="py-8">
+                <CrownOutlined className="text-6xl text-gray-300 mb-4" />
+                <Title level={3} className="text-gray-700 mb-2">No Active Subscription</Title>
+                <Text className="text-gray-500 mb-6 block">
+                  You're currently on the free plan. Upgrade to unlock premium features and higher limits.
+                </Text>
+                <Button 
+                  type="primary" 
+                  size="large"
+                  onClick={() => window.location.href = '/pricing'}
+                >
+                  View Plans
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'security',
+      label: (
+        <span className="flex items-center gap-2">
           <LockOutlined />
           Security
-        </span>,
-
-    children:
-    <div className="space-y-6">
+        </span>
+      ),
+      children: (
+        <div className="space-y-6">
           <Card
-        title={<span className="text-gray-900 font-semibold">Change Password</span>}
-        className="card-modern border border-gray-200">
-        
+            title={<span className="text-gray-900 font-semibold">Change Password</span>}
+            className="card-modern border border-gray-200"
+          >
             <Form
-          form={passwordForm}
-          layout="vertical"
-          onFinish={handlePasswordChange}>
-          
+              form={passwordForm}
+              layout="vertical"
+              onFinish={handlePasswordChange}
+            >
               <Form.Item
-            name="currentPassword"
-            label={<span className="text-gray-700 font-medium">Current Password</span>}
-            rules={[{ required: true, message: 'Please enter your current password!' }]}>
-            
+                name="currentPassword"
+                label={<span className="text-gray-700 font-medium">Current Password</span>}
+                rules={[{ required: true, message: 'Please enter your current password!' }]}
+              >
                 <Input.Password
-              placeholder="Enter current password"
-              className="input-modern h-12" />
-            
+                  placeholder="Enter current password"
+                  className="input-modern h-12"
+                />
               </Form.Item>
 
               <Form.Item
-            name="newPassword"
-            label={<span className="text-gray-700 font-medium">New Password</span>}
-            rules={[
-            { required: true, message: 'Please enter a new password!' },
-            { min: 6, message: 'Password must be at least 6 characters!' }]
-            }>
-            
+                name="newPassword"
+                label={<span className="text-gray-700 font-medium">New Password</span>}
+                rules={[
+                  { required: true, message: 'Please enter a new password!' },
+                  { min: 6, message: 'Password must be at least 6 characters!' }
+                ]}
+              >
                 <Input.Password
-              placeholder="Enter new password"
-              className="input-modern h-12" />
-            
+                  placeholder="Enter new password"
+                  className="input-modern h-12"
+                />
               </Form.Item>
 
               <Form.Item
-            name="confirmPassword"
-            label={<span className="text-gray-700 font-medium">Confirm New Password</span>}
-            dependencies={['newPassword']}
-            rules={[
-            { required: true, message: 'Please confirm your new password!' },
-            ({ getFieldValue }) => ({
-              validator(_, value) {
-                if (!value || getFieldValue('newPassword') === value) {
-                  return Promise.resolve();
+                name="confirmPassword"
+                label={<span className="text-gray-700 font-medium">Confirm New Password</span>}
+                dependencies={['newPassword']}
+                rules={[
+                  { required: true, message: 'Please confirm your new password!' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue('newPassword') === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('Passwords do not match!'));
+                    }
+                  })]
                 }
-                return Promise.reject(new Error('Passwords do not match!'));
-              }
-            })]
-            }>
-            
+              >
                 <Input.Password
-              placeholder="Confirm new password"
-              className="input-modern h-12" />
-            
+                  placeholder="Confirm new password"
+                  className="input-modern h-12"
+                />
               </Form.Item>
 
               <Form.Item>
                 <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              className="btn-primary h-12 px-8">
-              
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  className="btn-primary h-12 px-8"
+                >
                   Update Password
                 </Button>
               </Form.Item>
@@ -456,13 +715,13 @@ const ProfilePage = () => {
           </Card>
 
           <Card
-        title={<span className="text-gray-900 font-semibold">Security Settings</span>}
-        className="card-modern border border-gray-200">
-        
+            title={<span className="text-gray-900 font-semibold">Security Settings</span>}
+            className="card-modern border border-gray-200"
+          >
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  {}
+                  <SecurityScanOutlined className="text-primary-600 text-xl" />
                   <div>
                     <Text strong className="text-gray-900">Two-Factor Authentication</Text>
                     <br />
@@ -486,34 +745,34 @@ const ProfilePage = () => {
             </div>
           </Card>
         </div>
-
-  },
-  {
-    key: 'settings',
-    label:
-    <span className="flex items-center gap-2">
+      )
+    },
+    {
+      key: 'settings',
+      label: (
+        <span className="flex items-center gap-2">
           <SettingOutlined />
           Settings
-        </span>,
-
-    children:
-    <div className="space-y-6">
+        </span>
+      ),
+      children: (
+        <div className="space-y-6">
           <Card
-        title={<span className="text-gray-900 font-semibold">General Settings</span>}
-        className="card-modern border border-gray-200">
-        
+            title={<span className="text-gray-900 font-semibold">General Settings</span>}
+            className="card-modern border border-gray-200"
+          >
             <Form
-          form={settingsForm}
-          layout="vertical"
-          onFinish={handleSettingsUpdate}
-          initialValues={userSettings}>
-          
+              form={settingsForm}
+              layout="vertical"
+              onFinish={handleSettingsUpdate}
+              initialValues={userSettings}
+            >
               <Row gutter={[16, 0]}>
                 <Col xs={24} md={12}>
                   <Form.Item
-                name="language"
-                label={<span className="text-gray-700 font-medium">Language</span>}>
-                
+                    name="language"
+                    label={<span className="text-gray-700 font-medium">Language</span>}
+                  >
                     <Select className="h-12">
                       <Option value="en">English</Option>
                       <Option value="es">Español</Option>
@@ -524,9 +783,9 @@ const ProfilePage = () => {
                 </Col>
                 <Col xs={24} md={12}>
                   <Form.Item
-                name="theme"
-                label={<span className="text-gray-700 font-medium">Theme</span>}>
-                
+                    name="theme"
+                    label={<span className="text-gray-700 font-medium">Theme</span>}
+                  >
                     <Select className="h-12">
                       <Option value="light">Light</Option>
                       <Option value="dark">Dark</Option>
@@ -592,20 +851,20 @@ const ProfilePage = () => {
 
               <Form.Item className="mt-6">
                 <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              className="btn-primary h-12 px-8">
-              
+                  type="primary"
+                  htmlType="submit"
+                  loading={loading}
+                  className="btn-primary h-12 px-8"
+                >
                   Save Settings
                 </Button>
               </Form.Item>
             </Form>
           </Card>
         </div>
-
-  }];
-
+      )
+    }
+  ];
 
   return (
     <MainLayout>
@@ -614,7 +873,7 @@ const ProfilePage = () => {
           <div className="mb-8">
             <Title level={2} className="text-gray-900 mb-2">My Account</Title>
             <Paragraph className="text-gray-600">
-              Manage your profile, security settings, and preferences
+              Manage your profile, subscription, security settings, and preferences
             </Paragraph>
           </div>
 
@@ -623,12 +882,37 @@ const ProfilePage = () => {
             items={profileTabItems}
             size="large"
             className="profile-tabs bg-white rounded-lg shadow-soft p-6"
-            tabBarStyle={{ marginBottom: '24px' }} />
-          
+            tabBarStyle={{ marginBottom: '24px' }}
+          />
         </div>
       </div>
-    </MainLayout>);
 
+      {/* Cancel Subscription Modal */}
+      <Modal
+        title="Cancel Subscription"
+        open={showCancelModal}
+        onOk={handleCancelSubscription}
+        onCancel={() => setShowCancelModal(false)}
+        okText="Yes, Cancel Subscription"
+        cancelText="Keep Subscription"
+        okButtonProps={{ danger: true }}
+      >
+        <div className="space-y-4">
+          <Alert
+            message="Are you sure you want to cancel your subscription?"
+            description="Your subscription will remain active until the end of the current billing period. You can reactivate it anytime."
+            type="warning"
+            showIcon
+          />
+          <div className="text-sm text-gray-600">
+            <p>• You'll lose access to premium features</p>
+            <p>• Your files and data will be preserved</p>
+            <p>• You can upgrade again anytime</p>
+          </div>
+        </div>
+      </Modal>
+    </MainLayout>
+  );
 };
 
 export default ProfilePage;

@@ -128,6 +128,14 @@ sendAuthRequest(
   { notifyOnSuccess: false, notifyOnFailed: false }
 );
 
+export const updateUserProfile = ({ profileData }) =>
+sendAuthRequest(
+  'put',
+  'users/profile',
+  profileData,
+  { notifyOnSuccess: true, notifyOnFailed: true }
+);
+
 export const changeCurrentPassword = ({ oldPassword, newPassword }) =>
 sendAuthRequest(
   'post',

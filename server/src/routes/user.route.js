@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerUser, registerEmail, verifyEmailByLink, verifyEmailByOTP, loginUser, refreshAccessToken, logoutUser, userSocialLogin, forgotPasswordRequest, changeCurrentPassword, resetForgottenPassword, getCurrentUser, resendEmailVerification } from "../controllers/user.controller.js";
+import { registerUser, registerEmail, verifyEmailByLink, verifyEmailByOTP, loginUser, refreshAccessToken, logoutUser, userSocialLogin, forgotPasswordRequest, changeCurrentPassword, resetForgottenPassword, getCurrentUser, resendEmailVerification, updateUserProfile } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { emailValidator, usernameValidator, passwordValidator, userLoginValidator, userRegisterValidator, changeCurrentPasswordValidator, resetForgottenPasswordValidator } from "../validators/user.validator.js";
 import { validate } from "../validators/validate.js";
@@ -7,7 +7,6 @@ import passport from "passport";
 import "../middlewares/passport.js";
 
 const router = Router();
-
 
 router.route("/register-email").post(emailValidator(), validate, registerEmail);
 router.route("/register-user").post(userRegisterValidator(), validate, registerUser);
@@ -18,13 +17,11 @@ router.route("/resend-verification").post(resendEmailVerification);
 router.route("/request-password-reset").post(emailValidator(), validate, forgotPasswordRequest);
 router.route("/reset-forgot-password").post(resetForgottenPasswordValidator(), validate, resetForgottenPassword);
 
-
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/change-password").post(verifyJWT, changeCurrentPasswordValidator(), validate, changeCurrentPassword);
 router.route("/current-user").get(verifyJWT, getCurrentUser);
+router.route("/profile").put(verifyJWT, updateUserProfile);
 router.route("/refresh-access-token").get(refreshAccessToken);
-
-
 
 router.route("/google").get(
   passport.authenticate("google", {
