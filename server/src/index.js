@@ -30,24 +30,24 @@ const shutdown = async (signal) => {
   }
 };
 
-connectDB()
-  .then(async () => {
-    console.log('Database connected successfully');
+connectDB().
+then(async () => {
+  console.log('Database connected successfully');
 
-    await initCleanup();
-    await initializeQueue();
-    await initializePdfWorker();
-    healthCheck();
+  await initCleanup();
+  await initializeQueue();
+  await initializePdfWorker();
+  healthCheck();
 
-    const PORT = process.env.PORT || 8080;
-    server = app.listen(PORT, () => {
-      console.log(`App is listening at port ${PORT}`);
-    });
-  })
-  .catch((error) => {
-    console.error(`Could not connect to database: ${error.message}`);
-    process.exit(1);
+  const PORT = process.env.PORT || 8080;
+  server = app.listen(PORT, () => {
+    console.log(`App is listening at port ${PORT}`);
   });
+}).
+catch((error) => {
+  console.error(`Could not connect to database: ${error.message}`);
+  process.exit(1);
+});
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));

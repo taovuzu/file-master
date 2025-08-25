@@ -1,4 +1,4 @@
-// src/components/UnlockPdfForm.jsx
+
 import React, { useState } from "react";
 import { Form, Button, Input, message, Alert, Card, Row, Col } from "antd";
 import { LockOutlined, InfoCircleOutlined, KeyOutlined } from "@ant-design/icons";
@@ -36,7 +36,7 @@ const UnlockPdfForm = ({ onFinish, file }) => {
             <Col span={12}>
               <Card size="small" style={{ textAlign: 'center', border: '1px solid #d9d9d9', backgroundColor: '#fafafa' }}>
                 <div style={{ fontSize: '12px', color: '#666' }}>
-                  <strong>Protected PDF</strong><br/>
+                  <strong>Protected PDF</strong><br />
                   Password required
                 </div>
               </Card>
@@ -44,7 +44,7 @@ const UnlockPdfForm = ({ onFinish, file }) => {
             <Col span={12}>
               <Card size="small" style={{ textAlign: 'center', border: '1px solid #d9d9d9', backgroundColor: '#f6ffed' }}>
                 <div style={{ fontSize: '12px', color: '#666' }}>
-                  <strong>Unlocked PDF</strong><br/>
+                  <strong>Unlocked PDF</strong><br />
                   No password needed
                 </div>
               </Card>
@@ -60,8 +60,8 @@ const UnlockPdfForm = ({ onFinish, file }) => {
           Unlock Protected PDF
         </Button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default UnlockPdfForm;

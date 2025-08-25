@@ -14,10 +14,10 @@ const MergePdfPage = () => {
         minFiles: 2,
         maxFiles: 15,
         maxSize: 10,
-        acceptedTypes: ["application/pdf"],
-      }}
-    />
-  );
+        acceptedTypes: ["application/pdf"]
+      }} />);
+
+
 };
 
 export default MergePdfPage;

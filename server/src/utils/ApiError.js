@@ -7,8 +7,8 @@ class ApiError extends Error {
     this.code = code || `HTTP_${statusCode}`;
     this.success = false;
     this.timestamp = new Date().toISOString();
-    this.path = null; // Will be set by middleware
-    
+    this.path = null;
+
     if (stack) {
       this.stack = stack;
     } else {

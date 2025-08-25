@@ -22,7 +22,7 @@ const addTextWatermark = asyncHandler(async (req, res) => {
     toPage = 1,
     fontFamily = "Arial",
     fontSize = "normal",
-    textColor = [0, 0, 0],
+    textColor = [0, 0, 0]
   } = req.body;
 
   if (!text) {
@@ -38,7 +38,7 @@ const addTextWatermark = asyncHandler(async (req, res) => {
   const outputPath = path.join(outputDir, outputName);
 
   try {
-    // Check Redis health
+
     let retryCount = 0;
     const maxRetries = 3;
     while (retryCount < maxRetries) {
@@ -46,17 +46,17 @@ const addTextWatermark = asyncHandler(async (req, res) => {
         const isHealthy = await healthCheck();
         if (isHealthy) break;
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       } catch (error) {
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
     if (retryCount > maxRetries) {
       throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
-    // Initialize job status
+
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'addTextWatermark',
@@ -71,7 +71,7 @@ const addTextWatermark = asyncHandler(async (req, res) => {
       fontSize
     });
 
-    // Add job to queue
+
     await pdfProcessingQueue.add('add-text-watermark', {
       jobId,
       operation: 'addTextWatermark',
@@ -92,8 +92,8 @@ const addTextWatermark = asyncHandler(async (req, res) => {
 
   } catch (error) {
     console.error(`Failed to queue text watermark job ${jobId}:`, error);
-    
-    // Update job status to failed if job was created
+
+
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue text watermark job',
@@ -103,7 +103,7 @@ const addTextWatermark = asyncHandler(async (req, res) => {
     } catch (redisError) {
       console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-    
+
     throw error;
   }
 
@@ -143,7 +143,7 @@ const addImageWatermark = asyncHandler(async (req, res) => {
     layer = "overlay",
     fromPage = 1,
     toPage = 1,
-    scale = 1,
+    scale = 1
   } = req.body;
 
   transparency = parseFloat(transparency);
@@ -170,7 +170,7 @@ const addImageWatermark = asyncHandler(async (req, res) => {
   const outputPath = path.join(outputDir, outputName);
 
   try {
-    // Check Redis health
+
     let retryCount = 0;
     const maxRetries = 3;
     while (retryCount < maxRetries) {
@@ -178,17 +178,17 @@ const addImageWatermark = asyncHandler(async (req, res) => {
         const isHealthy = await healthCheck();
         if (isHealthy) break;
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       } catch (error) {
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
     if (retryCount > maxRetries) {
       throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
-    // Initialize job status
+
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'addImageWatermark',
@@ -201,7 +201,7 @@ const addImageWatermark = asyncHandler(async (req, res) => {
       scale
     });
 
-    // Add job to queue
+
     await pdfProcessingQueue.add('add-image-watermark', {
       jobId,
       operation: 'addImageWatermark',
@@ -220,8 +220,8 @@ const addImageWatermark = asyncHandler(async (req, res) => {
 
   } catch (error) {
     console.error(`Failed to queue image watermark job ${jobId}:`, error);
-    
-    // Update job status to failed if job was created
+
+
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue image watermark job',
@@ -231,7 +231,7 @@ const addImageWatermark = asyncHandler(async (req, res) => {
     } catch (redisError) {
       console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-    
+
     throw error;
   }
 

@@ -26,10 +26,10 @@ const limiter = rateLimit({
   handler: (_, __, ___, options) => {
     throw new ApiError(
       options.statusCode || 500,
-      `There are too many requests. You are only allowed ${options.max
-      } requests per ${options.windowMs / 60000} minutes`
+      `There are too many requests. You are only allowed ${options.max} requests per ${
+      options.windowMs / 60000} minutes`
     );
-  },
+  }
 });
 app.use(limiter);
 app.use(express.json({ limit: "32kb" }));
@@ -64,7 +64,7 @@ import downloadRouter from "./routes/download.route.js";
 import healthRouter from "./routes/health.routes.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 import { enforceUsageLimits } from "./middlewares/usageLimit.middleware.js";
-import { uploadLimitMiddleware } from "./middlewares/uploadLimit.middleware.js"
+import { uploadLimitMiddleware } from "./middlewares/uploadLimit.middleware.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/pdf-tools", enforceUsageLimits, uploadLimitMiddleware, pdfToolsRouter);
@@ -74,16 +74,3 @@ app.use("/api/v1/health", healthRouter);
 app.use(errorHandler);
 
 export { app };
-
-// image-to-pdf -> { PDFDocument from "pdf-lib" }
-// doc-to-pdf -> { libreoffice }
-// pdf-to-ppt -> { pptxgenjs, pdf-poppler, pdf-lib }
-// merge -> { PDFMerger from "pdf-merger-js" }
-// split -> { PDFDocument from "pdf-lib" }
-// compress -> { ghostscript }
-// rotate -> { PDFDocument, degrees from "pdf-lib" }
-// page-numbers -> { PDFDocument, StandardFonts, rgb from "pdf-lib" }
-// watermark -> { PDFDocument, rgb, StandardFonts, degrees from "pdf-lib" }
-// esign -> { PDFDocument from "pdf-lib" }
-// unlock -> { ghostscript }
-// protect -> { ghostscript }

@@ -28,10 +28,10 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
         const isHealthy = await healthCheck();
         if (isHealthy) break;
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       } catch (error) {
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
     if (retryCount > maxRetries) {
@@ -56,8 +56,8 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
 
   } catch (error) {
     console.error(`Failed to queue doc to pdf conversion job ${jobId}:`, error);
-    
-    // Update job status to failed if job was created
+
+
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue doc to pdf conversion job',
@@ -67,7 +67,7 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
     } catch (redisError) {
       console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-    
+
     throw error;
   }
 
@@ -98,7 +98,7 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
     orientation = "portrait",
     pagetype = "A4",
     margin = "none",
-    mergeImagesInOnePdf = true,
+    mergeImagesInOnePdf = true
   } = req.body;
 
   const jobId = uuidv4();
@@ -115,10 +115,10 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
         const isHealthy = await healthCheck();
         if (isHealthy) break;
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       } catch (error) {
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
     if (retryCount > maxRetries) {
@@ -128,7 +128,7 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'convertImagesToPdf',
-      originalFileNames: files.map(f => f.originalname),
+      originalFileNames: files.map((f) => f.originalname),
       orientation,
       pagetype,
       margin,
@@ -144,13 +144,13 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
       pagetype,
       margin,
       mergeImagesInOnePdf,
-      originalFileNames: files.map(f => f.originalname)
+      originalFileNames: files.map((f) => f.originalname)
     });
 
   } catch (error) {
     console.error(`Failed to queue images to pdf conversion job ${jobId}:`, error);
-    
-    // Update job status to failed if job was created
+
+
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue images to pdf conversion job',
@@ -160,7 +160,7 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
     } catch (redisError) {
       console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-    
+
     throw error;
   }
 
@@ -174,7 +174,7 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
       statusUrl: `/api/v1/download/status/${jobId}`,
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'convertImagesToPdf',
-      originalFileNames: files.map(f => f.originalname),
+      originalFileNames: files.map((f) => f.originalname),
       orientation,
       pagetype,
       margin,
@@ -206,10 +206,10 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
         const isHealthy = await healthCheck();
         if (isHealthy) break;
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       } catch (error) {
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
     if (retryCount > maxRetries) {
@@ -232,8 +232,8 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
 
   } catch (error) {
     console.error(`Failed to queue pdf to doc conversion job ${jobId}:`, error);
-    
-    // Update job status to failed if job was created
+
+
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue pdf to doc conversion job',
@@ -243,7 +243,7 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
     } catch (redisError) {
       console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-    
+
     throw error;
   }
 
@@ -285,10 +285,10 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
         const isHealthy = await healthCheck();
         if (isHealthy) break;
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       } catch (error) {
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
     if (retryCount > maxRetries) {
@@ -311,8 +311,8 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
 
   } catch (error) {
     console.error(`Failed to queue pdf to ppt conversion job ${jobId}:`, error);
-    
-    // Update job status to failed if job was created
+
+
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue pdf to ppt conversion job',
@@ -322,7 +322,7 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
     } catch (redisError) {
       console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-    
+
     throw error;
   }
 

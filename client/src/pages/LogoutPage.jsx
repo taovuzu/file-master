@@ -27,14 +27,14 @@ const LogoutPage = () => {
   return (
     <AuthLayout
       title="Logging Out"
-      subtitle="Please wait while we log you out..."
-    >
+      subtitle="Please wait while we log you out...">
+      
       <div style={{ textAlign: 'center', padding: '40px 0' }}>
         <Spin size="large" />
         <p style={{ marginTop: '20px' }}>Logging you out...</p>
       </div>
-    </AuthLayout>
-  );
+    </AuthLayout>);
+
 };
 
 export default LogoutPage;

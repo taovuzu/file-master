@@ -1,20 +1,20 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as pdfToolsService from '@/services/pdfToolsService';
 
-// Async thunks
+
 export const processPdf = createAsyncThunk(
   'pdfTools/processPdf',
   async ({ toolType, files, options }, { rejectWithValue }) => {
     try {
       let result;
-      
-      // Determine if tool supports multiple files
+
+
       const multiFileTools = ['merge', 'image-to-pdf'];
       const isMultiFile = multiFileTools.includes(toolType);
-      
-      // For single file tools, use the first file
-      const input = isMultiFile ? files : (Array.isArray(files) ? files[0] : files);
-      
+
+
+      const input = isMultiFile ? files : Array.isArray(files) ? files[0] : files;
+
       switch (toolType) {
         case 'merge':
           result = await pdfToolsService.mergePdfs(input, options);
@@ -46,7 +46,7 @@ export const processPdf = createAsyncThunk(
         default:
           throw new Error(`Unknown tool type: ${toolType}`);
       }
-      
+
       return result;
     } catch (error) {
       return rejectWithValue(error.message || 'Processing failed');
@@ -77,8 +77,8 @@ const initialState = {
   settings: {
     autoDownload: false,
     keepHistory: true,
-    maxHistoryItems: 50,
-  },
+    maxHistoryItems: 50
+  }
 };
 
 const pdfToolsSlice = createSlice({
@@ -96,7 +96,7 @@ const pdfToolsSlice = createSlice({
     },
     removeFile: (state, action) => {
       state.currentFiles = state.currentFiles.filter(
-        file => file !== action.payload
+        (file) => file !== action.payload
       );
     },
     clearFiles: (state) => {
@@ -118,12 +118,12 @@ const pdfToolsSlice = createSlice({
       const newItem = {
         id: Date.now(),
         timestamp: new Date().toISOString(),
-        ...action.payload,
+        ...action.payload
       };
-      
+
       state.history.unshift(newItem);
-      
-      // Keep only the latest items based on settings
+
+
       if (state.history.length > state.settings.maxHistoryItems) {
         state.history = state.history.slice(0, state.settings.maxHistoryItems);
       }
@@ -140,42 +140,42 @@ const pdfToolsSlice = createSlice({
       state.error = null;
       state.processing = false;
       state.downloading = false;
-    },
+    }
   },
   extraReducers: (builder) => {
-    builder
-      // Process PDF
-      .addCase(processPdf.pending, (state) => {
-        state.processing = true;
+    builder.
+
+    addCase(processPdf.pending, (state) => {
+      state.processing = true;
+      state.error = null;
+    }).
+    addCase(processPdf.fulfilled, (state, action) => {
+      state.processing = false;
+      if (action.payload.success) {
+        state.processedFile = action.payload.fileUrl;
         state.error = null;
-      })
-      .addCase(processPdf.fulfilled, (state, action) => {
-        state.processing = false;
-        if (action.payload.success) {
-          state.processedFile = action.payload.fileUrl;
-          state.error = null;
-        } else {
-          state.error = action.payload.error || 'Processing failed';
-        }
-      })
-      .addCase(processPdf.rejected, (state, action) => {
-        state.processing = false;
-        state.error = action.payload || 'Processing failed';
-      })
-      // Download File
-      .addCase(downloadFile.pending, (state) => {
-        state.downloading = true;
-        state.error = null;
-      })
-      .addCase(downloadFile.fulfilled, (state) => {
-        state.downloading = false;
-        state.error = null;
-      })
-      .addCase(downloadFile.rejected, (state, action) => {
-        state.downloading = false;
-        state.error = action.payload || 'Download failed';
-      });
-  },
+      } else {
+        state.error = action.payload.error || 'Processing failed';
+      }
+    }).
+    addCase(processPdf.rejected, (state, action) => {
+      state.processing = false;
+      state.error = action.payload || 'Processing failed';
+    }).
+
+    addCase(downloadFile.pending, (state) => {
+      state.downloading = true;
+      state.error = null;
+    }).
+    addCase(downloadFile.fulfilled, (state) => {
+      state.downloading = false;
+      state.error = null;
+    }).
+    addCase(downloadFile.rejected, (state, action) => {
+      state.downloading = false;
+      state.error = action.payload || 'Download failed';
+    });
+  }
 });
 
 export const {
@@ -191,7 +191,7 @@ export const {
   addToHistory,
   clearHistory,
   updateSettings,
-  reset,
+  reset
 } = pdfToolsSlice.actions;
 
 export default pdfToolsSlice.reducer;

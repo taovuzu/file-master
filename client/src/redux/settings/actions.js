@@ -2,27 +2,27 @@ import { createAsyncThunk, createAction } from '@reduxjs/toolkit';
 import { request } from '@/request';
 import storePersist from '@/redux/storePersist.js';
 
-// Helper to normalize settings list into { category: { key: value } } shape
+
 const normalizeSettings = (datas) => {
   const settingsCategory = {};
   datas.forEach((data) => {
     settingsCategory[data.settingCategory] = {
       ...settingsCategory[data.settingCategory],
-      [data.settingKey]: data.settingValue,
+      [data.settingKey]: data.settingValue
     };
   });
   return settingsCategory;
 };
 
-// Helper to save settings to storePersist
+
 const saveSettingsToLocalStorage = (settings) => {
   storePersist.set('settings', settings);
 };
 
-// Sync actions
+
 export const resetState = createAction('settings/resetState');
 
-// async handler
+
 const fetchAndStoreSettings = async (entity, rejectWithValue) => {
   const listRes = await request.listAll({ entity });
   if (!listRes.success) return rejectWithValue(listRes.error || 'Failed to fetch settings');
@@ -31,13 +31,13 @@ const fetchAndStoreSettings = async (entity, rejectWithValue) => {
   return payload;
 };
 
-// Async thunks
+
 export const updateSetting = createAsyncThunk(
   'settings/updateSetting',
   async ({ entity, settingKey, jsonData }, { rejectWithValue }) => {
     const res = await request.patch({
       entity: `${entity}/updateBySettingKey/${settingKey}`,
-      jsonData,
+      jsonData
     });
     if (!res.success) return rejectWithValue(res.error || 'Failed to update setting');
     return await fetchAndStoreSettings(entity, rejectWithValue);
@@ -49,7 +49,7 @@ export const updateManySettings = createAsyncThunk(
   async ({ entity, jsonData }, { rejectWithValue }) => {
     const res = await request.patch({
       entity: `${entity}/updateManySetting`,
-      jsonData,
+      jsonData
     });
     if (!res.success) return rejectWithValue(res.error || 'Failed to update many settings');
     return await fetchAndStoreSettings(entity, rejectWithValue);

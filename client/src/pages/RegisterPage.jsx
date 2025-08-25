@@ -11,18 +11,18 @@ import {
   verifyEmailByOTP,
   resendVerification,
   clearEmailRegistrationStep,
-  googleLogin,
-} from "@/redux/auth/actions";
+  googleLogin } from
+"@/redux/auth/actions";
 import {
   selectEmailRegistrationStep,
-  selectIsSuccess,
-} from "@/redux/auth/selectors";
+  selectIsSuccess } from
+"@/redux/auth/selectors";
 
 const { Title, Text } = Typography;
 
 const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState("email"); // 'email', 'otp', 'userDetails'
+  const [currentStep, setCurrentStep] = useState("email");
   const [emailData, setEmailData] = useState(null);
   const [resendTimer, setResendTimer] = useState(0);
   const location = useLocation();
@@ -76,7 +76,7 @@ const RegisterPage = () => {
       const result = await dispatch(registerEmail({ email: values.email }));
       if (result.meta.requestStatus === "fulfilled") {
         setEmailData(values.email);
-        setResendTimer(120); // start 2-min countdown
+        setResendTimer(120);
         message.success(
           "Verification email sent! Please check your inbox and enter the OTP."
         );
@@ -111,7 +111,7 @@ const RegisterPage = () => {
       const result = await dispatch(
         verifyEmailByOTP({
           email: values.email,
-          otp: values.otp,
+          otp: values.otp
         })
       );
       if (result.meta.requestStatus === "fulfilled") {
@@ -132,7 +132,7 @@ const RegisterPage = () => {
     try {
       const registerData = {
         fullName: values.fullName,
-        password: values.password,
+        password: values.password
       };
 
       const result = await dispatch(registerUser({ registerData }));
@@ -155,99 +155,99 @@ const RegisterPage = () => {
           <div>
             <Title
               level={3}
-              style={{ textAlign: "center", marginBottom: "24px" }}
-            >
+              style={{ textAlign: "center", marginBottom: "24px" }}>
+              
               Step 1: Verify Your Email
             </Title>
             <Text
               style={{
                 display: "block",
                 textAlign: "center",
-                marginBottom: "24px",
-              }}
-            >
+                marginBottom: "24px"
+              }}>
+              
               Enter your email address to receive a verification code
             </Text>
             <AuthForm
               type="registerEmail"
               onFinish={handleEmailRegistration}
-              loading={loading}
-            />
+              loading={loading} />
+            
             <Button
               type="default"
               size="large"
               block
               icon={<GoogleOutlined />}
               onClick={handleGoogleLogin}
-              style={{ marginBottom: "16px" }}
-            >
+              style={{ marginBottom: "16px" }}>
+              
               Continue with Google
             </Button>
-          </div>
-        );
+          </div>);
+
 
       case "otp":
         return (
           <div>
             <Title
               level={3}
-              style={{ textAlign: "center", marginBottom: "24px" }}
-            >
+              style={{ textAlign: "center", marginBottom: "24px" }}>
+              
               Step 2: Enter OTP
             </Title>
             <Text
               style={{
                 display: "block",
                 textAlign: "center",
-                marginBottom: "24px",
-              }}
-            >
+                marginBottom: "24px"
+              }}>
+              
               We've sent a 6-digit code to {emailData}
             </Text>
             <AuthForm
               type="verifyOTP"
               onFinish={handleOTPVerification}
-              loading={loading}
-            />
+              loading={loading} />
+            
             <div style={{ textAlign: "center", marginTop: "16px" }}>
               <Text>Didn't receive the code? </Text>
-              {resendTimer > 0 ? (
-                <Text type="secondary">Resend available in {resendTimer}s</Text>
-              ) : (
-                <a onClick={handleResendOTP} style={{ cursor: "pointer" }}>
+              {resendTimer > 0 ?
+              <Text type="secondary">Resend available in {resendTimer}s</Text> :
+
+              <a onClick={handleResendOTP} style={{ cursor: "pointer" }}>
                   Resend
                 </a>
-              )}
+              }
             </div>
-          </div>
-        );
+          </div>);
+
 
       case "userDetails":
         return (
           <div>
             <Title
               level={3}
-              style={{ textAlign: "center", marginBottom: "24px" }}
-            >
+              style={{ textAlign: "center", marginBottom: "24px" }}>
+              
               Step 3: Complete Registration
             </Title>
             <Text
               style={{
                 display: "block",
                 textAlign: "center",
-                marginBottom: "24px",
-              }}
-            >
+                marginBottom: "24px"
+              }}>
+              
               Fill in your details to complete the registration
             </Text>
             <AuthForm
               type="register"
               onFinish={handleUserRegistration}
               loading={loading}
-              email={emailData}
-            />
-          </div>
-        );
+              email={emailData} />
+            
+          </div>);
+
 
       default:
         return null;
@@ -256,87 +256,87 @@ const RegisterPage = () => {
 
   const getStepIndicator = () => {
     const steps = [
-      {
-        key: "email",
-        title: "Email",
-        status:
-          currentStep === "email"
-            ? "current"
-            : currentStep === "otp" || currentStep === "userDetails"
-            ? "finish"
-            : "wait",
-      },
-      {
-        key: "otp",
-        title: "OTP",
-        status:
-          currentStep === "otp"
-            ? "current"
-            : currentStep === "userDetails"
-            ? "finish"
-            : "wait",
-      },
-      {
-        key: "userDetails",
-        title: "Details",
-        status: currentStep === "userDetails" ? "current" : "wait",
-      },
-    ];
+    {
+      key: "email",
+      title: "Email",
+      status:
+      currentStep === "email" ?
+      "current" :
+      currentStep === "otp" || currentStep === "userDetails" ?
+      "finish" :
+      "wait"
+    },
+    {
+      key: "otp",
+      title: "OTP",
+      status:
+      currentStep === "otp" ?
+      "current" :
+      currentStep === "userDetails" ?
+      "finish" :
+      "wait"
+    },
+    {
+      key: "userDetails",
+      title: "Details",
+      status: currentStep === "userDetails" ? "current" : "wait"
+    }];
+
 
     return (
       <div style={{ marginBottom: "32px" }}>
         <Space size="large" style={{ width: "100%", justifyContent: "center" }}>
-          {steps.map((step, index) => (
-            <div key={step.key} style={{ textAlign: "center" }}>
+          {steps.map((step, index) =>
+          <div key={step.key} style={{ textAlign: "center" }}>
               <div
-                style={{
-                  width: "32px",
-                  height: "32px",
-                  borderRadius: "50%",
-                  backgroundColor:
-                    step.status === "finish"
-                      ? "#52c41a"
-                      : step.status === "current"
-                      ? "#1890ff"
-                      : "#d9d9d9",
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 8px",
-                  fontWeight: "bold",
-                }}
-              >
+              style={{
+                width: "32px",
+                height: "32px",
+                borderRadius: "50%",
+                backgroundColor:
+                step.status === "finish" ?
+                "#52c41a" :
+                step.status === "current" ?
+                "#1890ff" :
+                "#d9d9d9",
+                color: "white",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 8px",
+                fontWeight: "bold"
+              }}>
+              
                 {step.status === "finish" ? "✓" : index + 1}
               </div>
               <Text
-                style={{
-                  color:
-                    step.status === "finish"
-                      ? "#52c41a"
-                      : step.status === "current"
-                      ? "#1890ff"
-                      : "#8c8c8c",
-                }}
-              >
+              style={{
+                color:
+                step.status === "finish" ?
+                "#52c41a" :
+                step.status === "current" ?
+                "#1890ff" :
+                "#8c8c8c"
+              }}>
+              
                 {step.title}
               </Text>
             </div>
-          ))}
+          )}
         </Space>
-      </div>
-    );
+      </div>);
+
   };
 
   return (
     <AuthLayout
       title="Create Account"
-      subtitle="Sign up to get started with FileMaster"
-    >
+      subtitle="Sign up to get started with FileMaster">
+      
       {getStepIndicator()}
       {renderStepContent()}
-    </AuthLayout>
-  );
+    </AuthLayout>);
+
 };
 
 export default RegisterPage;

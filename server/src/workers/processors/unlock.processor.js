@@ -11,12 +11,12 @@ export async function unlockProcessor(jobId, jobData) {
     await updateJobStatus(jobId, 'processing', 20);
 
     const qpdfCmd = [
-      QPDF_PATH,
-      `--password=${password}`,
-      `--decrypt`,
-      `"${inputPath}"`,
-      `"${outputPath}"`
-    ].join(" ");
+    QPDF_PATH,
+    `--password=${password}`,
+    `--decrypt`,
+    `"${inputPath}"`,
+    `"${outputPath}"`].
+    join(" ");
 
     await updateJobStatus(jobId, 'processing', 40);
 

@@ -6,13 +6,13 @@ const buildAuthState = (user) => ({
   current: user,
   isLoggedIn: true,
   isLoading: false,
-  isSuccess: true,
+  isSuccess: true
 });
 
 export const clearEmailRegistrationStep = createAsyncThunk(
   'auth/clearEmailRegistrationStep',
   async () => {
-    return null; 
+    return null;
   }
 );
 
@@ -20,7 +20,7 @@ export const registerEmail = createAsyncThunk(
   'auth/registerEmail',
   async ({ email }, { rejectWithValue }) => {
     const data = await authService.registerEmail({ email });
-    
+
     if (data.success === true) {
       return data.result;
     }
@@ -77,7 +77,7 @@ export const resendVerification = createAsyncThunk(
   'auth/resendVerification',
   async (_, { rejectWithValue }) => {
     const data = await authService.resendVerification();
-    
+
     if (data.success === true) {
       return data.result;
     }
@@ -142,7 +142,7 @@ export const getCurrentUser = createAsyncThunk(
 export const changeCurrentPassword = createAsyncThunk(
   'auth/changeCurrentPassword',
   async ({ oldPassword, newPassword }, { rejectWithValue }) => {
-    const data = await authService.changeCurrentPassword({oldPassword, newPassword });
+    const data = await authService.changeCurrentPassword({ oldPassword, newPassword });
 
     if (data.success === true) {
       return data.result;
@@ -158,7 +158,7 @@ export const resetPasswordWithToken = createAsyncThunk(
       const data = await authService.resetPasswordWithToken({
         email,
         unHashedToken,
-        newPassword,
+        newPassword
       });
 
       if (data.success === true) {

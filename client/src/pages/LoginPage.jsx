@@ -22,15 +22,15 @@ const LoginPage = () => {
     dispatch(googleLogin());
   };
 
-  // useEffect(() => {
-  //   if (isSuccess) navigate("/");
-  // }, [isSuccess]);
+
+
+
 
   return (
     <AuthLayout
       title="Welcome Back"
-      subtitle="Sign in to your account to continue"
-    >
+      subtitle="Sign in to your account to continue">
+      
       <Space direction="vertical" style={{ width: "100%" }}>
         <AuthForm type="login" onFinish={handleLogin} loading={isLoading} />
         <Button
@@ -38,13 +38,13 @@ const LoginPage = () => {
           size="large"
           block
           icon={<GoogleOutlined />}
-          onClick={handleGoogleLogin}
-        >
+          onClick={handleGoogleLogin}>
+          
           Continue with Google
         </Button>
       </Space>
-    </AuthLayout>
-  );
+    </AuthLayout>);
+
 };
 
 export default LoginPage;

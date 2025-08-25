@@ -38,7 +38,7 @@ router.get("/redis", asyncHandler(async (req, res) => {
 }));
 
 router.get("/mongodb", asyncHandler(async (req, res) => {
-  const mongoStatus = mongoose.connection.readyState === 1; // 1 = connected
+  const mongoStatus = mongoose.connection.readyState === 1;
 
   if (mongoStatus) {
     return res.status(200).json({
@@ -86,7 +86,7 @@ router.get("/all", asyncHandler(async (req, res) => {
       systems: {
         server: true,
         redis: redisHealthy,
-        mongodb: mongoHealthy,
+        mongodb: mongoHealthy
       },
       timestamp: new Date().toISOString()
     },

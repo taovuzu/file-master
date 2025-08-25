@@ -10,7 +10,7 @@ const __dirname = dirname(import.meta.url);
 const bullConnection = new IORedis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   connectTimeout: 20000,
-  retryStrategy: (times) => Math.min(times * 500, 5000),
+  retryStrategy: (times) => Math.min(times * 500, 5000)
 });
 
 const redisClient = createClient({
@@ -18,8 +18,8 @@ const redisClient = createClient({
   password: process.env.REDIS_PASSWORD,
   socket: {
     host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-  },
+    port: process.env.REDIS_PORT
+  }
 });
 
 let isConnected = false;
@@ -79,11 +79,11 @@ async function initializeQueue() {
         removeOnComplete: 100,
         removeOnFail: 100,
         attempts: 1,
-        backoff: { type: 'exponential', delay: 2000 },
-      },
+        backoff: { type: 'exponential', delay: 2000 }
+      }
     });
     pdfQueueEvents = new QueueEvents('pdf-processing-queue', {
-      connection: bullConnection,
+      connection: bullConnection
     });
     console.log('PDF processing queue + queue events initialized successfully');
   }
@@ -93,16 +93,16 @@ async function updateJobStatus(jobId, status, progress, additionalData = {}) {
   try {
     if (!(await healthCheck())) throw new Error('Redis not healthy');
 
-    // Only store essential job information to prevent Redis encoding issues
+
     const essentialJobData = {
       status,
       progress: progress || 0,
       updatedAt: new Date().toISOString()
     };
 
-    // Add only essential additional data (avoid large objects)
+
     if (additionalData) {
-      // Only include specific essential fields
+
       if (additionalData.outputFilePath) essentialJobData.outputFilePath = additionalData.outputFilePath;
       if (additionalData.message) essentialJobData.message = additionalData.message;
       if (additionalData.operation) essentialJobData.operation = additionalData.operation;
@@ -114,17 +114,17 @@ async function updateJobStatus(jobId, status, progress, additionalData = {}) {
       if (additionalData.failedAt) essentialJobData.failedAt = additionalData.failedAt;
     }
 
-    // Use hSet for better structure and add expiration
-    // Ensure all values are strings or numbers for Redis compatibility
+
+
     const sanitizedJobData = {};
     Object.entries(essentialJobData).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         sanitizedJobData[key] = typeof value === 'object' ? JSON.stringify(value) : String(value);
       }
     });
-    
+
     await redisClient.hSet(`job:${jobId}`, sanitizedJobData);
-    await redisClient.expire(`job:${jobId}`, 86400); // 24 hours
+    await redisClient.expire(`job:${jobId}`, 86400);
   } catch (error) {
     console.error('Failed to update job status:', error);
     throw error;
@@ -165,5 +165,4 @@ async function getWaitingJobsCount() {
 }
 
 export {
-  pdfProcessingQueue, pdfQueueEvents, initializeQueue, updateJobStatus, getJobStatus, deleteJobData, healthCheck, getWaitingJobsCount, redisClient, bullConnection
-};
+  pdfProcessingQueue, pdfQueueEvents, initializeQueue, updateJobStatus, getJobStatus, deleteJobData, healthCheck, getWaitingJobsCount, redisClient, bullConnection };

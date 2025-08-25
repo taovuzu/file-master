@@ -20,7 +20,7 @@ export async function mergeProcessor(jobId, jobData) {
 
     for (let i = 0; i < inputPaths.length; i++) {
       await merger.add(inputPaths[i]);
-      const progress = 30 + (i * 40 / inputPaths.length);
+      const progress = 30 + i * 40 / inputPaths.length;
       await updateJobStatus(jobId, 'processing', Math.round(progress), {
         message: `Processing file ${i + 1} of ${inputPaths.length}...`
       });
@@ -34,7 +34,7 @@ export async function mergeProcessor(jobId, jobData) {
       producer: "file_master",
       author: "file_master",
       creator: "file_master",
-      title: "file_master_merged",
+      title: "file_master_merged"
     });
 
     await updateJobStatus(jobId, 'processing', 80, {
@@ -75,14 +75,14 @@ export async function mergeProcessor(jobId, jobData) {
 
   } catch (error) {
     console.error(`Merge failed for job ${jobId}:`, error);
-    
-    // Update job status with error information before re-throwing
+
+
     await updateJobStatus(jobId, 'failed', 0, {
       message: error.message || 'Merge processing failed',
       error: error.stack,
       failedAt: new Date().toISOString()
     });
-    
+
     throw error;
   }
 }

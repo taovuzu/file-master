@@ -1,55 +1,55 @@
 import React from 'react';
-import { 
-  FileText, 
+import {
+  FileText,
   Zap,
   ArrowRight,
   Shield,
   Sparkles,
   Globe,
-  Award
-} from 'lucide-react';
+  Award } from
+'lucide-react';
 import ToolCard, { toolCardUtils } from '@/components/ToolCard';
 import { Button } from 'antd';
 import Header from '@/components/Header';
 
 const LandingPage = () => {
-  // Get all tools from the centralized configuration
-  const allTools = toolCardUtils.getAllTools().map(tool => tool.key);
+
+  const allTools = toolCardUtils.getAllTools().map((tool) => tool.key);
 
   const features = [
-    {
-      icon: <Shield className="w-8 h-8" />,
-      title: 'Secure & Private',
-      description: 'Your files are encrypted and automatically deleted after processing'
-    },
-    {
-      icon: <Zap className="w-8 h-8" />,
-      title: 'Lightning Fast',
-      description: 'Process your PDFs in seconds with our optimized algorithms'
-    },
-    {
-      icon: <Globe className="w-8 h-8" />,
-      title: 'Works Everywhere',
-      description: 'No installation needed. Works on any device with a web browser'
-    },
-    {
-      icon: <Award className="w-8 h-8" />,
-      title: 'Trusted by Millions',
-      description: 'Join millions of users who trust us with their documents'
-    }
-  ];
+  {
+    icon: <Shield className="w-8 h-8" />,
+    title: 'Secure & Private',
+    description: 'Your files are encrypted and automatically deleted after processing'
+  },
+  {
+    icon: <Zap className="w-8 h-8" />,
+    title: 'Lightning Fast',
+    description: 'Process your PDFs in seconds with our optimized algorithms'
+  },
+  {
+    icon: <Globe className="w-8 h-8" />,
+    title: 'Works Everywhere',
+    description: 'No installation needed. Works on any device with a web browser'
+  },
+  {
+    icon: <Award className="w-8 h-8" />,
+    title: 'Trusted by Millions',
+    description: 'Join millions of users who trust us with their documents'
+  }];
+
 
   const stats = [
-    { number: '50M+', label: 'Files Processed' },
-    { number: '2M+', label: 'Happy Users' },
-    { number: '99.9%', label: 'Uptime' },
-    { number: '24/7', label: 'Support' }
-  ];
+  { number: '50M+', label: 'Files Processed' },
+  { number: '2M+', label: 'Happy Users' },
+  { number: '99.9%', label: 'Uptime' },
+  { number: '24/7', label: 'Support' }];
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <Header/>
-      {/* Hero Section */}
+      <Header />
+      {}
       <section className="relative overflow-hidden py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -69,9 +69,9 @@ const LandingPage = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Button 
-                type="primary" 
-                size="large" 
+              <Button
+                type="primary"
+                size="large"
                 icon={<FileText className="w-5 h-5" />}
                 className="w-full sm:w-auto"
                 style={{
@@ -81,12 +81,12 @@ const LandingPage = () => {
                   padding: '0 24px',
                   fontSize: '16px',
                   fontWeight: '600'
-                }}
-              >
+                }}>
+                
                 Start Processing PDFs
               </Button>
-              <Button 
-                type="default" 
+              <Button
+                type="default"
                 size="large"
                 icon={<ArrowRight className="w-5 h-5" />}
                 className="w-full sm:w-auto"
@@ -97,27 +97,27 @@ const LandingPage = () => {
                   fontWeight: '600',
                   borderColor: '#667eea',
                   color: '#667eea'
-                }}
-              >
+                }}>
+                
                 View All Tools
               </Button>
             </div>
 
-            {/* Stats */}
+            {}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
+              {stats.map((stat, index) =>
+              <div key={index} className="text-center">
                   <div className="text-3xl font-bold text-primary-600 mb-1">
                     {stat.number}
                   </div>
                   <div className="text-sm text-gray-600">{stat.label}</div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
 
-        {/* Background decoration */}
+        {}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-72 h-72 bg-primary-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse-soft"></div>
           <div className="absolute top-40 right-10 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse-soft"></div>
@@ -125,7 +125,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Featured Tools Section */}
+      {}
       <section className="py-20 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -138,20 +138,20 @@ const LandingPage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {allTools.map((tool, index) => (
-              <ToolCard 
-                key={tool} 
-                tool={tool} 
-                featured={index === 0}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              />
-            ))}
+            {allTools.map((tool, index) =>
+            <ToolCard
+              key={tool}
+              tool={tool}
+              featured={index === 0}
+              className="animate-fade-in"
+              style={{ animationDelay: `${index * 100}ms` }} />
+
+            )}
           </div>
 
           <div className="text-center">
-            <Button 
-              type="default" 
+            <Button
+              type="default"
               size="large"
               icon={<ArrowRight className="w-5 h-5" />}
               style={{
@@ -161,15 +161,15 @@ const LandingPage = () => {
                 fontWeight: '600',
                 borderColor: '#667eea',
                 color: '#667eea'
-              }}
-            >
+              }}>
+              
               View All Tools
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
+      {}
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -182,12 +182,12 @@ const LandingPage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={index}
-                className="text-center p-6 bg-white rounded-xl shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in"
-                style={{ animationDelay: `${index * 150}ms` }}
-              >
+            {features.map((feature, index) =>
+            <div
+              key={index}
+              className="text-center p-6 bg-white rounded-xl shadow-soft hover:shadow-medium transition-all duration-300 animate-fade-in"
+              style={{ animationDelay: `${index * 150}ms` }}>
+              
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 text-primary-600 rounded-full mb-4">
                   {feature.icon}
                 </div>
@@ -198,12 +198,12 @@ const LandingPage = () => {
                   {feature.description}
                 </p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
+      {}
       <section className="py-20 px-6 bg-gradient-to-r from-primary-600 to-primary-800">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-4">
@@ -213,8 +213,8 @@ const LandingPage = () => {
             Join millions of users who trust FileMaster for their PDF needs
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              type="default" 
+            <Button
+              type="default"
               size="large"
               icon={<FileText className="w-5 h-5" />}
               className="bg-white text-primary-600 hover:bg-gray-50"
@@ -226,12 +226,12 @@ const LandingPage = () => {
                 backgroundColor: 'white',
                 color: '#667eea',
                 borderColor: 'white'
-              }}
-            >
+              }}>
+              
               Start Processing Now
             </Button>
-            <Button 
-              type="default" 
+            <Button
+              type="default"
               size="large"
               icon={<ArrowRight className="w-5 h-5" />}
               style={{
@@ -242,15 +242,15 @@ const LandingPage = () => {
                 borderColor: 'white',
                 color: 'white',
                 backgroundColor: 'transparent'
-              }}
-            >
+              }}>
+              
               Learn More
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {}
       <footer className="py-12 px-6 bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -305,8 +305,8 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>);
+
 };
 
 export default LandingPage;

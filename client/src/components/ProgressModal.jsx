@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Progress, Button, Space, Typography, Alert } from 'antd';
-import { 
-  CloseOutlined, 
-  CheckCircleOutlined, 
+import {
+  CloseOutlined,
+  CheckCircleOutlined,
   ExclamationCircleOutlined,
   ClockCircleOutlined,
   FileTextOutlined,
-  LoadingOutlined
-} from '@ant-design/icons';
+  LoadingOutlined } from
+'@ant-design/icons';
 
 const { Text, Title } = Typography;
 
-const ProgressModal = ({ 
-  visible, 
-  progress, 
-  status, 
-  currentStep, 
-  error, 
-  onCancel, 
+const ProgressModal = ({
+  visible,
+  progress,
+  status,
+  currentStep,
+  error,
+  onCancel,
   onRetry,
   elapsedTime,
   formatTime,
@@ -30,19 +30,19 @@ const ProgressModal = ({
   const [timeDisplay, setTimeDisplay] = useState('0s');
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
 
-  // Update time display every second and check for timeout warnings
+
   useEffect(() => {
-    // Don't update time or show warnings if there's an error
+
     if (error || status === 'error' || status === 'polling_failed') {
       return;
     }
-    
+
     if (status === 'uploading' || status === 'processing') {
       const interval = setInterval(() => {
         const elapsed = elapsedTime();
         setTimeDisplay(formatTime(elapsed));
-        
-        // Show timeout warning after 3 minutes (180 seconds)
+
+
         if (elapsed > 180 && !showTimeoutWarning) {
           setShowTimeoutWarning(true);
         }
@@ -52,11 +52,11 @@ const ProgressModal = ({
   }, [status, elapsedTime, formatTime, showTimeoutWarning, error]);
 
   const getStatusIcon = () => {
-    // If there's an error, show error icon regardless of status
+
     if (error) {
       return <ExclamationCircleOutlined style={{ color: '#ff4d4f', fontSize: '24px' }} />;
     }
-    
+
     switch (status) {
       case 'completed':
         return <CheckCircleOutlined style={{ color: '#52c41a', fontSize: '24px' }} />;
@@ -73,11 +73,11 @@ const ProgressModal = ({
   };
 
   const getStatusColor = () => {
-    // If there's an error, show error color regardless of status
+
     if (error) {
       return '#ff4d4f';
     }
-    
+
     switch (status) {
       case 'completed':
         return '#52c41a';
@@ -94,23 +94,23 @@ const ProgressModal = ({
   };
 
   const getStatusText = () => {
-    // First check if we have a specific current step to show
+
     if (currentStep && currentStep.trim()) {
-      // Clean up the current step text to make it more user-friendly
+
       let stepText = currentStep;
-      
-      // Remove percentage and technical details
+
+
       stepText = stepText.replace(/\d+%/, '').trim();
       stepText = stepText.replace(/\(\d+\/\d+\)/, '').trim();
-      
-      // Capitalize first letter and make it more readable
+
+
       if (stepText) {
         stepText = stepText.charAt(0).toUpperCase() + stepText.slice(1);
         return stepText;
       }
     }
-    
-    // Fallback to status-based text
+
+
     switch (status) {
       case 'completed':
         return 'Completed';
@@ -143,7 +143,7 @@ const ProgressModal = ({
   };
 
   const renderProgressContent = () => {
-    // Show error screen if there's an error, regardless of status
+
     if (error || status === 'error') {
       return (
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
@@ -160,14 +160,14 @@ const ProgressModal = ({
             <Button onClick={onCancel} icon={<CloseOutlined />} size="large">
               Close
             </Button>
-            {onRetry && (
-              <Button type="primary" onClick={onRetry} size="large">
+            {onRetry &&
+            <Button type="primary" onClick={onRetry} size="large">
                 Try Again
               </Button>
-            )}
+            }
           </Space>
-        </div>
-      );
+        </div>);
+
     }
 
     if (status === 'polling_failed') {
@@ -186,14 +186,14 @@ const ProgressModal = ({
             <Button onClick={onCancel} icon={<CloseOutlined />} size="large">
               Close
             </Button>
-            {onRetry && (
-              <Button type="primary" onClick={onRetry} size="large">
+            {onRetry &&
+            <Button type="primary" onClick={onRetry} size="large">
                 Try Again
               </Button>
-            )}
+            }
           </Space>
-        </div>
-      );
+        </div>);
+
     }
 
     if (status === 'completed') {
@@ -211,14 +211,14 @@ const ProgressModal = ({
           <Button type="primary" onClick={onCancel} size="large">
             Continue
           </Button>
-        </div>
-      );
+        </div>);
+
     }
 
     return (
       <div style={{ padding: '20px 0' }}>
-        {!error && (
-          <div style={{ marginBottom: '20px' }}>
+        {!error &&
+        <div style={{ marginBottom: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
               <FileTextOutlined style={{ marginRight: '8px', color: '#8c8c8c' }} />
               <Text strong>{fileName}</Text>
@@ -227,105 +227,105 @@ const ProgressModal = ({
               {getToolDisplayName()}
             </Text>
           </div>
-        )}
+        }
 
-        {!error && (
-          <div style={{ marginBottom: '20px' }}>
+        {!error &&
+        <div style={{ marginBottom: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <Text>{currentStep}</Text>
               <Text type="secondary">{Math.round(progress)}%</Text>
             </div>
-            <Progress 
-              percent={progress} 
-              status={status === 'error' || status === 'polling_failed' ? 'exception' : 
-                     status === 'completed' ? 'success' : 'active'}
-              strokeColor={getStatusColor()}
-              showInfo={false}
-            />
+            <Progress
+            percent={progress}
+            status={status === 'error' || status === 'polling_failed' ? 'exception' :
+            status === 'completed' ? 'success' : 'active'}
+            strokeColor={getStatusColor()}
+            showInfo={false} />
+          
           </div>
-        )}
+        }
 
-        {!error && (
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            padding: '16px',
-            backgroundColor: '#f8fafc',
-            borderRadius: '8px',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
-          }}>
+        {!error &&
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '16px',
+          backgroundColor: '#f8fafc',
+          borderRadius: '8px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+        }}>
             <div style={{ display: 'flex', alignItems: 'center' }}>
               {getStatusIcon()}
               <Text style={{ marginLeft: '12px', fontWeight: 600, fontSize: '15px', color: '#1e293b' }}>
                 {getStatusText()}
               </Text>
             </div>
-            {(status === 'uploading' || status === 'processing') && progress > 0 && timeDisplay !== '0s' && (
-              <Text style={{ 
-                color: '#64748b', 
-                fontSize: '14px',
-                fontWeight: 500,
-                backgroundColor: '#f1f5f9',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                border: '1px solid #e2e8f0'
-              }}>
+            {(status === 'uploading' || status === 'processing') && progress > 0 && timeDisplay !== '0s' &&
+          <Text style={{
+            color: '#64748b',
+            fontSize: '14px',
+            fontWeight: 500,
+            backgroundColor: '#f1f5f9',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            border: '1px solid #e2e8f0'
+          }}>
                 Time elapsed: {timeDisplay}
               </Text>
-            )}
+          }
           </div>
-        )}
+        }
 
-        {/* Polling information */}
-        {isPolling && !error && status !== 'error' && status !== 'polling_failed' && (
-          <div style={{ 
-            padding: '12px', 
-            backgroundColor: '#e6f7ff', 
-            borderRadius: '6px',
-            marginTop: '12px',
-            border: '1px solid #91d5ff'
-          }}>
+        {}
+        {isPolling && !error && status !== 'error' && status !== 'polling_failed' &&
+        <div style={{
+          padding: '12px',
+          backgroundColor: '#e6f7ff',
+          borderRadius: '6px',
+          marginTop: '12px',
+          border: '1px solid #91d5ff'
+        }}>
             <Text type="secondary" style={{ fontSize: '12px' }}>
               Checking job status...
             </Text>
           </div>
-        )}
+        }
 
-        {/* Timeout warning */}
-        {showTimeoutWarning && status === 'processing' && !error && (
-          <Alert
-            message="Processing is taking longer than expected"
-            description="Your file is still being processed. This may take a few more minutes for large files or complex operations."
-            type="warning"
-            showIcon
-            style={{ marginTop: '12px' }}
-          />
-        )}
+        {}
+        {showTimeoutWarning && status === 'processing' && !error &&
+        <Alert
+          message="Processing is taking longer than expected"
+          description="Your file is still being processed. This may take a few more minutes for large files or complex operations."
+          type="warning"
+          showIcon
+          style={{ marginTop: '12px' }} />
 
-        {(status === 'uploading' || status === 'processing') && !error && (
-          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        }
+
+        {(status === 'uploading' || status === 'processing') && !error &&
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
             <Button onClick={onCancel} danger>
               Cancel
             </Button>
           </div>
-        )}
-      </div>
-    );
+        }
+      </div>);
+
   };
 
   return (
     <Modal
       title={
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
           {getStatusIcon()}
           <span style={{ marginLeft: '8px' }}>
             {error ? 'Processing Failed' :
-             status === 'completed' ? 'Processing Complete' : 
-             status === 'error' ? 'Processing Failed' : 
-             status === 'polling_failed' ? 'Connection Issue' :
-             'Processing PDF'}
+          status === 'completed' ? 'Processing Complete' :
+          status === 'error' ? 'Processing Failed' :
+          status === 'polling_failed' ? 'Connection Issue' :
+          'Processing PDF'}
           </span>
         </div>
       }
@@ -335,14 +335,11 @@ const ProgressModal = ({
       width={500}
       centered
       closable={status === 'completed' || status === 'error' || status === 'polling_failed'}
-      maskClosable={status === 'completed' || status === 'error' || status === 'polling_failed'}
-    >
+      maskClosable={status === 'completed' || status === 'error' || status === 'polling_failed'}>
+      
       {renderProgressContent()}
-    </Modal>
-  );
+    </Modal>);
+
 };
 
 export default ProgressModal;
-
-
-

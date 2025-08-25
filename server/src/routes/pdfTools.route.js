@@ -14,17 +14,17 @@ import { ApiError } from "../utils/ApiError.js";
 
 const router = Router();
 
-router.post("/compress", upload.single("PDFFILE") ,compressPdf);
+router.post("/compress", upload.single("PDFFILE"), compressPdf);
 router.post("/merge", upload.array("PDFFILE"), mergePdfFiles);
 router.post("/watermark/text", upload.single("PDFFILE"), addTextWatermark);
-// router.post("/watermark/image", upload.fields([
-//   { name: 'PDFFILE', maxCount: 1 },
-//   { name: 'IMAGEFILE', maxCount: 1 }
-// ]), addImageWatermark);
+
+
+
+
 router.post("/page-numbers", upload.single("PDFFILE"), AddPageNumber);
 router.post("/convert/doc-to-pdf", upload.single("DOCFILE"), convertDocToPdf);
 router.post("/convert/images-to-pdf", upload.array("IMAGEFILE"), convertImagesToPdf);
-// router.post("/convert/pdf-to-doc", upload.single("PDFFILE"), convertPdfToDoc);
+
 router.post("/convert/pdf-to-ppt", upload.single("PDFFILE"), convertPdfToPpt);
 router.post("/rotate", upload.single("PDFFILE"), rotatePdf);
 router.post("/split", upload.single("PDFFILE"), splitPdf);

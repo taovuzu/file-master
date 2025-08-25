@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 
 export const useProgress = () => {
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState('idle'); // 'idle', 'uploading', 'processing', 'completed', 'error', 'polling_failed'
+  const [status, setStatus] = useState('idle');
   const [currentStep, setCurrentStep] = useState('');
   const [error, setError] = useState(null);
   const [startTime, setStartTime] = useState(null);
@@ -29,15 +29,15 @@ export const useProgress = () => {
     if (step) {
       setCurrentStep(step);
     }
-    
-    // Update status based on progress
+
+
     if (percent >= 100) {
       setStatus('completed');
     } else if (percent > 0 && status === 'uploading') {
       setStatus('processing');
     }
-    
-    // Only clear errors if we're actually making progress and not in error state
+
+
     if (error && percent > 0 && status !== 'error' && status !== 'polling_failed') {
       setError(null);
     }
@@ -46,11 +46,11 @@ export const useProgress = () => {
   const setProgressError = useCallback((errorMessage) => {
     setError(errorMessage);
     setStatus('error');
-    // Reset progress to 0 for failed operations
+
     setProgress(0);
-    // Stop polling when there's an error
+
     setIsPolling(false);
-    // Abort any ongoing operations
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -70,9 +70,9 @@ export const useProgress = () => {
     setError(errorMessage);
     setStatus('polling_failed');
     setIsPolling(false);
-    // Reset progress to 0 for polling failures
+
     setProgress(0);
-    // Abort any ongoing operations
+
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -134,6 +134,6 @@ export const useProgress = () => {
     getElapsedTime,
     formatTime,
     isAborted: () => abortControllerRef.current?.signal.aborted || false,
-    abortSignal: abortControllerRef.current?.signal,
+    abortSignal: abortControllerRef.current?.signal
   };
 };

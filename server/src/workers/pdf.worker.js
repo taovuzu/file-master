@@ -33,27 +33,27 @@ async function initializePdfWorker() {
       let result;
 
       switch (operation) {
-        case 'compress': result = await compressProcessor(jobId, jobData); break;
-        case 'merge': result = await mergeProcessor(jobId, jobData); break;
-        case 'split': result = await splitProcessor(jobId, jobData); break;
-        case 'rotate': result = await rotateProcessor(jobId, jobData); break;
-        case 'addPageNumbers': result = await addPageNumbersProcessor(jobId, jobData); break;
-        case 'addTextWatermark': result = await addWatermarkProcessor(jobId, {operation, ...jobData }); break;
-        // case 'addImageWatermark': result = await addWatermarkProcessor(jobId, { ...jobData, watermarkType: 'image' }); break;
-        case 'unlock': result = await unlockProcessor(jobId, jobData); break;
-        case 'protect': result = await protectProcessor(jobId, jobData); break;
-        case 'convertDocToPdf': result = await convertProcessor(jobId, {operation, ...jobData  }); break;
-        case 'convertImagesToPdf': result = await convertProcessor(jobId, {operation, ...jobData }); break;
-        // case 'convertPdfToDoc': result = await convertProcessor(jobId, {operation, ...jobData }); break;
-        case 'convertPdfToPpt': result = await convertProcessor(jobId, {operation, ...jobData}); break;
-        // case 'uploadStream': result = await uploadFileStream(jobId, jobData); break;
+        case 'compress':result = await compressProcessor(jobId, jobData);break;
+        case 'merge':result = await mergeProcessor(jobId, jobData);break;
+        case 'split':result = await splitProcessor(jobId, jobData);break;
+        case 'rotate':result = await rotateProcessor(jobId, jobData);break;
+        case 'addPageNumbers':result = await addPageNumbersProcessor(jobId, jobData);break;
+        case 'addTextWatermark':result = await addWatermarkProcessor(jobId, { operation, ...jobData });break;
+
+        case 'unlock':result = await unlockProcessor(jobId, jobData);break;
+        case 'protect':result = await protectProcessor(jobId, jobData);break;
+        case 'convertDocToPdf':result = await convertProcessor(jobId, { operation, ...jobData });break;
+        case 'convertImagesToPdf':result = await convertProcessor(jobId, { operation, ...jobData });break;
+
+        case 'convertPdfToPpt':result = await convertProcessor(jobId, { operation, ...jobData });break;
+
         default:
           console.warn(`Unknown operation: ${operation}. Running generic processFile fallback.`);
           await processFileFallback(jobId, jobData.filePath, jobData.originalName, jobData.mimeType);
           break;
       }
 
-      // Update job status with completion data including output file path
+
       await updateJobStatus(jobId, 'completed', 100, {
         outputFilePath: result?.outputPath || null,
         message: result?.message || 'File processed successfully',
@@ -99,15 +99,15 @@ async function processFileFallback(jobId, filePath, originalName, mimeType) {
   await fs.mkdir(jobsDir, { recursive: true });
 
   const steps = [
-    { progress: 20, message: 'Reading file...' },
-    { progress: 40, message: 'Processing content...' },
-    { progress: 60, message: 'Applying transformations...' },
-    { progress: 80, message: 'Generating output...' },
-    { progress: 90, message: 'Finalizing...' }
-  ];
+  { progress: 20, message: 'Reading file...' },
+  { progress: 40, message: 'Processing content...' },
+  { progress: 60, message: 'Applying transformations...' },
+  { progress: 80, message: 'Generating output...' },
+  { progress: 90, message: 'Finalizing...' }];
+
 
   for (const step of steps) {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     await updateJobStatus(jobId, 'processing', step.progress, {
       message: step.message
     });
@@ -133,11 +133,11 @@ async function uploadFileStream(jobId, { streamData, originalName }) {
 
     let bytesWritten = 0;
     const totalSize = streamData.size || 0;
-    
+
     streamData.on('data', async (chunk) => {
       bytesWritten += chunk.length;
       if (totalSize) {
-        const progress = Math.min(95, Math.floor((bytesWritten / totalSize) * 100));
+        const progress = Math.min(95, Math.floor(bytesWritten / totalSize * 100));
         await updateJobStatus(jobId, 'uploading', progress, {
           message: `Uploading: ${Math.round(progress)}%`
         });

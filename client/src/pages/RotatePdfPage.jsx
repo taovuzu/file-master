@@ -14,10 +14,10 @@ const RotatePdfPage = () => {
         minFiles: 1,
         maxFiles: 1,
         maxSize: 10,
-        acceptedTypes: ["application/pdf"],
-      }}
-    />
-  );
+        acceptedTypes: ["application/pdf"]
+      }} />);
+
+
 };
 
 export default RotatePdfPage;

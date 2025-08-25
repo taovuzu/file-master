@@ -17,7 +17,7 @@ export const usePdfTools = (toolType) => {
 
   const processPdfTool = useCallback(async (files, formValues = {}, onProgress, abortSignal = null) => {
 
-    if (!files || (Array.isArray(files) && files.length === 0)) {
+    if (!files || Array.isArray(files) && files.length === 0) {
       notify.error('Please select files to process', 'select-files');
       return { success: false, error: 'No files selected' };
     }
@@ -31,7 +31,7 @@ export const usePdfTools = (toolType) => {
       const fileArray = Array.isArray(files) ? files : [files];
       const primaryFile = fileArray[0];
 
-      // Use the appropriate service based on tool type
+
       switch (toolType) {
         case 'merge':
           result = await pdfToolsService.mergePdfs(fileArray, formValues, onProgress, undefined, abortSignal);
@@ -69,15 +69,15 @@ export const usePdfTools = (toolType) => {
 
       if (result.success && result.fileUrl) {
         setProcessedFile(result.fileUrl);
-        setJobId(result.file); // Store job ID for reference
+        setJobId(result.file);
         dispatch(setProcessedFileAction(result.fileUrl));
-        
-        // Show success message with operation details
+
+
         const operationName = toolType.charAt(0).toUpperCase() + toolType.slice(1).replace('-', ' ');
         notify.success(`${operationName} completed successfully!`, 'tool-success');
 
-        return { 
-          success: true, 
+        return {
+          success: true,
           data: {
             ...result,
             operation: toolType,
@@ -91,19 +91,19 @@ export const usePdfTools = (toolType) => {
       const errorMessage = err.message || 'An error occurred during processing';
       setError(errorMessage);
       notify.error(errorMessage, 'tool-error');
-      
-      // Ensure we return a proper error response
-      return { 
-        success: false, 
+
+
+      return {
+        success: false,
         error: errorMessage,
-        data: null 
+        data: null
       };
     } finally {
       setLoading(false);
     }
   }, [toolType, isLoggedIn, dispatch]);
 
-  // Download processed file
+
   const downloadProcessedFile = useCallback(async (fileName) => {
     if (!processedFile) {
       notify.error('No file to download', 'no-download');
@@ -123,7 +123,7 @@ export const usePdfTools = (toolType) => {
     }
   }, [processedFile]);
 
-  // Check job status manually (useful for debugging or manual status checks)
+
   const checkJobStatus = useCallback(async (jobIdToCheck) => {
     if (!jobIdToCheck) {
       notify.error('No job ID provided', 'no-job-id');
@@ -143,7 +143,7 @@ export const usePdfTools = (toolType) => {
     }
   }, []);
 
-  // Reset state
+
   const reset = useCallback(() => {
     setProcessedFile(null);
     setError(null);
@@ -151,11 +151,11 @@ export const usePdfTools = (toolType) => {
     setJobId(null);
   }, []);
 
-  // Validate files
+
   const validateFiles = useCallback((files, requirements = {}) => {
     const { minFiles = 1, maxFiles = 10, maxSize = 10, allowedTypes = ['application/pdf'] } = requirements;
 
-    if (!files || (Array.isArray(files) && files.length === 0)) {
+    if (!files || Array.isArray(files) && files.length === 0) {
       return { valid: false, error: 'No files selected' };
     }
 
@@ -183,7 +183,7 @@ export const usePdfTools = (toolType) => {
   }, []);
 
   return {
-    // State
+
     loading,
     processedFile,
     error,
@@ -191,12 +191,12 @@ export const usePdfTools = (toolType) => {
     isLoggedIn,
     user,
 
-    // Actions
+
     processPdfTool,
     downloadProcessedFile,
     checkJobStatus,
     reset,
     validateFiles,
-    processedFileFromStore,
+    processedFileFromStore
   };
 };

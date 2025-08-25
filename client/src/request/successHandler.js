@@ -7,9 +7,9 @@ const notify = (type, title, description, duration = 15, maxCount = 1) => {
 };
 
 const successHandler = (
-  response,
-  options = { notifyOnSuccess: false, notifyOnFailed: true }
-) => {
+response,
+options = { notifyOnSuccess: false, notifyOnFailed: true }) =>
+{
   const { data, status } = response || {};
   const message = data?.message || codeMessage[status] || '';
 

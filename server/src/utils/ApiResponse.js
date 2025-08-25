@@ -5,7 +5,7 @@ class ApiResponse {
     this.message = message;
     this.data = data;
     this.timestamp = new Date().toISOString();
-    this.path = null; // Will be set by middleware
+    this.path = null;
   }
 
   static success(data = null, message = "Success", statusCode = 200) {

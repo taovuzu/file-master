@@ -9,19 +9,19 @@ const { Title, Text } = Typography;
 
 const DownloadPage = () => {
   const [loading, setLoading] = useState(false);
-  const [readyFile, setReadyFile] = useState(null); // { file?: string, url?: string, name?: string }
+  const [readyFile, setReadyFile] = useState(null);
   const history = useSelector((state) => state.pdfTools.history);
 
   useEffect(() => {
-    // If redirected with query params, prepare a ready-to-download card
+
     const params = new URLSearchParams(window.location.search);
     const file = params.get('file');
     const url = params.get('url');
     const name = params.get('name');
     const operation = params.get('operation');
-    
+
     if (file || url) {
-      // Derive a nice filename using server-provided file name or url
+
       const deriveName = () => {
         try {
           const raw = file || (url ? decodeURIComponent(url.split('/').pop() || '') : '');
@@ -34,17 +34,17 @@ const DownloadPage = () => {
         }
       };
 
-      setReadyFile({ 
-        file: file || undefined, 
-        url: url || undefined, 
+      setReadyFile({
+        file: file || undefined,
+        url: url || undefined,
         name: name || deriveName(),
         operation: operation || undefined
       });
-      // Clean query params to avoid stale state if user refreshes later
+
       window.history.replaceState({}, '', window.location.pathname);
     }
 
-    // No server-side list; show client-side history
+
     setLoading(false);
   }, []);
 
@@ -65,102 +65,102 @@ const DownloadPage = () => {
             <Text type="secondary">Access your processed PDF files</Text>
           </div>
 
-          {readyFile && (
-            <Card
-              style={{ borderRadius: 12 }}
-              bodyStyle={{ padding: 24 }}
-            >
+          {readyFile &&
+          <Card
+            style={{ borderRadius: 12 }}
+            bodyStyle={{ padding: 24 }}>
+            
               <Space direction="vertical" size="middle" style={{ width: '100%', alignItems: 'center' }}>
                 <FileDoneOutlined style={{ fontSize: 40, color: '#52c41a' }} />
                 <Title level={4} style={{ margin: 0 }}>Your file is ready</Title>
-                {readyFile.operation && (
-                  <Text type="secondary" style={{ fontSize: '14px', textTransform: 'capitalize' }}>
+                {readyFile.operation &&
+              <Text type="secondary" style={{ fontSize: '14px', textTransform: 'capitalize' }}>
                     {readyFile.operation.replace('-', ' ')} operation completed successfully
                   </Text>
-                )}
+              }
                 <Text type="secondary">{readyFile.name}</Text>
                 <Space size="middle">
                   <Button
-                    type="primary"
-                    size="large"
-                    icon={<DownloadOutlined />}
-                    onClick={() => handleDownload(readyFile.file || readyFile.url, readyFile.name)}
-                  >
+                  type="primary"
+                  size="large"
+                  icon={<DownloadOutlined />}
+                  onClick={() => handleDownload(readyFile.file || readyFile.url, readyFile.name)}>
+                  
                     Download file
                   </Button>
                   <Button
-                    size="large"
-                    icon={<HomeOutlined />}
-                    onClick={() => window.location.assign('/')}
-                  >
+                  size="large"
+                  icon={<HomeOutlined />}
+                  onClick={() => window.location.assign('/')}>
+                  
                     Go to Home
                   </Button>
-                  {readyFile.operation && (
-                    <Button
-                      size="large"
-                      onClick={() => window.location.assign(`/${readyFile.operation}`)}
-                    >
+                  {readyFile.operation &&
+                <Button
+                  size="large"
+                  onClick={() => window.location.assign(`/${readyFile.operation}`)}>
+                  
                       Process Another {readyFile.operation.replace('-', ' ')}
                     </Button>
-                  )}
+                }
                 </Space>
               </Space>
             </Card>
-          )}
+          }
 
           <Card>
-            {history && history.length > 0 ? (
-              <List
-                loading={loading}
-                dataSource={history}
-                renderItem={(item) => {
-                  const fileUrl = item.result;
-                  const fileNameFromUrl = typeof fileUrl === 'string' ? decodeURIComponent(fileUrl.split('/').pop() || '') : '';
-                  const displayName = fileNameFromUrl || `processed-${item.operation}.pdf`;
-                  return (
-                    <List.Item
-                      actions={[
-                        <Button 
-                          icon={<EyeOutlined />} 
-                          onClick={() => handlePreview(fileUrl)}
-                          size="small"
-                          key="preview"
-                        >
+            {history && history.length > 0 ?
+            <List
+              loading={loading}
+              dataSource={history}
+              renderItem={(item) => {
+                const fileUrl = item.result;
+                const fileNameFromUrl = typeof fileUrl === 'string' ? decodeURIComponent(fileUrl.split('/').pop() || '') : '';
+                const displayName = fileNameFromUrl || `processed-${item.operation}.pdf`;
+                return (
+                  <List.Item
+                    actions={[
+                    <Button
+                      icon={<EyeOutlined />}
+                      onClick={() => handlePreview(fileUrl)}
+                      size="small"
+                      key="preview">
+                      
                           Preview
                         </Button>,
-                        <Button 
-                          type="primary" 
-                          icon={<DownloadOutlined />} 
-                          onClick={() => handleDownload(fileUrl, displayName)}
-                          size="small"
-                          key="download"
-                        >
+                    <Button
+                      type="primary"
+                      icon={<DownloadOutlined />}
+                      onClick={() => handleDownload(fileUrl, displayName)}
+                      size="small"
+                      key="download">
+                      
                           Download
-                        </Button>
-                      ]}
-                    >
+                        </Button>]
+                    }>
+                    
                       <List.Item.Meta
-                        title={displayName}
-                        description={
-                          <Space direction="vertical" size="small">
+                      title={displayName}
+                      description={
+                      <Space direction="vertical" size="small">
                             <Text type="secondary">Operation: {item.operation}</Text>
                             <Text type="secondary">Files: {(item.files || []).join(', ')}</Text>
                             <Text type="secondary">Created: {item.timestamp ? new Date(item.timestamp).toLocaleString() : ''}</Text>
                           </Space>
-                        }
-                      />
-                    </List.Item>
-                  );
-                }}
-              />
-            ) : (
-              <Empty description="No downloads available yet" />
-            )}
+                      } />
+                    
+                    </List.Item>);
+
+              }} /> :
+
+
+            <Empty description="No downloads available yet" />
+            }
           </Card>
         </Space>
       </div>
-    </MainLayout>
-  );
+    </MainLayout>);
+
 };
 
 export default DownloadPage;

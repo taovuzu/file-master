@@ -57,14 +57,14 @@ async function validateFileDoc(filePath) {
     }
 
     const actualExtension = filetype.ext.toLowerCase();
-    const isActualExtensionPresent = (actualExtension in allowedFormats.documents);
+    const isActualExtensionPresent = actualExtension in allowedFormats.documents;
     if (!isActualExtensionPresent) {
       throw new ApiError(400, `Extension mismatch! got wrong extensiontype: ${actualExtension}`);
     }
     if (mimeType === "application/pdf") {
       throw new ApiError(400, "file is already in pdf format");
-    }
-    else if ([allowedFormats.documents.doc, allowedFormats.documents.docx, allowedFormats.documents.xml].includes(mimeType)) {
+    } else
+    if ([allowedFormats.documents.doc, allowedFormats.documents.docx, allowedFormats.documents.xml].includes(mimeType)) {
       const zip = new AdmZip(filePath);
       const entries = zip.getEntries().map((entry) => entry.entryName);
       if (!entries.includes("word/document.xml")) {
@@ -118,7 +118,7 @@ function getLastNBytes(filePath, n) {
 
 async function validatePDF(filePath) {
   try {
-    const fileStream = fs.createReadStream(filePath, { start: 0, end: 1024 * 1024 }); 
+    const fileStream = fs.createReadStream(filePath, { start: 0, end: 1024 * 1024 });
     const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
 
     let foundPDFHeader = false;

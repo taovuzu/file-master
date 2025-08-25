@@ -12,10 +12,10 @@ const rotatePdf = asyncHandler(async (req, res) => {
     throw new ApiError.notFound("File could not be found on server");
   }
 
-  const angle = Number(req.body.angle); // 1 -> 90 clockwise, 2 -> 180 clockwise, 3 -> 270 clockwise, 
-  // -1 -> 90 antiClockwise, -2 -> 180 antiClockwise, -3 -> 270 antiClockwise
+  const angle = Number(req.body.angle);
+
   if (![1, 2, 3, -1, -2, -3].includes(angle)) {
-    throw new ApiError.badRequest("angle of rotation value should be one of 1, 2, 3, -1, -2 , -3")
+    throw new ApiError.badRequest("angle of rotation value should be one of 1, 2, 3, -1, -2 , -3");
   }
 
   const jobId = uuidv4();
@@ -26,7 +26,7 @@ const rotatePdf = asyncHandler(async (req, res) => {
   const outputPath = path.join(outputDir, outputName);
 
   try {
-    // Check Redis health
+
     let retryCount = 0;
     const maxRetries = 3;
     while (retryCount < maxRetries) {
@@ -34,17 +34,17 @@ const rotatePdf = asyncHandler(async (req, res) => {
         const isHealthy = await healthCheck();
         if (isHealthy) break;
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       } catch (error) {
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
     if (retryCount > maxRetries) {
       throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
-    // Initialize job status
+
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'rotate',
@@ -52,7 +52,7 @@ const rotatePdf = asyncHandler(async (req, res) => {
       angle: angle
     });
 
-    // Add job to queue
+
     await pdfProcessingQueue.add('rotate-pdf', {
       jobId,
       operation: 'rotate',
@@ -64,8 +64,8 @@ const rotatePdf = asyncHandler(async (req, res) => {
 
   } catch (error) {
     console.error(`Failed to queue rotate job ${jobId}:`, error);
-    
-    // Update job status to failed if job was created
+
+
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue rotate job',
@@ -75,7 +75,7 @@ const rotatePdf = asyncHandler(async (req, res) => {
     } catch (redisError) {
       console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-    
+
     throw error;
   }
 

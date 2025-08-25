@@ -1,4 +1,4 @@
-// src/components/Footer.jsx
+
 import React from 'react';
 import { Layout, Typography, Space } from 'antd';
 
@@ -19,8 +19,8 @@ const Footer = () => {
           © {new Date().getFullYear()} iLovePDF Clone. All rights reserved.
         </Text>
       </Space>
-    </AntFooter>
-  );
+    </AntFooter>);
+
 };
 
 export default Footer;

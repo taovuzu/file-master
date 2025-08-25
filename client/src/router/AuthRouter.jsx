@@ -9,6 +9,6 @@ export default function AuthRouter() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/logout" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
-  );
+    </Routes>);
+
 }

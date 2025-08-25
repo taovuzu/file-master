@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from 'antd';
-import { 
-  FileText, 
+import {
+  FileText,
   Download,
   Star,
   Clock,
@@ -16,17 +16,17 @@ import {
   Unlock as UnlockIcon,
   RotateCw as Rotate,
   Type as Watermark,
-  Hash as PageNumbers
-} from 'lucide-react';
+  Hash as PageNumbers } from
+'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES, PDF_OPERATIONS } from '@/utils/constants';
 import { useComponentTracking } from '@/utils/analytics';
 import { logUserAction } from '@/utils/logger';
 
-/**
- * Tool configuration with metadata
- */
+
+
+
 const TOOL_CONFIG = {
   'Merge PDF': {
     title: 'Merge PDF',
@@ -38,7 +38,7 @@ const TOOL_CONFIG = {
     processingTime: '30 seconds',
     users: '2M+',
     premium: false,
-    route: '/merge',
+    route: '/merge'
   },
   'Split PDF': {
     title: 'Split PDF',
@@ -50,7 +50,7 @@ const TOOL_CONFIG = {
     processingTime: '15 seconds',
     users: '1.5M+',
     premium: false,
-    route: '/split',
+    route: '/split'
   },
   'Compress PDF': {
     title: 'Compress PDF',
@@ -62,7 +62,7 @@ const TOOL_CONFIG = {
     processingTime: '45 seconds',
     users: '3M+',
     premium: false,
-    route: '/compress',
+    route: '/compress'
   },
   'Protect PDF': {
     title: 'Protect PDF',
@@ -74,7 +74,7 @@ const TOOL_CONFIG = {
     processingTime: '20 seconds',
     users: '1.2M+',
     premium: true,
-    route: '/protect',
+    route: '/protect'
   },
   'Unlock PDF': {
     title: 'Unlock PDF',
@@ -86,7 +86,7 @@ const TOOL_CONFIG = {
     processingTime: '10 seconds',
     users: '800K+',
     premium: true,
-    route: '/unlock',
+    route: '/unlock'
   },
   'Rotate PDF': {
     title: 'Rotate PDF',
@@ -98,7 +98,7 @@ const TOOL_CONFIG = {
     processingTime: '8 seconds',
     users: '950K+',
     premium: false,
-    route: '/rotate',
+    route: '/rotate'
   },
   'Watermark': {
     title: 'Add Watermark',
@@ -110,7 +110,7 @@ const TOOL_CONFIG = {
     processingTime: '25 seconds',
     users: '750K+',
     premium: true,
-    route: '/watermark',
+    route: '/watermark'
   },
   'PDF to PowerPoint': {
     title: 'PDF to PowerPoint',
@@ -122,7 +122,7 @@ const TOOL_CONFIG = {
     processingTime: '45 seconds',
     users: '1.8M+',
     premium: true,
-    route: '/pdf-to-powerpoint',
+    route: '/pdf-to-powerpoint'
   },
   'Word to PDF': {
     title: 'Word to PDF',
@@ -134,7 +134,7 @@ const TOOL_CONFIG = {
     processingTime: '20 seconds',
     users: '2.2M+',
     premium: false,
-    route: '/convert?type=doc-to-pdf',
+    route: '/convert?type=doc-to-pdf'
   },
   'PowerPoint to PDF': {
     title: 'PowerPoint to PDF',
@@ -146,7 +146,7 @@ const TOOL_CONFIG = {
     processingTime: '25 seconds',
     users: '1.9M+',
     premium: false,
-    route: '/convert?type=ppt-to-pdf',
+    route: '/convert?type=ppt-to-pdf'
   },
   'Excel to PDF': {
     title: 'Excel to PDF',
@@ -158,7 +158,7 @@ const TOOL_CONFIG = {
     processingTime: '30 seconds',
     users: '1.6M+',
     premium: false,
-    route: '/convert?type=excel-to-pdf',
+    route: '/convert?type=excel-to-pdf'
   },
   'Edit PDF': {
     title: 'Edit PDF',
@@ -170,7 +170,7 @@ const TOOL_CONFIG = {
     processingTime: '40 seconds',
     users: '1.3M+',
     premium: true,
-    route: '/edit',
+    route: '/edit'
   },
   'PDF to JPG': {
     title: 'PDF to JPG',
@@ -182,7 +182,7 @@ const TOOL_CONFIG = {
     processingTime: '35 seconds',
     users: '1.1M+',
     premium: false,
-    route: '/convert?type=pdf-to-jpg',
+    route: '/convert?type=pdf-to-jpg'
   },
   'JPG to PDF': {
     title: 'JPG to PDF',
@@ -194,7 +194,7 @@ const TOOL_CONFIG = {
     processingTime: '20 seconds',
     users: '1.7M+',
     premium: false,
-    route: '/convert?type=image-to-pdf',
+    route: '/convert?type=image-to-pdf'
   },
   'Organize PDF': {
     title: 'Organize PDF',
@@ -206,7 +206,7 @@ const TOOL_CONFIG = {
     processingTime: '15 seconds',
     users: '900K+',
     premium: false,
-    route: '/split',
+    route: '/split'
   },
   'Page numbers': {
     title: 'Add Page Numbers',
@@ -218,15 +218,15 @@ const TOOL_CONFIG = {
     processingTime: '12 seconds',
     users: '700K+',
     premium: false,
-    route: '/page-numbers',
-  },
+    route: '/page-numbers'
+  }
 };
 
-/**
- * Get color classes for different tool types
- * @param {string} color - Color name
- * @returns {Object} Color classes
- */
+
+
+
+
+
 const getColorClasses = (color) => {
   const colorMap = {
     blue: {
@@ -236,7 +236,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-blue-100',
       icon: 'text-blue-500',
       gradient: 'from-blue-500 to-blue-600',
-      light: 'bg-blue-100',
+      light: 'bg-blue-100'
     },
     green: {
       bg: 'bg-green-50',
@@ -245,7 +245,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-green-100',
       icon: 'text-green-500',
       gradient: 'from-green-500 to-green-600',
-      light: 'bg-green-100',
+      light: 'bg-green-100'
     },
     orange: {
       bg: 'bg-orange-50',
@@ -254,7 +254,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-orange-100',
       icon: 'text-orange-500',
       gradient: 'from-orange-500 to-orange-600',
-      light: 'bg-orange-100',
+      light: 'bg-orange-100'
     },
     red: {
       bg: 'bg-red-50',
@@ -263,7 +263,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-red-100',
       icon: 'text-red-500',
       gradient: 'from-red-500 to-red-600',
-      light: 'bg-red-100',
+      light: 'bg-red-100'
     },
     purple: {
       bg: 'bg-purple-50',
@@ -272,7 +272,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-purple-100',
       icon: 'text-purple-500',
       gradient: 'from-purple-500 to-purple-600',
-      light: 'bg-purple-100',
+      light: 'bg-purple-100'
     },
     cyan: {
       bg: 'bg-cyan-50',
@@ -281,7 +281,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-cyan-100',
       icon: 'text-cyan-500',
       gradient: 'from-cyan-500 to-cyan-600',
-      light: 'bg-cyan-100',
+      light: 'bg-cyan-100'
     },
     indigo: {
       bg: 'bg-indigo-50',
@@ -290,7 +290,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-indigo-100',
       icon: 'text-indigo-500',
       gradient: 'from-indigo-500 to-indigo-600',
-      light: 'bg-indigo-100',
+      light: 'bg-indigo-100'
     },
     teal: {
       bg: 'bg-teal-50',
@@ -299,7 +299,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-teal-100',
       icon: 'text-teal-500',
       gradient: 'from-teal-500 to-teal-600',
-      light: 'bg-teal-100',
+      light: 'bg-teal-100'
     },
     pink: {
       bg: 'bg-pink-50',
@@ -308,7 +308,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-pink-100',
       icon: 'text-pink-500',
       gradient: 'from-pink-500 to-pink-600',
-      light: 'bg-pink-100',
+      light: 'bg-pink-100'
     },
     yellow: {
       bg: 'bg-yellow-50',
@@ -317,7 +317,7 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-yellow-100',
       icon: 'text-yellow-500',
       gradient: 'from-yellow-500 to-yellow-600',
-      light: 'bg-yellow-100',
+      light: 'bg-yellow-100'
     },
     gray: {
       bg: 'bg-gray-50',
@@ -326,27 +326,27 @@ const getColorClasses = (color) => {
       hover: 'hover:bg-gray-100',
       icon: 'text-gray-500',
       gradient: 'from-gray-500 to-gray-600',
-      light: 'bg-gray-100',
-    },
+      light: 'bg-gray-100'
+    }
   };
 
   return colorMap[color] || colorMap.blue;
 };
 
-/**
- * Modern tool card component for displaying PDF tools
- */
+
+
+
 const ToolCard = ({
   tool,
   featured = false,
   compact = false,
   onClick,
   className = '',
-  style = {},
+  style = {}
 }) => {
   const navigate = useNavigate();
   const { trackInteraction } = useComponentTracking('ToolCard');
-  
+
   const config = TOOL_CONFIG[tool];
   if (!config) {
     console.warn(`Tool configuration not found for: ${tool}`);
@@ -356,13 +356,13 @@ const ToolCard = ({
   const { title, description, icon: Icon, color, features, popularity, processingTime, users, premium, route } = config;
   const colors = getColorClasses(color);
 
-  /**
-   * Handle card click
-   */
+
+
+
   const handleClick = () => {
     trackInteraction('tool_selected', { tool, title });
     logUserAction('tool_card_clicked', { tool, title, premium });
-    
+
     if (onClick) {
       onClick(tool);
     } else if (route) {
@@ -380,14 +380,14 @@ const ToolCard = ({
         ${className}
       `}
       style={style}
-      onClick={handleClick}
-    >
-      {/* Background gradient overlay on hover */}
+      onClick={handleClick}>
+      
+      {}
       <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
       
-      {/* Card content */}
+      {}
       <div className="relative z-10 p-6 h-full flex flex-col">
-        {/* Header */}
+        {}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className={`
@@ -404,8 +404,8 @@ const ToolCard = ({
               `}>
                 {title}
               </h3>
-              {!compact && (
-                <div className="flex items-center space-x-2 mt-1">
+              {!compact &&
+              <div className="flex items-center space-x-2 mt-1">
                   <div className="flex items-center space-x-1">
                     <Star className="w-3 h-3 text-yellow-500 fill-current" />
                     <span className="text-xs font-medium text-gray-600">{popularity}%</span>
@@ -416,30 +416,30 @@ const ToolCard = ({
                     <span className="text-xs text-gray-500">{users}</span>
                   </div>
                 </div>
-              )}
+              }
             </div>
           </div>
           
-          {/* Premium badge */}
-          {premium && (
-            <div className="flex-shrink-0">
-              <Badge 
-                count="PRO" 
-                className="premium-badge"
-                style={{ 
-                  backgroundColor: '#f59e0b',
-                  color: 'white',
-                  fontSize: '9px',
-                  fontWeight: 'bold',
-                  borderRadius: '10px',
-                  padding: '1px 6px',
-                }}
-              />
+          {}
+          {premium &&
+          <div className="flex-shrink-0">
+              <Badge
+              count="PRO"
+              className="premium-badge"
+              style={{
+                backgroundColor: '#f59e0b',
+                color: 'white',
+                fontSize: '9px',
+                fontWeight: 'bold',
+                borderRadius: '10px',
+                padding: '1px 6px'
+              }} />
+            
             </div>
-          )}
+          }
         </div>
 
-        {/* Description */}
+        {}
         <p className={`
           text-gray-600 mb-4 flex-1 leading-relaxed
           ${compact ? 'text-sm line-clamp-2' : 'text-sm line-clamp-3'}
@@ -447,28 +447,28 @@ const ToolCard = ({
           {description}
         </p>
 
-        {/* Features - Show only in non-compact mode */}
-        {!compact && features && features.length > 0 && (
-          <div className="mb-4">
+        {}
+        {!compact && features && features.length > 0 &&
+        <div className="mb-4">
             <div className="flex flex-wrap gap-1.5">
-              {features.slice(0, 2).map((feature, index) => (
-                <span 
-                  key={index}
-                  className="inline-block px-2 py-1 text-xs bg-gray-50 rounded-md text-gray-600 border border-gray-100"
-                >
+              {features.slice(0, 2).map((feature, index) =>
+            <span
+              key={index}
+              className="inline-block px-2 py-1 text-xs bg-gray-50 rounded-md text-gray-600 border border-gray-100">
+              
                   {feature}
                 </span>
-              ))}
-              {features.length > 2 && (
-                <span className="inline-block px-2 py-1 text-xs bg-gray-100 rounded-md text-gray-500 font-medium">
+            )}
+              {features.length > 2 &&
+            <span className="inline-block px-2 py-1 text-xs bg-gray-100 rounded-md text-gray-500 font-medium">
                   +{features.length - 2}
                 </span>
-              )}
+            }
             </div>
           </div>
-        )}
+        }
 
-        {/* Footer */}
+        {}
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
           <div className="flex items-center space-x-2">
             <Clock className="w-3 h-3 text-gray-400" />
@@ -476,12 +476,12 @@ const ToolCard = ({
           </div>
           
           <div className="flex items-center space-x-2">
-            {featured && (
-              <div className="flex items-center space-x-1">
+            {featured &&
+            <div className="flex items-center space-x-1">
                 <Zap className="w-3 h-3 text-yellow-500" />
                 <span className="text-xs text-yellow-600 font-semibold">Featured</span>
               </div>
-            )}
+            }
             
             <button
               className={`
@@ -494,84 +494,84 @@ const ToolCard = ({
               onClick={(e) => {
                 e.stopPropagation();
                 handleClick();
-              }}
-            >
+              }}>
+              
               <span>{compact ? 'Use' : 'Start'}</span>
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
-// Export component with performance optimization
+
 export default React.memo(ToolCard);
 
-// Export tool configuration for external use
+
 export { TOOL_CONFIG, getColorClasses };
 
-// Export utility functions
+
 export const toolCardUtils = {
-  /**
-   * Get tool configuration
-   * @param {string} tool - Tool name
-   * @returns {Object} Tool configuration
-   */
+
+
+
+
+
   getToolConfig: (tool) => {
     return TOOL_CONFIG[tool];
   },
 
-  /**
-   * Get all available tools
-   * @returns {Array} Array of tool configurations
-   */
+
+
+
+
   getAllTools: () => {
     return Object.entries(TOOL_CONFIG).map(([key, config]) => ({
       key,
-      ...config,
+      ...config
     }));
   },
 
-  /**
-   * Get featured tools
-   * @returns {Array} Array of featured tool configurations
-   */
+
+
+
+
   getFeaturedTools: () => {
-    return Object.entries(TOOL_CONFIG)
-      .filter(([_, config]) => config.popularity > 85)
-      .map(([key, config]) => ({
-        key,
-        ...config,
-      }))
-      .sort((a, b) => b.popularity - a.popularity);
+    return Object.entries(TOOL_CONFIG).
+    filter(([_, config]) => config.popularity > 85).
+    map(([key, config]) => ({
+      key,
+      ...config
+    })).
+    sort((a, b) => b.popularity - a.popularity);
   },
 
-  /**
-   * Get premium tools
-   * @returns {Array} Array of premium tool configurations
-   */
+
+
+
+
   getPremiumTools: () => {
-    return Object.entries(TOOL_CONFIG)
-      .filter(([_, config]) => config.premium)
-      .map(([key, config]) => ({
-        key,
-        ...config,
-      }));
+    return Object.entries(TOOL_CONFIG).
+    filter(([_, config]) => config.premium).
+    map(([key, config]) => ({
+      key,
+      ...config
+    }));
   },
 
-  /**
-   * Get popular tools (top 8 by popularity)
-   * @returns {Array} Array of popular tool configurations
-   */
+
+
+
+
   getPopularTools: () => {
-    return Object.entries(TOOL_CONFIG)
-      .sort((a, b) => b[1].popularity - a[1].popularity)
-      .slice(0, 8)
-      .map(([key, config]) => ({
-        key,
-        ...config,
-      }));
-  },
+    return Object.entries(TOOL_CONFIG).
+    sort((a, b) => b[1].popularity - a[1].popularity).
+    slice(0, 8).
+    map(([key, config]) => ({
+      key,
+      ...config
+    }));
+  }
 };

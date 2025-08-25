@@ -6,13 +6,13 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const downloadFile = asyncHandler(async (req, res) => {
   const { file } = req.params;
-  
+
   if (!file) {
     throw new ApiError.badRequest('File parameter is required');
   }
 
   const filePath = path.join(process.cwd(), "public", "processed", file);
-  
+
   try {
     if (!existsSync(filePath)) {
       throw new ApiError.notFound("File does not exist");

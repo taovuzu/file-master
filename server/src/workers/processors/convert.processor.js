@@ -9,7 +9,7 @@ import { PDFDocument, PageSizes } from "pdf-lib";
 import archiver from "archiver";
 import pptxgen from "pptxgenjs";
 import pdf from "pdf-poppler";
-import { imageSizeFromFile } from 'image-size/fromFile'
+import { imageSizeFromFile } from 'image-size/fromFile';
 
 export async function convertProcessor(jobId, jobData) {
   const { inputPath, files, outputName, outputDir, outputPath, operation, orientation, pagetype, margin, mergeImagesInOnePdf, originalFileName } = jobData;
@@ -28,8 +28,8 @@ export async function convertProcessor(jobId, jobData) {
       case 'convertPdfToPpt':
         result = await convertToPowerPoint(jobId, inputPath, outputPath);
         break;
-      case 'convertImagesToPdf': 
-        result = await convertImagesToPdf(jobId, files, outputPath, orientation, pagetype, margin, mergeImagesInOnePdf)
+      case 'convertImagesToPdf':
+        result = await convertImagesToPdf(jobId, files, outputPath, orientation, pagetype, margin, mergeImagesInOnePdf);
         break;
       case 'docx':
       case 'doc':
@@ -59,7 +59,7 @@ export async function convertProcessor(jobId, jobData) {
       console.error(`Error deleting input file ${inputPath}:`, unlinkError);
     }
 
-    // Update Redis with final job data including filename
+
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
       message: `Successfully converted to ${operation.toUpperCase()}`,
@@ -87,13 +87,13 @@ async function convertDocToPdf(jobId, inputPath, outputDir) {
   });
 
   const libreCmd = [
-    LIBRE_PATH,
-    "--headless",
-    "--convert-to pdf",
-    "--outdir",
-    `"${outputDir}"`,
-    `"${inputPath}"`
-  ].join(" ");
+  LIBRE_PATH,
+  "--headless",
+  "--convert-to pdf",
+  "--outdir",
+  `"${outputDir}"`,
+  `"${inputPath}"`].
+  join(" ");
 
   await new Promise((resolve, reject) => {
     exec(libreCmd, (error, stdout, stderr) => {
@@ -118,7 +118,7 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
   const marginMap = {
     none: 0,
     small: 20,
-    big: 40,
+    big: 40
   };
   const marginValue = marginMap[margin] ?? 0;
 
@@ -189,7 +189,7 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
         x: (pageSize[0] - drawWidth) / 2,
         y: (pageSize[1] - drawHeight) / 2,
         width: drawWidth,
-        height: drawHeight,
+        height: drawHeight
       });
 
       await fs.unlink(file.path);
@@ -226,7 +226,7 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
         x: (pageSize[0] - drawWidth) / 2,
         y: (pageSize[1] - drawHeight) / 2,
         width: drawWidth,
-        height: drawHeight,
+        height: drawHeight
       });
 
       const name = path.basename(file.originalname, path.extname(file.originalname));
@@ -244,7 +244,7 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
     const output = fss.createWriteStream(outputPath);
     const archive = archiver("zip", { zlib: { level: 2 } });
 
-    archive.on("error", (err) => { throw new Error(err); });
+    archive.on("error", (err) => {throw new Error(err);});
     archive.pipe(output);
     archive.directory(baseOutDir, false);
     await archive.finalize();
@@ -266,12 +266,12 @@ async function convertToWord(jobId, inputPath, outputPath) {
   });
 
   const libreOfficeCmd = [
-    'soffice',
-    '--headless',
-    '--convert-to', 'docx',
-    '--outdir', path.dirname(outputPath),
-    inputPath
-  ].join(' ');
+  'soffice',
+  '--headless',
+  '--convert-to', 'docx',
+  '--outdir', path.dirname(outputPath),
+  inputPath].
+  join(' ');
 
   await new Promise((resolve, reject) => {
     exec(libreOfficeCmd, (error, stdout, stderr) => {
@@ -304,7 +304,7 @@ async function convertToPowerPoint(jobId, inputPath, outputPath) {
     format: 'png',
     out_dir: baseOutDir,
     out_prefix: 'slide',
-    page: null,
+    page: null
   };
 
   await pdf.convert(inputPath, options);
@@ -351,12 +351,12 @@ async function convertToExcel(jobId, inputPath, outputPath) {
   });
 
   const libreOfficeCmd = [
-    'soffice',
-    '--headless',
-    '--convert-to', 'xlsx',
-    '--outdir', path.dirname(outputPath),
-    inputPath
-  ].join(' ');
+  'soffice',
+  '--headless',
+  '--convert-to', 'xlsx',
+  '--outdir', path.dirname(outputPath),
+  inputPath].
+  join(' ');
 
   await new Promise((resolve, reject) => {
     exec(libreOfficeCmd, (error, stdout, stderr) => {
@@ -378,7 +378,7 @@ async function convertToHtml(jobId, inputPath, outputPath) {
     message: 'Converting to HTML...'
   });
 
-  // Use pdf-poppler for HTML conversion
+
   const { pdfToHtml } = await import('pdf-poppler');
 
   const options = {
@@ -399,7 +399,7 @@ async function convertToText(jobId, inputPath, outputPath) {
     message: 'Extracting text from PDF...'
   });
 
-  // Use pdf-poppler for text extraction
+
   const { pdfToText } = await import('pdf-poppler');
 
   const options = {

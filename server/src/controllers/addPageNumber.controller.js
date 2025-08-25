@@ -9,19 +9,19 @@ import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.
 const fontSizes = {
   small: 10,
   normal: 12,
-  large: 16,
+  large: 16
 };
 
 const marginSizes = {
   small: 10,
   normal: 20,
-  large: 30,
+  large: 30
 };
 
 const fontChoices = {
   Arial: "Helvetica",
   "Times New Roman": "TimesRoman",
-  Courier: "Courier",
+  Courier: "Courier"
 };
 
 const AddPageNumber = asyncHandler(async (req, res) => {
@@ -41,7 +41,7 @@ const AddPageNumber = asyncHandler(async (req, res) => {
     textStyle,
     fontFamily = "Arial",
     fontSize = "normal",
-    textColor = [0, 0, 0],
+    textColor = [0, 0, 0]
   } = req.body;
 
   const jobId = uuidv4();
@@ -52,7 +52,7 @@ const AddPageNumber = asyncHandler(async (req, res) => {
   const outputPath = path.join(outputDir, outputName);
 
   try {
-    // Check Redis health
+
     let retryCount = 0;
     const maxRetries = 3;
     while (retryCount < maxRetries) {
@@ -60,17 +60,17 @@ const AddPageNumber = asyncHandler(async (req, res) => {
         const isHealthy = await healthCheck();
         if (isHealthy) break;
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       } catch (error) {
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
     if (retryCount > maxRetries) {
       throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
-    // Initialize job status
+
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'addPageNumbers',
@@ -86,7 +86,7 @@ const AddPageNumber = asyncHandler(async (req, res) => {
       fontSize
     });
 
-    // Add job to queue
+
     await pdfProcessingQueue.add('add-page-numbers', {
       jobId,
       operation: 'addPageNumbers',
@@ -108,8 +108,8 @@ const AddPageNumber = asyncHandler(async (req, res) => {
 
   } catch (error) {
     console.error(`Failed to queue page numbering job ${jobId}:`, error);
-    
-    // Update job status to failed if job was created
+
+
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue page numbering job',
@@ -119,7 +119,7 @@ const AddPageNumber = asyncHandler(async (req, res) => {
     } catch (redisError) {
       console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-    
+
     throw error;
   }
 

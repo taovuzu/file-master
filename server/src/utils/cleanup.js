@@ -6,10 +6,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const cleanupTargets = [
-  { path: join(__dirname, '..', '..', 'temp', 'uploads'), maxAge: 1 * 60 * 1000 }, // 5 mins
-  { path: join(__dirname, '..', '..', 'temp'), maxAge: 1 * 60 * 1000 }, // 10 mins
-  { path: join(__dirname, '..', '..', 'public', 'processed'), maxAge: 5 * 60 * 1000 } // 10 mins
-];
+{ path: join(__dirname, '..', '..', 'temp', 'uploads'), maxAge: 1 * 60 * 1000 },
+{ path: join(__dirname, '..', '..', 'temp'), maxAge: 1 * 60 * 1000 },
+{ path: join(__dirname, '..', '..', 'public', 'processed'), maxAge: 5 * 60 * 1000 }];
+
 
 const excludedDirs = ['important-job', 'do-not-delete', 'uploads'];
 let isCleaning = false;

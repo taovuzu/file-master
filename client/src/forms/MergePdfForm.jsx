@@ -1,4 +1,4 @@
-// src/components/MergePdfForm.jsx
+
 import React, { useState } from "react";
 import { Form, Button, message, Alert } from "antd";
 import { MergeCellsOutlined, InfoCircleOutlined } from "@ant-design/icons";
@@ -9,7 +9,7 @@ const MergePdfForm = ({ onFinish, fileList = [] }) => {
       message.error("Please upload at least two PDF files to merge!");
       return;
     }
-    // Only pass serializable options; files are managed by parent page
+
     onFinish({});
   };
 
@@ -18,9 +18,9 @@ const MergePdfForm = ({ onFinish, fileList = [] }) => {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100%",
-      }}
-    >
+        height: "100%"
+      }}>
+      
       <Form
         name="merge-pdf"
         layout="vertical"
@@ -28,15 +28,15 @@ const MergePdfForm = ({ onFinish, fileList = [] }) => {
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "16px",
-        }}
-      >
-        {/* Title */}
+          padding: "16px"
+        }}>
+        
+        {}
         <Form.Item>
           <div style={{ fontSize: "18px", fontWeight: 600 }}>Merge PDFs</div>
         </Form.Item>
 
-        {/* Options: none for merge; all files are selected in upload zone */}
+        {}
       </Form>
 
       <Alert
@@ -45,8 +45,8 @@ const MergePdfForm = ({ onFinish, fileList = [] }) => {
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
-        style={{ marginBottom: 24 }}
-      />
+        style={{ marginBottom: 24 }} />
+      
 
       <div
         style={{
@@ -55,9 +55,9 @@ const MergePdfForm = ({ onFinish, fileList = [] }) => {
           background: "#fff",
           position: "sticky",
           bottom: 0,
-          zIndex: 10,
-        }}
-      >
+          zIndex: 10
+        }}>
+        
         <Button
           type="primary"
           htmlType="submit"
@@ -65,13 +65,13 @@ const MergePdfForm = ({ onFinish, fileList = [] }) => {
           icon={<MergeCellsOutlined />}
           size="large"
           disabled={!fileList || fileList.length < 2}
-          onClick={handleFinish}
-        >
+          onClick={handleFinish}>
+          
           Merge {fileList?.length || 0} PDF{fileList && fileList.length !== 1 ? 's' : ''}
         </Button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default MergePdfForm;

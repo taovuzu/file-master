@@ -65,14 +65,14 @@ export async function splitProcessor(jobId, jobData) {
 
     const output = fss.createWriteStream(outputPath);
     const archive = archiver("zip", {
-      zlib: { level: 2 },
+      zlib: { level: 2 }
     });
 
     await updateJobStatus(jobId, 'processing', 90, {
       message: 'Finalizing ZIP archive...'
     });
 
-    archive.on("error", (err) => { throw new Error(err) });
+    archive.on("error", (err) => {throw new Error(err);});
 
     archive.pipe(output);
     archive.directory(baseOutDir, false);
@@ -86,7 +86,7 @@ export async function splitProcessor(jobId, jobData) {
       }
     });
 
-    // Update Redis with final job data including filename
+
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
       message: `Successfully split PDF into ${outputPaths.length} files`,

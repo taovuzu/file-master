@@ -6,19 +6,19 @@ import { updateJobStatus } from '../../queues/pdf.queue.js';
 const fontSizes = {
   small: 10,
   normal: 12,
-  large: 16,
+  large: 16
 };
 
 const marginSizes = {
   small: 10,
   normal: 20,
-  large: 30,
+  large: 30
 };
 
 const fontChoices = {
   Arial: StandardFonts.Helvetica,
   "Times New Roman": StandardFonts.TimesRoman,
-  Courier: StandardFonts.Courier,
+  Courier: StandardFonts.Courier
 };
 
 export async function addPageNumbersProcessor(jobId, jobData) {
@@ -70,7 +70,7 @@ export async function addPageNumbersProcessor(jobId, jobData) {
 
     const fromPageNum = isNaN(Number(fromPage)) || Number(fromPage) < 1 ? 1 : Number(fromPage);
     const toPageNum =
-      isNaN(Number(toPage)) || Number(toPage) < 1 ? numberOfPages : Number(toPage);
+    isNaN(Number(toPage)) || Number(toPage) < 1 ? numberOfPages : Number(toPage);
 
     const fromPageIndex = Math.max(0, fromPageNum - 1);
     const toPageIndex = Math.min(toPageNum - 1, numberOfPages - 1);
@@ -83,10 +83,10 @@ export async function addPageNumbersProcessor(jobId, jobData) {
     const marginValue = marginSizes[margin] || marginSizes.normal;
 
     if (
-      !Array.isArray(textColor) ||
-      textColor.length !== 3 ||
-      textColor.some((c) => typeof c !== "number" || Number.isNaN(c))
-    ) {
+    !Array.isArray(textColor) ||
+    textColor.length !== 3 ||
+    textColor.some((c) => typeof c !== "number" || Number.isNaN(c)))
+    {
       textColor = [0, 0, 0];
     } else {
       textColor = textColor.map((c) => {
@@ -120,10 +120,10 @@ export async function addPageNumbersProcessor(jobId, jobData) {
 
       const pageNumber = firstNumber + (i - fromPageIndex);
       const writingStyles = [
-        `${pageNumber}`,
-        `Page ${pageNumber}`,
-        `Page ${pageNumber} of ${numberOfPages}`,
-      ];
+      `${pageNumber}`,
+      `Page ${pageNumber}`,
+      `Page ${pageNumber} of ${numberOfPages}`];
+
 
       const styleIndex = isNaN(Number(textStyle)) ? 0 : Number(textStyle);
       const style = writingStyles[styleIndex >= 0 && styleIndex < writingStyles.length ? styleIndex : 0];
@@ -167,9 +167,9 @@ export async function addPageNumbersProcessor(jobId, jobData) {
         y,
         size: fontSizeValue,
         font: selectedFont,
-        color: rgb(...textColor),
+        color: rgb(...textColor)
       });
-      const progress = 50 + (i * 30 / numberOfPages);
+      const progress = 50 + i * 30 / numberOfPages;
       await updateJobStatus(jobId, 'processing', Math.round(progress), {
         message: `Processing page ${i + 1} of ${numberOfPages}...`
       });
@@ -188,7 +188,7 @@ export async function addPageNumbersProcessor(jobId, jobData) {
       console.error(`Error deleting input file ${inputPath}:`, unlinkError);
     }
 
-    // Update Redis with final job data including filename
+
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
       message: `Successfully added page numbers to ${numberOfPages} pages`,
@@ -212,5 +212,3 @@ export async function addPageNumbersProcessor(jobId, jobData) {
     throw error;
   }
 }
-
-

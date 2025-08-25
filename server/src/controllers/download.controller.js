@@ -20,11 +20,11 @@ export const checkJobStatus = asyncHandler(async (req, res) => {
       throw new ApiError.notFound('Job not found');
     }
 
-    // Determine if the response should be considered successful based on job status
+
     const isJobSuccessful = jobData.status === 'completed';
     const responseSuccess = isJobSuccessful || jobData.status === 'processing' || jobData.status === 'queued';
-    
-    // Get appropriate message based on job status
+
+
     let statusMessage = 'Job status retrieved successfully';
     if (jobData.status === 'failed') {
       statusMessage = jobData.message || 'Job processing failed';
@@ -35,8 +35,8 @@ export const checkJobStatus = asyncHandler(async (req, res) => {
     } else if (jobData.status === 'queued') {
       statusMessage = 'Job is queued for processing';
     }
-    
-    // Add error information for failed jobs
+
+
     const responseData = {
       jobId,
       status: jobData.status,
@@ -46,13 +46,13 @@ export const checkJobStatus = asyncHandler(async (req, res) => {
       createdAt: jobData.createdAt,
       updatedAt: jobData.updatedAt
     };
-    
-    // Add error details for failed jobs
+
+
     if (jobData.status === 'failed') {
       responseData.error = jobData.message || 'Job processing failed';
       responseData.failed = true;
     }
-    
+
     return res.json({
       success: responseSuccess,
       statusCode: responseSuccess ? 200 : 400,
@@ -90,7 +90,7 @@ export const downloadFile = asyncHandler(async (req, res) => {
     }
 
     const filePath = jobData.outputFilePath;
-    
+
     try {
       await fs.access(filePath);
     } catch (error) {
@@ -116,13 +116,13 @@ export const downloadFile = asyncHandler(async (req, res) => {
 
 export const downloadFileByPath = asyncHandler(async (req, res) => {
   const { file } = req.params;
-  
+
   if (!file) {
     throw new ApiError.badRequest('File parameter is required');
   }
 
   const filePath = path.join(process.cwd(), 'public', 'processed', file);
-  
+
   try {
     await fs.access(filePath);
   } catch (error) {
@@ -144,7 +144,7 @@ export const downloadFileByPath = asyncHandler(async (req, res) => {
 export const listProcessedFiles = asyncHandler(async (req, res) => {
   try {
     const processedDir = path.join(process.cwd(), 'public', 'processed');
-    
+
     try {
       await fs.access(processedDir);
     } catch (error) {
@@ -165,11 +165,11 @@ export const listProcessedFiles = asyncHandler(async (req, res) => {
       try {
         const filePath = path.join(processedDir, file);
         const stats = await fs.stat(filePath);
-        
+
         if (stats.isFile()) {
           const match = file.match(/^.+___(.+)$/);
           const originalName = match ? match[1] : file;
-          
+
           fileList.push({
             fileName: file,
             originalName: originalName,
@@ -199,14 +199,14 @@ export const listProcessedFiles = asyncHandler(async (req, res) => {
 
 export const deleteProcessedFile = asyncHandler(async (req, res) => {
   const { file } = req.params;
-  
+
   if (!file) {
     throw new ApiError.badRequest('File parameter is required');
   }
 
   try {
     const filePath = path.join(process.cwd(), 'public', 'processed', file);
-    
+
     try {
       await fs.access(filePath);
     } catch (error) {

@@ -1,4 +1,4 @@
-// src/components/PageNumbersPdfForm.jsx
+
 import React, { useState } from "react";
 import {
   Form,
@@ -12,19 +12,19 @@ import {
   Divider,
   Row,
   Col,
-  ColorPicker,
-} from "antd";
+  ColorPicker } from
+"antd";
 import {
   FileTextOutlined,
   InfoCircleOutlined,
-  FontSizeOutlined,
-} from "@ant-design/icons";
+  FontSizeOutlined } from
+"@ant-design/icons";
 
 const { Option } = Select;
 
 const PageNumbersPdfForm = ({ onFinish, file }) => {
   const [form] = Form.useForm();
-  const [textColor, setTextColor] = useState([0, 0, 0]); // RGB values 0-1
+  const [textColor, setTextColor] = useState([0, 0, 0]);
 
   const handleFinish = (values) => {
     if (!file) {
@@ -37,7 +37,7 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
       return;
     }
 
-    let finalColor = "#000000"; // default
+    let finalColor = "#000000";
     if (typeof textColor === "string") {
       finalColor = textColor;
     } else if (textColor && textColor.toHexString) {
@@ -55,7 +55,7 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
       textStyle: values.textStyle || 0,
       fontFamily: values.fontFamily || "Arial",
       fontSize: values.fontSize || "normal",
-      textColor: finalColor, // ✅ Plain HEX value
+      textColor: finalColor
     });
   };
 
@@ -77,9 +77,9 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
           toPage: 1,
           textStyle: 0,
           fontFamily: "Arial",
-          fontSize: "normal",
-        }}
-      >
+          fontSize: "normal"
+        }}>
+        
         <Form.Item>
           <div style={{ fontSize: "18px", fontWeight: 600 }}>
             Add Page Numbers
@@ -100,8 +100,8 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
             <Form.Item
               label="First Page is Cover"
               name="firstPageCover"
-              valuePropName="checked"
-            >
+              valuePropName="checked">
+              
               <Switch />
             </Form.Item>
           </Col>
@@ -112,8 +112,8 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
             <Form.Item
               label="From Page"
               name="fromPage"
-              rules={[{ required: true, message: "Enter start page!" }]}
-            >
+              rules={[{ required: true, message: "Enter start page!" }]}>
+              
               <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
@@ -121,8 +121,8 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
             <Form.Item
               label="To Page"
               name="toPage"
-              rules={[{ required: true, message: "Enter end page!" }]}
-            >
+              rules={[{ required: true, message: "Enter end page!" }]}>
+              
               <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
@@ -130,8 +130,8 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
             <Form.Item
               label="First Number"
               name="firstNumber"
-              rules={[{ required: true, message: "Enter first number!" }]}
-            >
+              rules={[{ required: true, message: "Enter first number!" }]}>
+              
               <InputNumber min={1} style={{ width: "100%" }} />
             </Form.Item>
           </Col>
@@ -196,21 +196,21 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
             onChange={setTextColor}
             showText
             presets={[
-              {
-                label: "Recommended",
-                colors: [
-                  "#000000",
-                  "#FFFFFF",
-                  "#FF0000",
-                  "#0000FF",
-                  "#008000",
-                  "#800080",
-                  "#FFA500",
-                  "#808080",
-                ],
-              },
-            ]}
-          />
+            {
+              label: "Recommended",
+              colors: [
+              "#000000",
+              "#FFFFFF",
+              "#FF0000",
+              "#0000FF",
+              "#008000",
+              "#800080",
+              "#FFA500",
+              "#808080"]
+
+            }]
+            } />
+          
         </Form.Item>
 
         <Form.Item>
@@ -220,23 +220,23 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
               backgroundColor: "#f6f8fa",
               borderRadius: "8px",
               border: "2px solid #1890ff",
-              textAlign: "center",
-            }}
-          >
+              textAlign: "center"
+            }}>
+            
             <div
               style={{
                 fontSize: "16px",
                 fontWeight: "bold",
                 color: "#1890ff",
-                marginBottom: "16px",
-              }}
-            >
+                marginBottom: "16px"
+              }}>
+              
               <FontSizeOutlined style={{ marginRight: "8px" }} />
               Page Number Preview
             </div>
             <div
-              style={{ fontSize: "14px", color: "#333", marginBottom: "8px" }}
-            >
+              style={{ fontSize: "14px", color: "#333", marginBottom: "8px" }}>
+              
               Style: <strong>1</strong>
             </div>
             <div style={{ fontSize: "12px", color: "#666" }}>
@@ -253,8 +253,8 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
-        style={{ marginBottom: 24 }}
-      />
+        style={{ marginBottom: 24 }} />
+      
 
       <div
         style={{
@@ -263,9 +263,9 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
           background: "#fff",
           position: "sticky",
           bottom: 0,
-          zIndex: 10,
-        }}
-      >
+          zIndex: 10
+        }}>
+        
         <Button
           type="primary"
           htmlType="submit"
@@ -273,13 +273,13 @@ const PageNumbersPdfForm = ({ onFinish, file }) => {
           icon={<FileTextOutlined />}
           size="large"
           disabled={!file}
-          onClick={() => form.submit()} // Same handler as onFinish
-        >
+          onClick={() => form.submit()}>
+          
           Add Page Numbers to PDF
         </Button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default PageNumbersPdfForm;

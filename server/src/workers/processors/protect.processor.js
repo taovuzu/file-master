@@ -12,12 +12,12 @@ export async function protectProcessor(jobId, jobData) {
       message: 'Starting PDF protection process...'
     });
     const qpdfCmd = [
-      QPDF_PATH,
-      `--encrypt "${password}" "${password}" 256`, // user & owner password with 128-bit encryption
-      `--`,
-      `"${inputPath}"`,
-      `"${outputPath}"`
-    ].join(' ');
+    QPDF_PATH,
+    `--encrypt "${password}" "${password}" 256`,
+    `--`,
+    `"${inputPath}"`,
+    `"${outputPath}"`].
+    join(' ');
 
     await updateJobStatus(jobId, 'processing', 40, {
       message: 'Adding password protection to PDF...'
@@ -47,7 +47,7 @@ export async function protectProcessor(jobId, jobData) {
       message: 'Finalizing protected PDF...'
     });
 
-    // Update Redis with final job data including filename
+
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
       message: `Successfully added password protection to PDF`,

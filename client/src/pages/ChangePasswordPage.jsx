@@ -29,7 +29,7 @@ const ChangePasswordPage = () => {
 
       if (result.meta.requestStatus === "fulfilled") {
         message.success("Password changed successfully!");
-        navigate("/"); // redirect after success
+        navigate("/");
       } else {
         message.error(result.payload || "Old password is incorrect.");
       }
@@ -45,12 +45,12 @@ const ChangePasswordPage = () => {
   return (
     <AuthLayout title="Change Password" subtitle="Enter your old and new password">
       <AuthForm
-        type="changeCurrentPassword" 
+        type="changeCurrentPassword"
         onFinish={handleChangePassword}
-        loading={loading}
-      />
-    </AuthLayout>
-  );
+        loading={loading} />
+      
+    </AuthLayout>);
+
 };
 
 export default ChangePasswordPage;

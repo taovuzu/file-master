@@ -5,13 +5,13 @@ import { updateJobStatus } from '../../queues/pdf.queue.js';
 const fontSizes = {
   small: 20,
   normal: 28,
-  large: 36,
+  large: 36
 };
 
 const fontChoices = {
   Arial: StandardFonts.Helvetica,
   "Times New Roman": StandardFonts.TimesRoman,
-  Courier: StandardFonts.Courier,
+  Courier: StandardFonts.Courier
 };
 
 export async function addWatermarkProcessor(jobId, jobData) {
@@ -58,15 +58,15 @@ export async function addWatermarkProcessor(jobId, jobData) {
     const fontSizeValue = fontSizes[fontSize] || fontSizes.normal;
     const marginValue = 16;
 
-    textColor = Array.isArray(textColor) && textColor.length === 3
-      ? textColor.map(c => Math.min(1, Math.max(0, Number(c))))
-      : [0, 0, 0];
+    textColor = Array.isArray(textColor) && textColor.length === 3 ?
+    textColor.map((c) => Math.min(1, Math.max(0, Number(c)))) :
+    [0, 0, 0];
 
     await updateJobStatus(jobId, 'processing', 40, {
       message: 'Processing watermark settings...'
     });
 
-    /** ---------------- TEXT WATERMARK ---------------- **/
+
     if (operation === 'addTextWatermark') {
       await updateJobStatus(jobId, 'processing', 45, {
         message: 'Adding text watermark to PDF pages...'
@@ -86,7 +86,7 @@ export async function addWatermarkProcessor(jobId, jobData) {
           rotate,
           size: fontSizeValue,
           font: selectedFont,
-          color: rgb(...textColor),
+          color: rgb(...textColor)
         });
       };
 
@@ -156,52 +156,52 @@ export async function addWatermarkProcessor(jobId, jobData) {
       }
     }
 
-    /** ---------------- IMAGE WATERMARK ---------------- **/
-    // if (operation === 'addImageWatermark') {
-    //   const imageBytes = await fs.readFile(imagePath);
-    //   const image = imagePath.toLowerCase().endsWith('.png')
-    //     ? await pdfDoc.embedPng(imageBytes)
-    //     : await pdfDoc.embedJpg(imageBytes);
 
-    //   const imgWidth = image.width * scale;
-    //   const imgHeight = image.height * scale;
 
-    //   for (let i = startPage; i <= endPage; i++) {
-    //     const page = pdfDoc.getPage(i);
-    //     const { width, height } = page.getSize();
 
-    //     if (position === 'mosaic') {
-    //       const gapX = imgWidth + 80;
-    //       const gapY = imgHeight + 50;
 
-    //       for (let y = 0; y < height; y += gapY) {
-    //         for (let x = 0; x < width; x += gapX) {
-    //           page.drawImage(image, {
-    //             x,
-    //             y,
-    //             width: imgWidth,
-    //             height: imgHeight,
-    //             rotate: degrees(rotation),
-    //             opacity: transparency
-    //           });
-    //         }
-    //       }
-    //     } else {
-    //       const { x, y } = getPosition(position, width, height, imgWidth, imgHeight, marginValue);
 
-    //       page.drawImage(image, {
-    //         x,
-    //         y,
-    //         width: imgWidth,
-    //         height: imgHeight,
-    //         rotate: degrees(rotation),
-    //         opacity: transparency
-    //       });
-    //     }
 
-    //     await reportProgress(jobId, i, startPage, endPage);
-    //   }
-    // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     await updateJobStatus(jobId, 'processing', 90, {
       message: 'Saving PDF with watermark...'
@@ -215,7 +215,7 @@ export async function addWatermarkProcessor(jobId, jobData) {
       console.error(`Error deleting input file ${inputPath}:`, unlinkError);
     }
 
-    // Update Redis with final job data including filename
+
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
       message: `Successfully processed ${operation} for ${numberOfPages} pages`,
@@ -239,7 +239,7 @@ export async function addWatermarkProcessor(jobId, jobData) {
 }
 
 async function reportProgress(jobId, currentPage, startPage, endPage) {
-  const progress = 40 + ((currentPage - startPage + 1) / (endPage - startPage + 1)) * 50;
+  const progress = 40 + (currentPage - startPage + 1) / (endPage - startPage + 1) * 50;
   await updateJobStatus(jobId, 'processing', Math.round(progress), {
     message: `Processing page ${currentPage + 1}...`
   });

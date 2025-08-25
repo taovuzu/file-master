@@ -3,10 +3,10 @@ import { redisClient, pdfQueueEvents, getWaitingJobsCount } from '../queues/pdf.
 import { ApiError } from '../utils/ApiError.js';
 
 const MAX_TOTAL_PENDING_JOBS = 40;
-const RESERVED_LIST_KEY = 'upload_reservations:list';          // list of reservation IDs (FIFO)
-const RESERVED_META_PREFIX = 'upload_reservation:';            // reservation metadata key prefix
-const RESERVATION_TTL_SECONDS = 60 * 60 * 2;                   // reservation metadata TTL (2 hours)
-const RESERVATION_TIMEOUT_MS = 10 * 60 * 1000;                 // fallback cleanup (10 minutes)
+const RESERVED_LIST_KEY = 'upload_reservations:list';
+const RESERVED_META_PREFIX = 'upload_reservation:';
+const RESERVATION_TTL_SECONDS = 60 * 60 * 2;
+const RESERVATION_TIMEOUT_MS = 10 * 60 * 1000;
 
 let queueEventsBound = false;
 
@@ -21,7 +21,7 @@ function ensureQueueEventsListener() {
         return;
       }
       await redisClient.set(`${RESERVED_META_PREFIX}${reservationId}`, 'transferred', {
-        EX: RESERVATION_TTL_SECONDS,
+        EX: RESERVATION_TTL_SECONDS
       });
     } catch (err) {
       console.error('[uploadLimit] QueueEvents handler error:', err);
@@ -33,7 +33,7 @@ function ensureQueueEventsListener() {
       const reservationId = await redisClient.lPop(RESERVED_LIST_KEY);
       if (!reservationId) return;
       await redisClient.set(`${RESERVED_META_PREFIX}${reservationId}`, 'transferred', {
-        EX: RESERVATION_TTL_SECONDS,
+        EX: RESERVATION_TTL_SECONDS
       });
       console.log(`[uploadLimit] QueueEvents: transferred reservation (added) ${reservationId}`);
     } catch (err) {
@@ -48,7 +48,7 @@ export async function uploadLimitMiddleware(req, res, next) {
     if (!redisClient.isOpen) {
       try {
         await redisClient.connect();
-      } catch (err) { }
+      } catch (err) {}
     }
 
     ensureQueueEventsListener();
@@ -57,7 +57,7 @@ export async function uploadLimitMiddleware(req, res, next) {
 
     let reservedCount = 0;
     try {
-      reservedCount = await redisClient.lLen(RESERVED_LIST_KEY) || 0;
+      reservedCount = (await redisClient.lLen(RESERVED_LIST_KEY)) || 0;
     } catch (err) {
       console.warn('[uploadLimit] Could not read reserved list length:', err);
       reservedCount = 0;
@@ -70,7 +70,7 @@ export async function uploadLimitMiddleware(req, res, next) {
     const reservationId = randomUUID();
     await redisClient.rPush(RESERVED_LIST_KEY, reservationId);
     await redisClient.set(`${RESERVED_META_PREFIX}${reservationId}`, 'reserved', {
-      EX: RESERVATION_TTL_SECONDS,
+      EX: RESERVATION_TTL_SECONDS
     });
 
     req._uploadReservationId = reservationId;

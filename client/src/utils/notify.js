@@ -4,7 +4,7 @@ const activeKeys = new Map();
 
 const show = (type, content, key = 'global', duration = 2) => {
   const dedupeKey = `${type}:${key}`;
-  // Use antd's keyed messages to replace instead of stacking
+
   message.open({ type, content, key: dedupeKey, duration });
   activeKeys.set(dedupeKey, Date.now());
 };
@@ -18,7 +18,5 @@ export default {
   success: notifySuccess,
   error: notifyError,
   info: notifyInfo,
-  warning: notifyWarning,
+  warning: notifyWarning
 };
-
-

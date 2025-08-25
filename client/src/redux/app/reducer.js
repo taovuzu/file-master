@@ -3,12 +3,12 @@ import {
   CLOSE_NAV_MENU,
   COLLAPSE_NAV_MENU,
   CHANGE_APP,
-  DEFAULT_APP,
-} from './actions';
+  DEFAULT_APP } from
+'./actions';
 
 const initialState = {
   isNavMenuClose: false,
-  currentApp: 'default',
+  currentApp: 'default'
 };
 
 export default function reducer(state = initialState, action) {
@@ -29,5 +29,3 @@ export default function reducer(state = initialState, action) {
 }
 
 export { initialState };
-
-

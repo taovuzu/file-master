@@ -15,10 +15,10 @@ const compressPdf = asyncHandler(async (req, res) => {
   }
 
   let compressionLevel = req.body.compressionLevel;
-  if (!compressionLevel) compressionLevel = "ebook";
-  else if (compressionLevel == 1) compressionLevel = "printer";
-  else if (compressionLevel == 2) compressionLevel = "ebook";
-  else compressionLevel = "screen";
+  if (!compressionLevel) compressionLevel = "ebook";else
+  if (compressionLevel == 1) compressionLevel = "printer";else
+  if (compressionLevel == 2) compressionLevel = "ebook";else
+  compressionLevel = "screen";
 
   const jobId = uuidv4();
   const inputPath = path.resolve(file.path);
@@ -28,7 +28,7 @@ const compressPdf = asyncHandler(async (req, res) => {
   const outputPath = path.join(outputDir, outputName);
 
   try {
-    // Check Redis health
+
     let retryCount = 0;
     const maxRetries = 3;
 
@@ -37,10 +37,10 @@ const compressPdf = asyncHandler(async (req, res) => {
         const isHealthy = await healthCheck();
         if (isHealthy) break;
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       } catch (error) {
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
       }
     }
 
@@ -48,14 +48,14 @@ const compressPdf = asyncHandler(async (req, res) => {
       throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
-    // Initialize job status
+
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'compress',
       originalFileName: file.originalname
     });
 
-    // Add job to queue
+
     await pdfProcessingQueue.add('compress-pdf', {
       jobId,
       operation: 'compress',
@@ -67,8 +67,8 @@ const compressPdf = asyncHandler(async (req, res) => {
 
   } catch (error) {
     console.error(`Failed to queue compress job ${jobId}:`, error);
-    
-    // Update job status to failed if job was created
+
+
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue compress job',
@@ -78,7 +78,7 @@ const compressPdf = asyncHandler(async (req, res) => {
     } catch (redisError) {
       console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-    
+
     throw error;
   }
 
@@ -100,4 +100,4 @@ const compressPdf = asyncHandler(async (req, res) => {
   });
 });
 
-export { compressPdf }
+export { compressPdf };

@@ -9,18 +9,18 @@ const SideBar = ({ form }) => {
         backgroundColor: "#fff",
         borderRight: "1px solid #f0f0f0",
         display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {form ? (
-        <div style={{ flex: 1 }}>{form}</div>
-      ) : (
-        <div style={{ padding: "20px", color: "#888" }}>
+        flexDirection: "column"
+      }}>
+      
+      {form ?
+      <div style={{ flex: 1 }}>{form}</div> :
+
+      <div style={{ padding: "20px", color: "#888" }}>
           Select a PDF tool to get started
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 };
 
 export default SideBar;
