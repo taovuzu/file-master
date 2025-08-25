@@ -5,29 +5,29 @@ import { useNavigate } from 'react-router-dom';
 const { Content } = Layout;
 const { Title } = Typography;
 
-const AuthLayout = ({ 
-  children, 
-  title = "Welcome", 
+const AuthLayout = ({
+  children,
+  title = "Welcome",
   subtitle = "Please sign in to continue",
-  showBackLink = true 
+  showBackLink = true
 }) => {
   const navigate = useNavigate();
 
   return (
     <Layout style={{ minHeight: '100vh', background: '#f0f2f5' }}>
-      <Content style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
+      <Content style={{
+        display: 'flex',
+        justifyContent: 'center',
         alignItems: 'center',
         padding: '24px'
       }}>
-        <Card 
-          style={{ 
-            width: '100%', 
+        <Card
+          style={{
+            width: '100%',
             maxWidth: '400px',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-          }}
-        >
+          }}>
+          
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <Title level={2} style={{ marginBottom: '8px' }}>
               {title}
@@ -39,17 +39,17 @@ const AuthLayout = ({
           
           {children}
           
-          {showBackLink && (
-            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+          {showBackLink &&
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
               <Typography.Link onClick={() => navigate('/')}>
                 ← Back to Home
               </Typography.Link>
             </div>
-          )}
+          }
         </Card>
       </Content>
-    </Layout>
-  );
+    </Layout>);
+
 };
 
 export default AuthLayout;

@@ -1,4 +1,4 @@
-// src/components/ConvertPdfForm.jsx
+
 import React, { useState, useEffect } from "react";
 import { Form, Button, Select, Radio, InputNumber, Switch, message, Alert } from "antd";
 import { FilePdfOutlined, FileImageOutlined, FileTextOutlined, InfoCircleOutlined } from "@ant-design/icons";
@@ -31,14 +31,14 @@ const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-p
       orientation: values.orientation || "portrait",
       pagetype: values.pagetype || "A4",
       margin: values.margin || "none",
-      mergeImagesInOnePdf: isMultipleImages,
+      mergeImagesInOnePdf: isMultipleImages
     };
 
     onFinish(formData);
   };
 
-  const ImageOptions = () => (
-    <>
+  const ImageOptions = () =>
+  <>
       <Form.Item label="Orientation" name="orientation" initialValue="portrait">
         <Radio.Group>
           <Radio.Button value="portrait">Portrait</Radio.Button>
@@ -65,13 +65,13 @@ const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-p
       <Form.Item label="Merge Images in One PDF" name="mergeImagesInOnePdf" initialValue={true}>
         <Switch checked={isMultipleImages} onChange={(checked) => setIsMultipleImages(checked)} checkedChildren="Yes" unCheckedChildren="No" />
       </Form.Item>
-    </>
-  );
+    </>;
+
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Form name="convert-pdf" layout="vertical" onFinish={handleFinish} style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-        {/* Title */}
+        {}
         <Form.Item>
           <div style={{ fontSize: "18px", fontWeight: 600 }}>{formTitle}</div>
         </Form.Item>
@@ -85,8 +85,8 @@ const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-p
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
-        style={{ marginBottom: 24 }}
-      />
+        style={{ marginBottom: 24 }} />
+      
 
       <div style={{ padding: "12px 16px", borderTop: "1px solid #f0f0f0", background: "#fff", position: "sticky", bottom: 0, zIndex: 10 }}>
         <Button type="primary" htmlType="submit" block icon={<FilePdfOutlined />} size="large" onClick={handleFinish}>
@@ -97,8 +97,8 @@ const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-p
           {conversionType === "pdf-to-pptx" && "Convert PDF to PowerPoint"}
         </Button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default ConvertPdfForm;

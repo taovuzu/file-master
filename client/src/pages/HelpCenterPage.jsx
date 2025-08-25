@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { Card, Typography, Collapse, Tabs, Form, Input, Button, message, Space, Divider, Row, Col } from 'antd';
-import { 
-  QuestionCircleOutlined, 
-  MailOutlined, 
-  PhoneOutlined, 
+import {
+  QuestionCircleOutlined,
+  MailOutlined,
+  PhoneOutlined,
   SafetyCertificateOutlined,
   FileTextOutlined,
   SendOutlined,
   CustomerServiceOutlined,
-  ClockCircleOutlined
-} from '@ant-design/icons';
+  ClockCircleOutlined } from
+'@ant-design/icons';
 import MainLayout from '@/layout/MainLayout';
 
 const { Title, Paragraph, Text } = Typography;
@@ -23,8 +23,8 @@ const HelpCenterPage = ({ initialTab = 'help' }) => {
   const handleContactSubmit = async (values) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       message.success('Your message has been sent successfully! We\'ll get back to you soon.');
       form.resetFields();
     } catch (error) {
@@ -35,11 +35,11 @@ const HelpCenterPage = ({ initialTab = 'help' }) => {
   };
 
   const faqItems = [
-    {
-      key: '1',
-      label: 'How do I merge multiple PDF files?',
-      children: (
-        <div className="text-gray-600">
+  {
+    key: '1',
+    label: 'How do I merge multiple PDF files?',
+    children:
+    <div className="text-gray-600">
           <Paragraph>
             To merge PDF files:
           </Paragraph>
@@ -51,44 +51,44 @@ const HelpCenterPage = ({ initialTab = 'help' }) => {
             <li>Download your merged PDF</li>
           </ol>
         </div>
-      ),
-    },
-    {
-      key: '2',
-      label: 'Is my data secure when using FileMaster?',
-      children: (
-        <Paragraph className="text-gray-600">
+
+  },
+  {
+    key: '2',
+    label: 'Is my data secure when using FileMaster?',
+    children:
+    <Paragraph className="text-gray-600">
           Yes, your data is completely secure. We use end-to-end encryption for all file transfers, 
           and all uploaded files are automatically deleted from our servers after processing. 
           We never store or access your documents.
         </Paragraph>
-      ),
-    },
-    {
-      key: '3',
-      label: 'What file size limits do you have?',
-      children: (
-        <Paragraph className="text-gray-600">
+
+  },
+  {
+    key: '3',
+    label: 'What file size limits do you have?',
+    children:
+    <Paragraph className="text-gray-600">
           Free users can upload files up to 50MB per file. Premium users can upload files up to 200MB per file.
           For larger files, please contact our support team for assistance.
         </Paragraph>
-      ),
-    },
-    {
-      key: '4',
-      label: 'Can I use FileMaster without creating an account?',
-      children: (
-        <Paragraph className="text-gray-600">
+
+  },
+  {
+    key: '4',
+    label: 'Can I use FileMaster without creating an account?',
+    children:
+    <Paragraph className="text-gray-600">
           Yes! You can use all our PDF tools without creating an account. However, creating a free account 
           allows you to save your processing history and access premium features.
         </Paragraph>
-      ),
-    },
-    {
-      key: '5',
-      label: 'How do I compress a PDF while maintaining quality?',
-      children: (
-        <div className="text-gray-600">
+
+  },
+  {
+    key: '5',
+    label: 'How do I compress a PDF while maintaining quality?',
+    children:
+    <div className="text-gray-600">
           <Paragraph>
             Our PDF compression tool uses advanced algorithms to reduce file size while preserving quality:
           </Paragraph>
@@ -99,29 +99,29 @@ const HelpCenterPage = ({ initialTab = 'help' }) => {
             <li>Download your optimized file</li>
           </ol>
         </div>
-      ),
-    },
-  ];
+
+  }];
+
 
   const tabItems = [
-    {
-      key: 'help',
-      label: (
-        <span className="flex items-center gap-2">
+  {
+    key: 'help',
+    label:
+    <span className="flex items-center gap-2">
           <QuestionCircleOutlined />
           Help Center
-        </span>
-      ),
-      children: (
-        <div className="space-y-8">
+        </span>,
+
+    children:
+    <div className="space-y-8">
           <div>
             <Title level={3} className="text-gray-900 mb-6">Frequently Asked Questions</Title>
             <Collapse
-              items={faqItems}
-              defaultActiveKey={['1']}
-              expandIconPosition="start"
-              className="bg-white border border-gray-200 rounded-lg"
-            />
+          items={faqItems}
+          defaultActiveKey={['1']}
+          expandIconPosition="start"
+          className="bg-white border border-gray-200 rounded-lg" />
+        
           </div>
 
           <div>
@@ -157,18 +157,18 @@ const HelpCenterPage = ({ initialTab = 'help' }) => {
             </Row>
           </div>
         </div>
-      ),
-    },
-    {
-      key: 'contact',
-      label: (
-        <span className="flex items-center gap-2">
+
+  },
+  {
+    key: 'contact',
+    label:
+    <span className="flex items-center gap-2">
           <MailOutlined />
           Contact Us
-        </span>
-      ),
-      children: (
-        <div className="space-y-8">
+        </span>,
+
+    children:
+    <div className="space-y-8">
           <div>
             <Title level={3} className="text-gray-900 mb-6">Get in Touch</Title>
             <Row gutter={[24, 24]} className="mb-8">
@@ -213,91 +213,91 @@ const HelpCenterPage = ({ initialTab = 'help' }) => {
           <Card className="card-modern border border-gray-200 rounded-2xl">
             <Title level={4} className="text-gray-900 mb-6">Send us a Message</Title>
             <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleContactSubmit}
-            >
+          form={form}
+          layout="vertical"
+          onFinish={handleContactSubmit}>
+          
               <Row gutter={[16, 0]}>
                 <Col xs={24} md={12}>
                   <Form.Item
-                    name="name"
-                    label={<span className="text-gray-700 font-medium">Name</span>}
-                    rules={[{ required: true, message: 'Please enter your name!' }]}
-                  >
-                    <Input 
-                      placeholder="Your name" 
-                      className="input-modern h-12"
-                    />
+                name="name"
+                label={<span className="text-gray-700 font-medium">Name</span>}
+                rules={[{ required: true, message: 'Please enter your name!' }]}>
+                
+                    <Input
+                  placeholder="Your name"
+                  className="input-modern h-12" />
+                
                   </Form.Item>
                 </Col>
 
                 <Col xs={24} md={12}>
                   <Form.Item
-                    name="email"
-                    label={<span className="text-gray-700 font-medium">Email</span>}
-                    rules={[
-                      { required: true, message: 'Please enter your email!' },
-                      { type: 'email', message: 'Please enter a valid email!' }
-                    ]}
-                  >
-                    <Input 
-                      placeholder="your.email@example.com" 
-                      className="input-modern h-12"
-                    />
+                name="email"
+                label={<span className="text-gray-700 font-medium">Email</span>}
+                rules={[
+                { required: true, message: 'Please enter your email!' },
+                { type: 'email', message: 'Please enter a valid email!' }]
+                }>
+                
+                    <Input
+                  placeholder="your.email@example.com"
+                  className="input-modern h-12" />
+                
                   </Form.Item>
                 </Col>
               </Row>
 
               <Form.Item
-                name="subject"
-                label={<span className="text-gray-700 font-medium">Subject</span>}
-                rules={[{ required: true, message: 'Please enter a subject!' }]}
-              >
-                <Input 
-                  placeholder="How can we help you?" 
-                  className="input-modern h-12"
-                />
+            name="subject"
+            label={<span className="text-gray-700 font-medium">Subject</span>}
+            rules={[{ required: true, message: 'Please enter a subject!' }]}>
+            
+                <Input
+              placeholder="How can we help you?"
+              className="input-modern h-12" />
+            
               </Form.Item>
 
               <Form.Item
-                name="message"
-                label={<span className="text-gray-700 font-medium">Message</span>}
-                rules={[{ required: true, message: 'Please enter your message!' }]}
-              >
+            name="message"
+            label={<span className="text-gray-700 font-medium">Message</span>}
+            rules={[{ required: true, message: 'Please enter your message!' }]}>
+            
                 <TextArea
-                  rows={6}
-                  placeholder="Please describe your issue or question in detail..."
-                  className="input-modern"
-                />
+              rows={6}
+              placeholder="Please describe your issue or question in detail..."
+              className="input-modern" />
+            
               </Form.Item>
 
               <Form.Item>
                 <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={loading}
-                  icon={<SendOutlined />}
-                  size="large"
-                  className="btn-primary h-12 px-8"
-                >
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              icon={<SendOutlined />}
+              size="large"
+              className="btn-primary h-12 px-8">
+              
                   Send Message
                 </Button>
               </Form.Item>
             </Form>
           </Card>
         </div>
-      ),
-    },
-    {
-      key: 'privacy',
-      label: (
-        <span className="flex items-center gap-2">
+
+  },
+  {
+    key: 'privacy',
+    label:
+    <span className="flex items-center gap-2">
           <SafetyCertificateOutlined />
           Privacy Policy
-        </span>
-      ),
-      children: (
-        <div className="space-y-6">
+        </span>,
+
+    children:
+    <div className="space-y-6">
           <div className="text-center mb-8">
             <Title level={3} className="text-gray-900">Privacy Policy</Title>
             <Text className="text-gray-500">Last updated: {new Date().toLocaleDateString()}</Text>
@@ -354,18 +354,18 @@ const HelpCenterPage = ({ initialTab = 'help' }) => {
             </ul>
           </Card>
         </div>
-      ),
-    },
-    {
-      key: 'terms',
-      label: (
-        <span className="flex items-center gap-2">
+
+  },
+  {
+    key: 'terms',
+    label:
+    <span className="flex items-center gap-2">
           <FileTextOutlined />
           Terms of Service
-        </span>
-      ),
-      children: (
-        <div className="space-y-6">
+        </span>,
+
+    children:
+    <div className="space-y-6">
           <div className="text-center mb-8">
             <Title level={3} className="text-gray-900">Terms of Service</Title>
             <Text className="text-gray-500">Last updated: {new Date().toLocaleDateString()}</Text>
@@ -433,9 +433,9 @@ const HelpCenterPage = ({ initialTab = 'help' }) => {
             </div>
           </Card>
         </div>
-      ),
-    },
-  ];
+
+  }];
+
 
   return (
     <MainLayout>
@@ -453,12 +453,12 @@ const HelpCenterPage = ({ initialTab = 'help' }) => {
             items={tabItems}
             size="large"
             className="help-center-tabs bg-white rounded-2xl shadow-sm p-6"
-            tabBarStyle={{ marginBottom: '24px' }}
-          />
+            tabBarStyle={{ marginBottom: '24px' }} />
+          
         </div>
       </div>
-    </MainLayout>
-  );
+    </MainLayout>);
+
 };
 
 export default HelpCenterPage;

@@ -8,7 +8,7 @@ const PageLoader = () => {
   return (
     <div className="centerAbsolute">
       <Spin indicator={antIcon}></Spin>
-    </div>
-  );
+    </div>);
+
 };
 export default PageLoader;

@@ -38,13 +38,13 @@ export default function AppRouter() {
 
   return (
     <Routes>
-      {routesList.map((route, index) => (
-        <Route
-          key={index}
-          path={route.path}
-          element={route.element}
-        />
-      ))}
-    </Routes>
-  );
+      {routesList.map((route, index) =>
+      <Route
+        key={index}
+        path={route.path}
+        element={route.element} />
+
+      )}
+    </Routes>);
+
 }

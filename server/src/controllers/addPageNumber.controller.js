@@ -1,35 +1,33 @@
 import path from "path";
 import fs from "fs";
-
 import { v4 as uuidv4 } from "uuid";
-import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
-
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.queue.js";
 
 const fontSizes = {
   small: 10,
   normal: 12,
-  large: 16,
+  large: 16
 };
 
 const marginSizes = {
   small: 10,
   normal: 20,
-  large: 30,
+  large: 30
 };
 
 const fontChoices = {
-  Arial: StandardFonts.Helvetica,
-  "Times New Roman": StandardFonts.TimesRoman,
-  Courier: StandardFonts.Courier,
+  Arial: "Helvetica",
+  "Times New Roman": "TimesRoman",
+  Courier: "Courier"
 };
 
 const AddPageNumber = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError(404, "File could not be found on server");
+    throw new ApiError.notFound("File could not be found on server");
   }
 
   let {
@@ -43,148 +41,108 @@ const AddPageNumber = asyncHandler(async (req, res) => {
     textStyle,
     fontFamily = "Arial",
     fontSize = "normal",
-    textColor = [0, 0, 0],
+    textColor = [0, 0, 0]
   } = req.body;
-  console.log(req.body);
 
-  firstPageCover = firstPageCover === true || firstPageCover === "true";
-
-  firstNumber = isNaN(Number(firstNumber)) ? 1 : Number(firstNumber);
-
-  position = position || "bottom-right";
-  margin = margin || "normal";
-
-  if (typeof textColor === "string") {
-    try {
-      textColor = JSON.parse(textColor);
-    } catch (e) {
-      const parts = textColor.split(",").map((p) => p.trim()).filter(Boolean);
-      if (parts.length === 3) {
-        textColor = parts.map((p) => Number(p));
-      } else {
-        textColor = [0, 0, 0];
-      }
-    }
-  }
-
+  const jobId = uuidv4();
   const inputPath = path.resolve(file.path);
-  const uint8Array = fs.readFileSync(inputPath);
-  const pdfDoc = await PDFDocument.load(uint8Array);
-  const numberOfPages = pdfDoc.getPages().length;
-
-  const fromPageNum = isNaN(Number(fromPage)) || Number(fromPage) < 1 ? 1 : Number(fromPage);
-  const toPageNum =
-    isNaN(Number(toPage)) || Number(toPage) < 1 ? numberOfPages : Number(toPage);
-
-  const fromPageIndex = Math.max(0, fromPageNum - 1);
-  const toPageIndex = Math.min(toPageNum - 1, numberOfPages - 1);
-
-  if (fromPageIndex > toPageIndex) {
-    throw new ApiError(400, "fromPage cannot be greater than toPage");
-  }
-
-  const fontSizeValue = fontSizes[fontSize] || fontSizes.normal;
-  const marginValue = marginSizes[margin] || marginSizes.normal;
-
-  if (
-    !Array.isArray(textColor) ||
-    textColor.length !== 3 ||
-    textColor.some((c) => typeof c !== "number" || Number.isNaN(c))
-  ) {
-    textColor = [0, 0, 0];
-  } else {
-    textColor = textColor.map((c) => {
-      const n = Number(c);
-      if (n > 1) return Math.max(0, Math.min(1, n / 255));
-      return Math.max(0, Math.min(1, n));
-    });
-  }
-
-  const fontName = fontChoices[fontFamily] || StandardFonts.Helvetica;
-  const selectedFont = await pdfDoc.embedFont(fontName);
-
-  const pages = pdfDoc.getPages();
-  if (!pages || pages.length === 0) {
-    throw new ApiError(400, "PDF has no pages");
-  }
-
-  for (let i = fromPageIndex; i <= toPageIndex; i++) {
-    if (firstPageCover && i === 0) {
-      continue;
-    }
-
-    const page = pages[i];
-    if (!page) {
-      continue;
-    }
-
-    const pageNumber = firstNumber + (i - fromPageIndex);
-    const writingStyles = [
-      `${pageNumber}`,
-      `Page ${pageNumber}`,
-      `Page ${pageNumber} of ${numberOfPages}`,
-    ];
-
-    const styleIndex = isNaN(Number(textStyle)) ? 0 : Number(textStyle);
-    const style = writingStyles[styleIndex >= 0 && styleIndex < writingStyles.length ? styleIndex : 0];
-
-    const height = page.getHeight();
-    const width = page.getWidth();
-
-    const textWidth = selectedFont.widthOfTextAtSize(style, fontSizeValue);
-
-    let x = 0;
-    let y = 0;
-
-    switch (position) {
-      case "top-left":
-        x = marginValue;
-        y = height - marginValue - fontSizeValue;
-        break;
-      case "top-right":
-        x = width - textWidth - marginValue;
-        y = height - marginValue - fontSizeValue;
-        break;
-      case "bottom-left":
-        x = marginValue;
-        y = marginValue;
-        break;
-      case "bottom-right":
-        x = width - textWidth - marginValue;
-        y = marginValue;
-        break;
-      default:
-        x = width - textWidth - marginValue;
-        y = marginValue;
-    }
-
-    if (pageMode === "Facing Pages" && i % 2 === 0) {
-      x += 10;
-    }
-
-    page.drawText(style, {
-      x,
-      y,
-      size: fontSizeValue,
-      font: selectedFont,
-      color: rgb(...textColor),
-    });
-  }
-
-  const outputName = `${uuidv4()}___${path.basename(file.originalname, path.extname(file.originalname))}_page_numbered.pdf`;
+  const name = path.basename(file.originalname, path.extname(file.originalname));
+  const outputName = `${uuidv4()}___${name}_numbered.pdf`;
   const outputDir = path.join(process.cwd(), "public", "processed");
-  fs.mkdirSync(outputDir, { recursive: true });
   const outputPath = path.join(outputDir, outputName);
 
-  const pdfBytes = await pdfDoc.save();
-  fs.writeFileSync(outputPath, pdfBytes);
-  fs.unlinkSync(file.path);
+  try {
 
-  return res.status(200).json(
-    new ApiResponse(200, "PDFs page numbered successfully", {
-      file: outputName,
-    })
-  );
+    let retryCount = 0;
+    const maxRetries = 3;
+    while (retryCount < maxRetries) {
+      try {
+        const isHealthy = await healthCheck();
+        if (isHealthy) break;
+        retryCount++;
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+      } catch (error) {
+        retryCount++;
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+      }
+    }
+    if (retryCount > maxRetries) {
+      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+    }
+
+
+    await updateJobStatus(jobId, 'queued', 0, {
+      createdAt: new Date().toISOString(),
+      operation: 'addPageNumbers',
+      originalFileName: file.originalname,
+      pageMode,
+      position,
+      margin,
+      firstNumber,
+      fromPage,
+      toPage,
+      textStyle,
+      fontFamily,
+      fontSize
+    });
+
+
+    await pdfProcessingQueue.add('add-page-numbers', {
+      jobId,
+      operation: 'addPageNumbers',
+      inputPath,
+      outputPath,
+      pageMode,
+      firstPageCover,
+      position,
+      margin,
+      firstNumber,
+      fromPage,
+      toPage,
+      textStyle,
+      fontFamily,
+      fontSize,
+      textColor,
+      originalFileName: file.originalname
+    });
+
+  } catch (error) {
+    console.error(`Failed to queue page numbering job ${jobId}:`, error);
+
+
+    try {
+      await updateJobStatus(jobId, 'failed', 0, {
+        message: error.message || 'Failed to queue page numbering job',
+        error: error.stack,
+        failedAt: new Date().toISOString()
+      });
+    } catch (redisError) {
+      console.error(`Failed to update job status for ${jobId}:`, redisError);
+    }
+
+    throw error;
+  }
+
+  return ApiResponse
+    .success({
+      jobId,
+      message: "Your PDF page numbering job has been queued. Use the job ID to track progress.",
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'addPageNumbers',
+      originalFileName: file.originalname,
+      pageMode,
+      position,
+      margin,
+      firstNumber,
+      fromPage,
+      toPage,
+      textStyle,
+      fontFamily,
+      fontSize
+    }, "PDF page numbering job queued successfully", 200)
+    .withRequest(req)
+    .send(res);
 });
 
 export { AddPageNumber };

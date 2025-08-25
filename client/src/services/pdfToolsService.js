@@ -1,352 +1,294 @@
 import { request } from '@/request';
-import { DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
+import { API_BASE_URL, DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
 
-// Normalize API response from server to a common shape
-const toClientResult = (resp) => {
-  // Server returns: { statusCode, data: <message string>, message: { file: <filename> }, success }
-  const file = resp?.data?.file || resp?.message?.file || resp?.file;
-  return file
-    ? { success: true, file, fileUrl: `${DOWNLOAD_BASE_URL}${file}` }
-    : { success: false, error: resp?.message || 'Processing failed' };
+
+const POLLING_INTERVAL = 2000;
+const MAX_POLLING_ATTEMPTS = 5;
+const POLLING_TIMEOUT = 300000;
+
+
+export const JOB_STATUS = {
+  QUEUED: 'queued',
+  PROCESSING: 'processing',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+  CANCELLED: 'cancelled'
 };
 
-// Helper function to create FormData with progress tracking
-const createFormDataWithProgress = (files, options = {}, onProgress) => {
-  console.log(options);
+
+const pollJobStatus = async (statusUrl, onProgress, maxAttempts = MAX_POLLING_ATTEMPTS, abortSignal = null) => {
+  let attempts = 0;
+  const startTime = Date.now();
+
+  const poll = async () => {
+
+    if (abortSignal && abortSignal.aborted) {
+      throw new Error('Operation was cancelled');
+    }
+
+    if (attempts >= maxAttempts) {
+      throw new Error(`Job polling timeout exceeded after ${Math.round((Date.now() - startTime) / 1000)}s`);
+    }
+
+    if (Date.now() - startTime > POLLING_TIMEOUT) {
+      throw new Error(`Job polling timeout exceeded after ${Math.round((Date.now() - startTime) / 1000)}s`);
+    }
+
+    try {
+
+      const jobId = statusUrl.split('/').pop();
+      const response = await request.get({ entity: `download/status/${jobId}` });
+
+
+      if (!response.success || response.statusCode >= 400 || response.success == "false") {
+        throw new Error(response.message || 'Failed to check job status');
+      }
+
+      const { status, progress, message, outputFilePath, error: jobError } = response.data;
+
+
+      if (jobError) {
+        throw new Error(jobError);
+      }
+
+
+      if (onProgress) {
+        const progressMessage = message || 'Processing...';
+        onProgress(progress || 0, progressMessage);
+      }
+
+
+      if (status === JOB_STATUS.COMPLETED) {
+        return {
+          success: true,
+          status: JOB_STATUS.COMPLETED,
+          outputFilePath,
+          message: 'Job completed successfully'
+        };
+      }
+
+
+      if (status === JOB_STATUS.FAILED || status === 'failed' || status === 'error' || status === 'error_processing') {
+        throw new Error(message || 'Job processing failed');
+      }
+
+
+      if (status === JOB_STATUS.CANCELLED || status === 'cancelled') {
+        throw new Error('Job was cancelled');
+      }
+
+
+      if (abortSignal && abortSignal.aborted) {
+        throw new Error('Operation was cancelled');
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
+      return poll();
+    } catch (error) {
+      attempts++;
+
+
+      if (error.message.includes('Failed to fetch') || error.message.includes('Network Error')) {
+        throw new Error(`Connection failed while checking job status`);
+      }
+
+
+      if (error.message.includes('Job processing failed') ||
+      error.message.includes('Job was cancelled') ||
+      error.message.includes('ApiError')) {
+        throw error;
+      }
+
+      if (attempts >= maxAttempts) {
+        throw error;
+      }
+
+
+      if (abortSignal && abortSignal.aborted) {
+        throw new Error('Operation was cancelled');
+      }
+
+
+      await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL));
+      return poll();
+    }
+  };
+
+  return poll();
+};
+
+
+const toClientResult = (resp) => {
+  if (!resp || !resp.success) {
+    return {
+      success: false,
+      error: resp?.message || 'Processing failed'
+    };
+  }
+
+
+  if (resp.data?.jobId && resp.data?.statusUrl) {
+    return {
+      success: true,
+      jobId: resp.data.jobId,
+      statusUrl: resp.data.statusUrl,
+      downloadUrl: resp.data.downloadUrl,
+      operation: resp.data.operation,
+      originalFileName: resp.data.originalFileName,
+      message: resp.data.message,
+      isJobBased: true
+    };
+  }
+
+
+  const file = resp?.data?.file || resp?.message?.file || resp?.file;
+  return file ?
+  {
+    success: true,
+    file,
+    fileUrl: `${DOWNLOAD_BASE_URL}${file}`,
+    isJobBased: false
+  } :
+  {
+    success: false,
+    error: resp?.message || 'Processing failed'
+  };
+};
+
+
+const processPdfToolWithPolling = async (endpoint, files, options, onProgress, onPollingStart, fieldName = 'PDFFILE', abortSignal = null) => {
   const formData = new FormData();
 
-  // Add files
+
   const fileArray = Array.isArray(files) ? files : [files];
   fileArray.forEach((file) => {
-    // Determine the field name based on file type
-    if (file.type === 'application/pdf') {
-      formData.append('PDFFILE', file);
-    } else if (file.type.includes('image/')) {
-      formData.append('IMAGEFILE', file);
-    } else if (file.type.includes('document/') ||
-      file.type.includes('word') ||
-      file.type.includes('spreadsheet') ||
-      file.type.includes('presentation')
-    ) {
-      formData.append('DOCFILE', file);
-    } else {
-      formData.append('PDFFILE', file); // fallback
-    }
+    formData.append(fieldName, file);
   });
 
-  return formData;
-};
 
-// Helper function to calculate total file size for progress tracking
-const calculateTotalFileSize = (files) => {
-  const fileArray = Array.isArray(files) ? files : [files];
-  return fileArray.reduce((total, file) => total + file.size, 0);
-};
-
-// Merge PDFs (field: PDFFILES)
-export const mergePdfs = async (files, options = {}, onProgress) => {
-  const formData = createFormDataWithProgress(files, options, onProgress);
-  const totalFileSize = calculateTotalFileSize(files);
-
-  if (onProgress) {
-    onProgress(20, 'Preparing files for merge...');
-  }
-
-  const resp = await request.post({
-    entity: 'merge/pdf',
-    jsonData: formData,
-    onUploadProgress: (progressEvent) => {
-      if (onProgress && progressEvent.total) {
-        // Calculate upload progress based on actual bytes uploaded
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75); // 75% for upload
-        onProgress(20 + uploadProgress, `Uploading files... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+  Object.entries(options).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      if (typeof value === 'object') {
+        formData.append(key, JSON.stringify(value));
+      } else {
+        formData.append(key, value);
       }
     }
   });
 
-  if (onProgress) {
-    onProgress(95, 'Processing files on server...');
-  }
 
-  // Simulate a small delay for server processing
-  await new Promise(resolve => setTimeout(resolve, 500));
+  // Avoid logging FormData entries to protect privacy and reduce noise
 
   if (onProgress) {
-    onProgress(100, 'Merge completed');
+    onProgress(10, 'Preparing files...');
   }
 
-  return toClientResult(resp);
-};
-
-// Split PDF (field: PDFFILE)
-export const splitPdf = async (file, ranges = [], options = {}, onProgress) => {
-  const formData = createFormDataWithProgress(file, options, onProgress);
-  formData.append('ranges', JSON.stringify(ranges));
-
-  if (onProgress) {
-    onProgress(20, 'Preparing file for split...');
-  }
 
   const resp = await request.post({
-    entity: 'split/pdf',
+    entity: `pdf-tools/${endpoint}`,
     jsonData: formData,
     onUploadProgress: (progressEvent) => {
       if (onProgress && progressEvent.total) {
-        // Calculate upload progress based on actual bytes uploaded
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75); // 75% for upload
-        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
+        const uploadProgress = Math.round(progressEvent.loaded / progressEvent.total * 30);
+        onProgress(10 + uploadProgress, `Uploading files... ${Math.round(progressEvent.loaded / progressEvent.total * 100)}%`);
       }
     }
   });
 
-  if (onProgress) {
-    onProgress(95, 'Processing file on server...');
+  const result = toClientResult(resp);
+  if (!result.success) {
+    throw new Error(result.error);
   }
 
-  // Simulate a small delay for server processing
-  await new Promise(resolve => setTimeout(resolve, 500));
 
-  if (onProgress) {
-    onProgress(100, 'Split completed');
-  }
-
-  return toClientResult(resp);
-};
-
-
-// Compress PDF (field: PDFFILE, body: compressionLevel)
-export const compressPdf = async (file, options = {}, onProgress) => {
-  const formData = createFormDataWithProgress(file, options, onProgress);
-  const level = options.level ?? options.compressionLevel;
-  if (level != null) formData.append('compressionLevel', level);
-
-  if (onProgress) {
-    onProgress(20, 'Preparing file for compression...');
-  }
-
-  const resp = await request.post({
-    entity: 'compress/pdf',
-    jsonData: formData,
-    onUploadProgress: (progressEvent) => {
-      if (onProgress && progressEvent.total) {
-        // Calculate upload progress based on actual bytes uploaded
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75); // 75% for upload
-        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-      }
+  if (result.isJobBased) {
+    if (onProgress) {
+      onProgress(40, 'Job submitted, starting processing...');
     }
-  });
 
-  if (onProgress) {
-    onProgress(95, 'Processing file on server...');
+
+    if (onPollingStart) {
+      onPollingStart();
+    }
+
+    try {
+
+      const jobResult = await pollJobStatus(result.statusUrl, onProgress, undefined, abortSignal);
+
+
+      const downloadUrl = `${DOWNLOAD_BASE_URL}${result.jobId}`;
+      return {
+        success: true,
+        file: result.jobId,
+        fileUrl: downloadUrl,
+        originalFileName: result.originalFileName,
+        operation: result.operation
+      };
+    } catch (error) {
+
+      if (error.message.includes('Connection failed') || error.message.includes('Failed to fetch')) {
+        throw new Error('Unable to check job status. Please try again later or contact support if the issue persists.');
+      }
+      throw error;
+    }
   }
 
-  // Simulate a small delay for server processing
-  await new Promise(resolve => setTimeout(resolve, 500));
 
-  if (onProgress) {
-    onProgress(100, 'Compression completed');
-  }
-
-  return toClientResult(resp);
+  return result;
 };
 
-// Convert PDF
-export const convertPdf = async (input, options = {}, onProgress) => {
+
+export const mergePdfs = async (files, options = {}, onProgress, onPollingStart, abortSignal = null) => {
+  return processPdfToolWithPolling('merge', files, options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
+};
+
+
+export const splitPdf = async (file, ranges = [], options = {}, onProgress, onPollingStart, abortSignal = null) => {
+  options = { ranges };
+  return processPdfToolWithPolling('split', file, options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
+};
+
+
+export const compressPdf = async (file, options = {}, onProgress, onPollingStart, abortSignal = null) => {
+  return processPdfToolWithPolling('compress', [file], options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
+};
+
+
+export const convertPdf = async (input, options = {}, onProgress, onPollingStart, abortSignal = null) => {
   const { conversionType } = options || {};
 
   if (conversionType === 'doc-to-pdf' || conversionType === 'ppt-to-pdf' || conversionType === 'excel-to-pdf') {
-    const formData = createFormDataWithProgress(input, options, onProgress);
-    if (onProgress) onProgress(20, 'Preparing document for conversion...');
-
-    const resp = await request.post({
-      entity: 'convert/doc-to-pdf',
-      jsonData: formData,
-      onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.total) {
-          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
-          onProgress(20 + uploadProgress, `Uploading document... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-        }
-      }
-    });
-
-    if (onProgress) onProgress(95, 'Processing document on server...');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    if (onProgress) onProgress(100, 'Conversion completed');
-    return toClientResult(resp);
+    return processPdfToolWithPolling('convert/doc-to-pdf', [input], options, onProgress, onPollingStart, 'DOCFILE', abortSignal);
   }
 
-  // if (conversionType === 'pdf-to-jpg') {
-  //   const formData = createFormDataWithProgress(input, options, onProgress);
-  //   if (onProgress) onProgress(20, 'Preparing PDF for conversion...');
-
-  //   const resp = await request.post({ 
-  //     entity: 'convert/pdf-to-jpg', 
-  //     jsonData: formData,
-  //     onUploadProgress: (progressEvent) => {
-  //       if (onProgress && progressEvent.total) {
-  //         const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
-  //         onProgress(20 + uploadProgress, `Uploading PDF... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-  //       }
-  //     }
-  //   });
-
-  //   if (onProgress) onProgress(95, 'Processing PDF on server...');
-  //   await new Promise(resolve => setTimeout(resolve, 500));
-  //   if (onProgress) onProgress(100, 'Conversion completed');
-  //   return toClientResult(resp);
-  // }
-
   if (conversionType === 'image-to-pdf') {
-    const formData = createFormDataWithProgress(input, options, onProgress);
-    if (onProgress) onProgress(20, 'Preparing images for conversion...');
-
-    const resp = await request.post({
-      entity: 'convert/image-to-pdf',
-      jsonData: formData,
-      onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.total) {
-          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
-          onProgress(20 + uploadProgress, `Uploading images... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-        }
-      }
-    });
-
-    if (onProgress) onProgress(95, 'Processing images on server...');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    if (onProgress) onProgress(100, 'Conversion completed');
-    return toClientResult(resp);
+    return processPdfToolWithPolling('convert/images-to-pdf', input, options, onProgress, onPollingStart, 'IMAGEFILE', abortSignal);
   }
 
   if (conversionType === 'pdf-to-pptx') {
-    const formData = createFormDataWithProgress(input, options, onProgress);
-    if (onProgress) onProgress(20, 'Preparing PDF for conversion...');
-
-    const resp = await request.post({
-      entity: 'convert/pdf-to-pptx',
-      jsonData: formData,
-      onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.total) {
-          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
-          onProgress(20 + uploadProgress, `Uploading PDF... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-        }
-      }
-    });
-
-    if (onProgress) onProgress(95, 'Processing PDF on server...');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    if (onProgress) onProgress(100, 'Conversion completed');
-    return toClientResult(resp);
+    return processPdfToolWithPolling('convert/pdf-to-ppt', [input], options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
   }
 
   return { success: false, error: 'Unknown conversion type' };
 };
 
-// Protect PDF
-export const protectPdf = async (file, options = {}, onProgress) => {
-  const formData = createFormDataWithProgress(file, options, onProgress);
-  if (options.PASSWORD) formData.append('PASSWORD', options.PASSWORD);
 
-  if (onProgress) {
-    onProgress(20, 'Preparing file for protection...');
-  }
-
-  const resp = await request.post({
-    entity: 'protect/pdf',
-    jsonData: formData,
-    onUploadProgress: (progressEvent) => {
-      if (onProgress && progressEvent.total) {
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
-        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-      }
-    }
-  });
-
-  if (onProgress) {
-    onProgress(95, 'Processing file on server...');
-  }
-
-  // Simulate a small delay for server processing
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  if (onProgress) {
-    onProgress(100, 'Protection completed');
-  }
-
-  return toClientResult(resp);
+export const protectPdf = async (file, options = {}, onProgress, onPollingStart, abortSignal = null) => {
+  return processPdfToolWithPolling('protect', [file], options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
 };
 
-// Unlock PDF
-export const unlockPdf = async (file, options = {}, onProgress) => {
-  const formData = createFormDataWithProgress(file, options, onProgress);
-  if (options.PASSWORD) formData.append('PASSWORD', options.PASSWORD);
 
-  if (onProgress) {
-    onProgress(20, 'Preparing file for unlock...');
-  }
-
-  const resp = await request.post({
-    entity: 'unlock/pdf',
-    jsonData: formData,
-    onUploadProgress: (progressEvent) => {
-      if (onProgress && progressEvent.total) {
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
-        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-      }
-    }
-  });
-
-  if (onProgress) {
-    onProgress(95, 'Processing file on server...');
-  }
-
-  // Simulate a small delay for server processing
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  if (onProgress) {
-    onProgress(100, 'Unlock completed');
-  }
-
-  return toClientResult(resp);
+export const unlockPdf = async (file, options = {}, onProgress, onPollingStart, abortSignal = null) => {
+  return processPdfToolWithPolling('unlock', [file], options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
 };
 
-// Rotate PDF
-export const rotatePdf = async (file, options = {}, onProgress) => {
-  const formData = createFormDataWithProgress(file, options, onProgress);
-  if (options.angle !== undefined) formData.append('angle', options.angle);
 
-  if (onProgress) {
-    onProgress(20, 'Preparing file for rotation...');
-  }
-  console.log(formData);
-
-  const resp = await request.post({
-    entity: 'rotate/pdf',
-    jsonData: formData,
-    onUploadProgress: (progressEvent) => {
-      if (onProgress && progressEvent.total) {
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
-        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-      }
-    }
-  });
-
-  if (onProgress) {
-    onProgress(95, 'Processing file on server...');
-  }
-
-  // Simulate a small delay for server processing
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  if (onProgress) {
-    onProgress(100, 'Rotation completed');
-  }
-
-  return toClientResult(resp);
+export const rotatePdf = async (file, options = {}, onProgress, onPollingStart, abortSignal = null) => {
+  return processPdfToolWithPolling('rotate', [file], options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
 };
 
-// Add watermark to PDF
-export const addWatermark = async (file, options = {}, onProgress) => {
-  const formData = createFormDataWithProgress(file, options, onProgress);
+
+export const addWatermark = async (file, options = {}, onProgress, onPollingStart, abortSignal = null) => {
   const {
     watermarkType = 'text',
     text,
@@ -358,111 +300,35 @@ export const addWatermark = async (file, options = {}, onProgress) => {
     toPage,
     fontFamily,
     fontSize,
-    textColor,
+    textColor
   } = options;
 
-  if (onProgress) {
-    onProgress(20, 'Preparing file for watermark...');
-  }
-
-  // Only text watermark supported from current form
   if (watermarkType === 'text') {
-    if (text) formData.append('text', text);
-    if (position) formData.append('position', position);
-    if (transparency !== undefined) formData.append('transparency', transparency);
-    if (rotation !== undefined) formData.append('rotation', rotation);
-    if (layer) formData.append('layer', layer);
-    if (fromPage !== undefined) formData.append('fromPage', fromPage);
-    if (toPage !== undefined) formData.append('toPage', toPage);
-    if (fontFamily) formData.append('fontFamily', fontFamily);
-    if (fontSize) formData.append('fontSize', fontSize);
-    if (Array.isArray(textColor)) formData.append('textColor', JSON.stringify(textColor));
+    const watermarkOptions = {
+      text,
+      position,
+      transparency,
+      rotation,
+      layer,
+      fromPage,
+      toPage,
+      fontFamily,
+      fontSize,
+      textColor: Array.isArray(textColor) ? textColor : undefined
+    };
 
-    const resp = await request.post({
-      entity: 'watermark/text',
-      jsonData: formData,
-      onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.total) {
-          const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
-          onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-        }
-      }
-    });
-
-    if (onProgress) {
-      onProgress(95, 'Processing file on server...');
-    }
-
-    // Simulate a small delay for server processing
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    if (onProgress) {
-      onProgress(100, 'Watermark added');
-    }
-
-    return toClientResult(resp);
+    return processPdfToolWithPolling('watermark/text', [file], watermarkOptions, onProgress, onPollingStart, 'PDFFILE', abortSignal);
   }
+
   return { success: false, error: 'Unsupported watermark type' };
 };
 
-// Add page numbers to PDF
-export const addPageNumbers = async (file, options = {}, onProgress) => {
-  const formData = createFormDataWithProgress(file, options, onProgress);
-  const {
-    pageMode,
-    firstPageCover,
-    position,
-    margin,
-    firstNumber,
-    fromPage,
-    toPage,
-    textStyle,
-    fontFamily,
-    fontSize,
-    textColor,
-  } = options;
-  if (pageMode) formData.append('pageMode', pageMode);
-  if (firstPageCover !== undefined) formData.append('firstPageCover', firstPageCover);
-  if (position) formData.append('position', position);
-  if (margin) formData.append('margin', margin);
-  if (firstNumber !== undefined) formData.append('firstNumber', firstNumber);
-  if (fromPage !== undefined) formData.append('fromPage', fromPage);
-  if (toPage !== undefined) formData.append('toPage', toPage);
-  if (textStyle !== undefined) formData.append('textStyle', textStyle);
-  if (fontFamily) formData.append('fontFamily', fontFamily);
-  if (fontSize) formData.append('fontSize', fontSize);
-  if (Array.isArray(textColor)) formData.append('textColor', JSON.stringify(textColor));
 
-  if (onProgress) {
-    onProgress(20, 'Preparing file for page numbers...');
-  }
-
-  const resp = await request.post({
-    entity: 'page-numbers/pdf',
-    jsonData: formData,
-    onUploadProgress: (progressEvent) => {
-      if (onProgress && progressEvent.total) {
-        const uploadProgress = Math.round((progressEvent.loaded / progressEvent.total) * 75);
-        onProgress(20 + uploadProgress, `Uploading file... ${Math.round((progressEvent.loaded / progressEvent.total) * 100)}%`);
-      }
-    }
-  });
-
-  if (onProgress) {
-    onProgress(95, 'Processing file on server...');
-  }
-
-  // Simulate a small delay for server processing
-  await new Promise(resolve => setTimeout(resolve, 500));
-
-  if (onProgress) {
-    onProgress(100, 'Page numbers added');
-  }
-
-  return toClientResult(resp);
+export const addPageNumbers = async (file, options = {}, onProgress, onPollingStart, abortSignal = null) => {
+  return processPdfToolWithPolling('page-numbers', [file], options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
 };
 
-// Download processed file by filename or full URL
+
 export const downloadFile = async (fileOrUrl, fileName) => {
   const url = fileOrUrl?.startsWith('http') ? fileOrUrl : `${DOWNLOAD_BASE_URL}${fileOrUrl}`;
   const link = document.createElement('a');
@@ -472,4 +338,14 @@ export const downloadFile = async (fileOrUrl, fileName) => {
   link.click();
   link.remove();
   return { success: true };
+};
+
+
+export const checkJobStatus = async (jobId) => {
+  try {
+    const response = await request.get({ entity: `download/status/${jobId}` });
+    return response;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 };

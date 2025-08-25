@@ -2,11 +2,14 @@ import { useState, useCallback, useRef } from 'react';
 
 export const useProgress = () => {
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState('idle'); // 'idle', 'uploading', 'processing', 'completed', 'error'
+  const [status, setStatus] = useState('idle');
   const [currentStep, setCurrentStep] = useState('');
   const [error, setError] = useState(null);
   const [startTime, setStartTime] = useState(null);
   const [estimatedTime, setEstimatedTime] = useState(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const [pollingAttempts, setPollingAttempts] = useState(0);
+  const [maxPollingAttempts, setMaxPollingAttempts] = useState(150);
   const abortControllerRef = useRef(null);
 
   const startProgress = useCallback((initialStep = 'Preparing...') => {
@@ -16,6 +19,8 @@ export const useProgress = () => {
     setError(null);
     setStartTime(Date.now());
     setEstimatedTime(null);
+    setIsPolling(false);
+    setPollingAttempts(0);
     abortControllerRef.current = new AbortController();
   }, []);
 
@@ -24,18 +29,53 @@ export const useProgress = () => {
     if (step) {
       setCurrentStep(step);
     }
-    
-    // Update status based on progress
+
+
     if (percent >= 100) {
       setStatus('completed');
     } else if (percent > 0 && status === 'uploading') {
       setStatus('processing');
     }
-  }, [status]);
+
+
+    if (error && percent > 0 && status !== 'error' && status !== 'polling_failed') {
+      setError(null);
+    }
+  }, [status, error]);
 
   const setProgressError = useCallback((errorMessage) => {
     setError(errorMessage);
     setStatus('error');
+
+    setProgress(0);
+
+    setIsPolling(false);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  }, []);
+
+  const startPolling = useCallback((maxAttempts = 150) => {
+    setIsPolling(true);
+    setMaxPollingAttempts(maxAttempts);
+    setPollingAttempts(0);
+  }, []);
+
+  const updatePollingAttempts = useCallback((attempts) => {
+    setPollingAttempts(attempts);
+  }, []);
+
+  const setPollingFailed = useCallback((errorMessage = 'Failed to check job status') => {
+    setError(errorMessage);
+    setStatus('polling_failed');
+    setIsPolling(false);
+
+    setProgress(0);
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
   }, []);
 
   const resetProgress = useCallback(() => {
@@ -45,6 +85,8 @@ export const useProgress = () => {
     setError(null);
     setStartTime(null);
     setEstimatedTime(null);
+    setIsPolling(false);
+    setPollingAttempts(0);
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
@@ -78,14 +120,20 @@ export const useProgress = () => {
     error,
     startTime,
     estimatedTime,
+    isPolling,
+    pollingAttempts,
+    maxPollingAttempts,
     startProgress,
     updateProgress,
     setProgressError: setProgressError,
+    startPolling,
+    updatePollingAttempts,
+    setPollingFailed,
     resetProgress,
     abort,
     getElapsedTime,
     formatTime,
     isAborted: () => abortControllerRef.current?.signal.aborted || false,
-    abortSignal: abortControllerRef.current?.signal,
+    abortSignal: abortControllerRef.current?.signal
   };
 };

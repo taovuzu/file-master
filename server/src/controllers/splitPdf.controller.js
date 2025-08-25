@@ -1,18 +1,15 @@
 import path from "path";
 import fs from "fs";
-
 import { v4 as uuidv4 } from "uuid";
-import { PDFDocument } from "pdf-lib";
-import archiver from "archiver";
-
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.queue.js";
 
 const splitPdf = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError(404, "File could not be found on server");
+    throw new ApiError.notFound("File could not be found on server");
   }
 
   let { ranges } = req.body;
@@ -22,76 +19,83 @@ const splitPdf = asyncHandler(async (req, res) => {
       ranges = JSON.parse(ranges);
       ranges = ranges.ranges;
     } catch (err) {
-      throw new ApiError(400, 'Invalid ranges format');
+      throw new ApiError.badRequest('Invalid ranges format');
     }
   }
 
+  const jobId = uuidv4();
   const inputPath = path.resolve(file.path);
   const name = path.basename(file.originalname, path.extname(file.originalname));
   const outputName = `${uuidv4()}___${name}_splited.zip`;
   const outputDir = path.join(process.cwd(), "public", "processed");
   const outputPath = path.join(outputDir, outputName);
-  const baseOutDir = path.join(process.cwd(), "public", "processed", `split___${uuidv4()}`);
-  fs.mkdirSync(baseOutDir, { recursive: true });
 
-  const uint8Array = fs.readFileSync(inputPath);
-  const pdfDoc = await PDFDocument.load(uint8Array);
-  const numberOfPages = pdfDoc.getPages().length;
+  try {
 
-  let outputPaths = [];
-  console.log(ranges, ranges.length);
+    let retryCount = 0;
+    const maxRetries = 3;
+    while (retryCount < maxRetries) {
+      try {
+        const isHealthy = await healthCheck();
+        if (isHealthy) break;
+        retryCount++;
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+      } catch (error) {
+        retryCount++;
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+      }
+    }
+    if (retryCount > maxRetries) throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
 
-  for (let i = 0; i < ranges.length; i++) {
-    console.log(typeof ranges[i]);
-    console.log(ranges[i]);
-    let [start, end] = ranges[i].map(Number);
-    if (start < 1 || end < start) {
-      continue;
+
+    await updateJobStatus(jobId, 'queued', 0, {
+      createdAt: new Date().toISOString(),
+      operation: 'split',
+      originalFileName: file.originalname,
+      ranges
+    });
+
+
+    await pdfProcessingQueue.add('split-pdf', {
+      jobId,
+      operation: 'split',
+      inputPath,
+      outputPath,
+      outputDir,
+      name,
+      ranges,
+      originalFileName: file.originalname
+    });
+
+  } catch (error) {
+    console.error(`Failed to queue split job ${jobId}:`, error);
+
+
+    try {
+      await updateJobStatus(jobId, 'failed', 0, {
+        message: error.message || 'Failed to queue split job',
+        error: error.stack,
+        failedAt: new Date().toISOString()
+      });
+    } catch (redisError) {
+      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
 
-    const actualEnd = Math.min(end, numberOfPages);
-    const idxs = Array.from({ length: actualEnd - start + 1 }, (_, i) => start - 1 + i);
-    const subDocument = await PDFDocument.create();
-    const pages = await subDocument.copyPages(pdfDoc, idxs);
-    pages.forEach((p) => subDocument.addPage(p));
-
-    const subDocumentOutName = `${name}-splited-${start}-${actualEnd}.pdf`;
-    const subDocumentOutPath = path.join(baseOutDir, subDocumentOutName);
-    const pdfBytes = await subDocument.save();
-    fs.writeFileSync(subDocumentOutPath, pdfBytes);
-
-    outputPaths.push(subDocumentOutPath);
+    throw error;
   }
 
-  fs.unlinkSync(file.path);
-
-  const output = fs.createWriteStream(outputPath);
-  const archive = archiver("zip", {
-    zlib: { level: 2 },
-  });
-
-
-  archive.on("error", (err) => { throw new ApiError(500, err) });
-
-  archive.pipe(output);
-  archive.directory(baseOutDir, false);
-  await archive.finalize();
-
-  fs.rm(baseOutDir, { recursive: true, force: true }, (err) => {
-    if (err) {
-      console.error(`Error deleting directory: ${err}`);
-    } else {
-      console.log(`Directory and its contents deleted: ${baseOutDir}`);
-    }
-  });
-
-  return res.status(200)
-    .json(
-      new ApiResponse(200, "PDFs split successfully", {
-        file: `${outputName}`
-      })
-    );
+  return ApiResponse
+    .success({
+      jobId,
+      message: "Your PDF split job has been queued. Use the job ID to track progress.",
+      statusUrl: `/api/v1/download/status/${jobId}`,
+      downloadUrl: `/api/v1/download/${jobId}`,
+      operation: 'split',
+      originalFileName: file.originalname,
+      ranges
+    }, "PDF split job queued successfully", 200)
+    .withRequest(req)
+    .send(res);
 });
-
 
 export { splitPdf };

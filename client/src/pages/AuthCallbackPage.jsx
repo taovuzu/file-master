@@ -12,6 +12,6 @@ const AuthCallback = () => {
   }, [dispatch]);
 
   return <p>Finishing login...</p>;
-}
+};
 
 export default AuthCallback;

@@ -1,4 +1,4 @@
-// src/components/WatermarkPdfForm.jsx
+
 import React, { useState } from "react";
 import { Form, Button, Select, Radio, InputNumber, Alert, Divider, Row, Col, ColorPicker, Input, Slider, message } from "antd";
 import { FileTextOutlined, FileImageOutlined, InfoCircleOutlined, FontSizeOutlined } from "@ant-design/icons";
@@ -9,7 +9,7 @@ const { TextArea } = Input;
 const WatermarkPdfForm = ({ onFinish, file }) => {
   const [form] = Form.useForm();
   const [watermarkType, setWatermarkType] = useState("text");
-  const [textColor, setTextColor] = useState("#000000"); // Store HEX string to avoid serialization issues
+  const [textColor, setTextColor] = useState("#000000");
 
   const handleFinish = async () => {
     try {
@@ -25,7 +25,7 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
         return;
       }
 
-      const finalColor = textColor; // Always HEX string now
+      const finalColor = textColor;
 
       const formData = {
         watermarkType,
@@ -34,14 +34,14 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
         position: values.position || "bottom-right",
         transparency: values.transparency ?? 0.5,
         rotation: values.rotation ?? 0,
-        layer: values.layer || "overlay",
+        layer: values.layer || "overlay"
       };
 
       if (watermarkType === "text") {
         formData.text = values.text || "WATERMARK";
         formData.fontFamily = values.fontFamily || "Arial";
         formData.fontSize = values.fontSize || "normal";
-        formData.textColor = finalColor; // HEX string
+        formData.textColor = finalColor;
       } else if (watermarkType === "image") {
         if (!values.imageProvided) {
           message.error("Image watermark requires an image source.");
@@ -56,17 +56,17 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
   };
 
   const getPositionOptions = () => [
-    { value: "top-left", label: "Top Left" },
-    { value: "top-right", label: "Top Right" },
-    { value: "bottom-left", label: "Bottom Left" },
-    { value: "bottom-right", label: "Bottom Right" },
-    { value: "center", label: "Center" },
-    { value: "top-center", label: "Top Center" },
-    { value: "bottom-center", label: "Bottom Center" },
-    { value: "left-center", label: "Left Center" },
-    { value: "right-center", label: "Right Center" },
-    { value: "mosaic", label: "Mosaic (Repeated)" },
-  ];
+  { value: "top-left", label: "Top Left" },
+  { value: "top-right", label: "Top Right" },
+  { value: "bottom-left", label: "Bottom Left" },
+  { value: "bottom-right", label: "Bottom Right" },
+  { value: "center", label: "Center" },
+  { value: "top-center", label: "Top Center" },
+  { value: "bottom-center", label: "Bottom Center" },
+  { value: "left-center", label: "Left Center" },
+  { value: "right-center", label: "Right Center" },
+  { value: "mosaic", label: "Mosaic (Repeated)" }];
+
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -86,10 +86,10 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
           text: "WATERMARK",
           fontFamily: "Arial",
           fontSize: "normal",
-          scale: 0.25,
-        }}
-      >
-        {/* Title */}
+          scale: 0.25
+        }}>
+        
+        {}
         <Form.Item>
           <div style={{ fontSize: "18px", fontWeight: 600 }}>Add Watermark</div>
         </Form.Item>
@@ -106,8 +106,8 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
           </Radio.Group>
         </Form.Item>
 
-        {watermarkType === "text" && (
-          <>
+        {watermarkType === "text" &&
+        <>
             <Divider orientation="left">Text Watermark Settings</Divider>
             <Form.Item label="Watermark Text" name="text" rules={[{ required: true, message: "Enter watermark text!" }]}>
               <TextArea rows={3} placeholder="Enter your watermark text here..." maxLength={100} showCount />
@@ -134,30 +134,30 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
               <Col span={8}>
                 <Form.Item label="Text Color" name="textColor">
                   <ColorPicker
-                    value={textColor}
-                    onChange={(color) => setTextColor(color.toHexString())} // Convert to HEX
-                    showText
-                    presets={[
-                      {
-                        label: "Recommended",
-                        colors: [
-                          "#000000",
-                          "#FFFFFF",
-                          "#FF0000",
-                          "#0000FF",
-                          "#008000",
-                          "#800080",
-                          "#FFA500",
-                          "#808080",
-                        ],
-                      },
-                    ]}
-                  />
+                  value={textColor}
+                  onChange={(color) => setTextColor(color.toHexString())}
+                  showText
+                  presets={[
+                  {
+                    label: "Recommended",
+                    colors: [
+                    "#000000",
+                    "#FFFFFF",
+                    "#FF0000",
+                    "#0000FF",
+                    "#008000",
+                    "#800080",
+                    "#FFA500",
+                    "#808080"]
+
+                  }]
+                  } />
+                
                 </Form.Item>
               </Col>
             </Row>
           </>
-        )}
+        }
 
         <Divider orientation="left">Watermark Properties</Divider>
         <Row gutter={16}>
@@ -177,11 +177,11 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
           <Col span={12}>
             <Form.Item label="Position" name="position">
               <Select>
-                {getPositionOptions().map((option) => (
-                  <Option key={option.value} value={option.value}>
+                {getPositionOptions().map((option) =>
+                <Option key={option.value} value={option.value}>
                     {option.label}
                   </Option>
-                ))}
+                )}
               </Select>
             </Form.Item>
           </Col>
@@ -215,9 +215,9 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
               backgroundColor: "#f6f8fa",
               borderRadius: "8px",
               border: "2px solid #1890ff",
-              textAlign: "center",
-            }}
-          >
+              textAlign: "center"
+            }}>
+            
             <div style={{ fontSize: "16px", fontWeight: "bold", color: "#1890ff", marginBottom: "16px" }}>
               <FontSizeOutlined style={{ marginRight: "8px" }} />
               Watermark Preview
@@ -239,8 +239,8 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
-        style={{ marginBottom: 24 }}
-      />
+        style={{ marginBottom: 24 }} />
+      
 
       <div
         style={{
@@ -249,9 +249,9 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
           background: "#fff",
           position: "sticky",
           bottom: 0,
-          zIndex: 10,
-        }}
-      >
+          zIndex: 10
+        }}>
+        
         <Button
           type="primary"
           htmlType="submit"
@@ -259,13 +259,13 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
           icon={<FileTextOutlined />}
           size="large"
           disabled={!file}
-          onClick={handleFinish}
-        >
+          onClick={handleFinish}>
+          
           Add {watermarkType === "text" ? "Text" : "Image"} Watermark to PDF
         </Button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default WatermarkPdfForm;

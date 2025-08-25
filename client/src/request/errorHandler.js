@@ -8,14 +8,14 @@ const notifyError = (title, description, duration = 15, maxCount = 1) => {
     description,
     duration,
     placement: 'bottomRight',
-    key: Date.now(),
+    key: Date.now()
   });
 };
 
 const makeErrorResult = (message) => ({
   success: false,
   result: null,
-  message,
+  message
 });
 
 const clearAuth = () => {
@@ -43,7 +43,7 @@ const errorHandler = (error) => {
 
     const result = window.localStorage.getItem("auth");
     const isLogoutData = window.localStorage.getItem("isLogout");
-    const { isLogout } = (isLogoutData && JSON.parse(isLogoutData)) || {};
+    const { isLogout } = isLogoutData && JSON.parse(isLogoutData) || {};
 
     if (result || isLogout) {
       window.location.href = "/logout";
@@ -53,7 +53,7 @@ const errorHandler = (error) => {
 
   if (response?.status) {
     const errorText =
-      response.data?.message || codeMessage[response.status] || 'Unexpected error';
+    response.data?.message || codeMessage[response.status] || 'Unexpected error';
     notifyError(`Request error ${response.status}`, errorText, 20, 2);
 
     if (response?.data?.message === 'JsonWebTokenError') {

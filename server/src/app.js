@@ -8,6 +8,9 @@ import passport from "passport";
 import { ApiError } from "./utils/ApiError.js";
 
 const app = express();
+
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
   credentials: true
@@ -26,10 +29,10 @@ const limiter = rateLimit({
   handler: (_, __, ___, options) => {
     throw new ApiError(
       options.statusCode || 500,
-      `There are too many requests. You are only allowed ${options.max
-      } requests per ${options.windowMs / 60000} minutes`
+      `There are too many requests. You are only allowed ${options.max} requests per ${
+      options.windowMs / 60000} minutes`
     );
-  },
+  }
 });
 app.use(limiter);
 app.use(express.json({ limit: "32kb" }));
@@ -43,10 +46,10 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     maxAge: 3600000,
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'lax'
-   } 
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  }
 }));
 
 import "./middlewares/passport.js";
@@ -58,36 +61,32 @@ app.use((req, res, next) => {
   next();
 });
 
-import userRouter from "./routes/user.route.js"
-import converterRouter from "./routes/converter.route.js";
-import mergePdfRouter from "./routes/mergePdf.route.js";
-import splitPdfRouter from "./routes/splitPdf.route.js";
-import compressPdfRouter from "./routes/compressPdf.route.js";
-import rotatePdfRouter from "./routes/rotatePdf.route.js";
-import pageNumbersRouter from "./routes/pageNumbers.route.js";
-import watermarkRouter from "./routes/watermark.route.js";
-// import esignPdfRouter from "./routes/esignPdf.route.js";
-import unlockPdfRouter from "./routes/unlockPdf.route.js";
-import protectPdfRouter from "./routes/protectPdf.route.js";
-import downloadFileRouter from "./routes/download.route.js";
+import userRouter from "./routes/user.route.js";
+import pdfToolsRouter from "./routes/pdfTools.route.js";
+import downloadRouter from "./routes/download.route.js";
+import healthRouter from "./routes/health.routes.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 import { enforceUsageLimits } from "./middlewares/usageLimit.middleware.js";
+import { uploadLimitMiddleware } from "./middlewares/uploadLimit.middleware.js";
 
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/convert", enforceUsageLimits, converterRouter); // image-to-pdf -> {PDFDocument from "pdf-lib"}, doc-to-pdf -> {libreoffice}
-// // pdf-to-ppt -> {pptxgenjs, pdf-poppler, pdf-lib}
-app.use("/api/v1/merge", enforceUsageLimits, mergePdfRouter); //  PDFMerger from "pdf-merger-js";
-app.use("/api/v1/split", enforceUsageLimits, splitPdfRouter); // { PDFDocument } from "pdf-lib";
-app.use("/api/v1/compress", enforceUsageLimits, compressPdfRouter); // ghostscript
-app.use("/api/v1/rotate", enforceUsageLimits, rotatePdfRouter); // { PDFDocument, degrees } from "pdf-lib";
-app.use("/api/v1/page-numbers", enforceUsageLimits, pageNumbersRouter); // { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-app.use("/api/v1/watermark", enforceUsageLimits, watermarkRouter); //  { PDFDocument, rgb, StandardFonts, degrees } from "pdf-lib";
-// app.use("/api/v1/esign", esignPdfRouter); // { PDFDocument } from 'pdf-lib';
-app.use("/api/v1/unlock", enforceUsageLimits, unlockPdfRouter); // ghostscript
-app.use("/api/v1/protect", enforceUsageLimits, protectPdfRouter); // gostscript
-app.use("/api/v1/download", downloadFileRouter);
-
+app.use("/api/v1/pdf-tools", enforceUsageLimits, uploadLimitMiddleware, pdfToolsRouter);
+app.use("/api/v1/download", downloadRouter);
+app.use("/api/v1/health", healthRouter);
 
 app.use(errorHandler);
 
 export { app };
+
+// image-to-pdf -> { PDFDocument from "pdf-lib" }
+// doc-to-pdf -> { libreoffice }
+// pdf-to-ppt -> { pptxgenjs, pdf-poppler, pdf-lib }
+// merge -> { PDFMerger from "pdf-merger-js" }
+// split -> { PDFDocument from "pdf-lib" }
+// compress -> { ghostscript }
+// rotate -> { PDFDocument, degrees from "pdf-lib" }
+// page-numbers -> { PDFDocument, StandardFonts, rgb from "pdf-lib" }
+// watermark -> { PDFDocument, rgb, StandardFonts, degrees from "pdf-lib" }
+// esign -> { PDFDocument from "pdf-lib" }
+// unlock -> { ghostscript }
+// protect -> { ghostscript }

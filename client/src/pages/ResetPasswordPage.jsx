@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import AuthLayout from "@/layout/AuthLayout";
 import AuthForm from "@/forms/AuthForm";
-import { resetPasswordWithToken } from "@/redux/auth/actions"; // new action for token-based reset
+import { resetPasswordWithToken } from "@/redux/auth/actions";
 
 const ResetPasswordPage = () => {
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,7 @@ const ResetPasswordPage = () => {
       const resetPasswordData = {
         email,
         unHashedToken,
-        newPassword: values.password,
+        newPassword: values.password
       };
 
       const result = await dispatch(resetPasswordWithToken(resetPasswordData));
@@ -53,10 +53,10 @@ const ResetPasswordPage = () => {
       <AuthForm
         type="resetPassword"
         onFinish={handleResetPassword}
-        loading={loading}
-      />
-    </AuthLayout>
-  );
+        loading={loading} />
+      
+    </AuthLayout>);
+
 };
 
 export default ResetPasswordPage;

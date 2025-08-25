@@ -6,7 +6,7 @@ const isJsonString = (str) => {
     return false;
   }
   return true;
-}
+};
 
 export const localStorageHealthCheck = async () => {
   for (let i = 0; i < localStorage.length; ++i) {
@@ -48,7 +48,7 @@ export const storePersist = {
   },
   clear: () => {
     window.localStorage.clear();
-  },
+  }
 };
 
 export default storePersist;

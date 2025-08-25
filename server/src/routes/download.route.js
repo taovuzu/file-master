@@ -1,10 +1,9 @@
 import { Router } from "express";
-
-import { downloadFile } from "../controllers/downloadFile.controller.js";
-import { enforceUsageLimits } from "../middlewares/usageLimit.middleware.js";
+import { checkJobStatus, downloadFile } from "../controllers/download.controller.js";
 
 const router = Router();
 
-router.get("/:file", enforceUsageLimits, downloadFile);
+router.get("/status/:jobId", checkJobStatus);
+router.get("/:jobId", downloadFile);
 
 export default router;

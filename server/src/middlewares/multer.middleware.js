@@ -4,7 +4,7 @@ import sanitize from "sanitize-filename";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./public/temp");
+    cb(null, "./temp/uploads");
   },
   filename: (req, file, cb) => {
     const sanitizedFileName = sanitize(file.originalname);

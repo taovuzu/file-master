@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Typography, Button, Card, Carousel, Statistic, Divider } from 'antd';
-import { 
-  FileText, 
-  Users, 
-  Clock, 
-  Shield, 
-  Zap, 
+import {
+  FileText,
+  Users,
+  Clock,
+  Shield,
+  Zap,
   Star,
   ArrowRight,
   CheckCircle,
   Globe,
-  Lock
-} from 'lucide-react';
+  Lock } from
+'lucide-react';
 
 import MainLayout from '@/layout/MainLayout';
 import ToolCard, { toolCardUtils } from '@/components/ToolCard';
@@ -22,28 +22,28 @@ import { logUserAction } from '@/utils/logger';
 
 const { Title, Paragraph } = Typography;
 
-/**
- * Modern HomePage component for the I Love PDF clone
- * Features hero section, tool showcase, statistics, and quick actions
- */
+
+
+
+
 const HomePage = () => {
   const [allTools, setAllTools] = useState([]);
 
-  // Track page view
+
   usePageTracking('home');
 
   useEffect(() => {
-    // Initialize tools
+
     setAllTools(toolCardUtils.getAllTools());
 
-    // Animate statistics
+
   }, []);
 
 
   return (
     <MainLayout>
 
-      {/* All Tools Grid */}
+      {}
       <section className="py-4 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -56,19 +56,19 @@ const HomePage = () => {
           </div>
 
           <Row gutter={[24, 24]}>
-            {allTools.map((tool) => (
-              <Col xs={24} sm={12} lg={8} xl={6} key={tool.key}>
+            {allTools.map((tool) =>
+            <Col xs={24} sm={12} lg={8} xl={6} key={tool.key}>
                 <ToolCard
-                  tool={tool.key}
-                  compact={true}
-                />
+                tool={tool.key}
+                compact={true} />
+              
               </Col>
-            ))}
+            )}
           </Row>
         </div>
       </section>
 
-      {/* Features Section */}
+      {}
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -120,7 +120,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {}
       <section className="py-20 px-6 bg-gradient-to-r from-primary-600 to-primary-800">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-4">
@@ -130,8 +130,8 @@ const HomePage = () => {
             Join millions of users who trust FileMaster for their PDF needs
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              type="default" 
+            <Button
+              type="default"
               size="large"
               icon={<FileText className="w-5 h-5" />}
               style={{
@@ -142,12 +142,12 @@ const HomePage = () => {
                 padding: '0 24px',
                 fontSize: '16px',
                 fontWeight: '600'
-              }}
-            >
+              }}>
+              
               Start Processing Now
             </Button>
-            <Button 
-              type="default" 
+            <Button
+              type="default"
               size="large"
               icon={<ArrowRight className="w-5 h-5" />}
               style={{
@@ -158,15 +158,15 @@ const HomePage = () => {
                 padding: '0 24px',
                 fontSize: '16px',
                 fontWeight: '600'
-              }}
-            >
+              }}>
+              
               Learn More
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {}
       <footer className="py-12 px-6 bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -218,8 +218,8 @@ const HomePage = () => {
           
         </div>
       </footer>
-    </MainLayout>
-  );
+    </MainLayout>);
+
 };
 
 export default HomePage;

@@ -26,4 +26,19 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  // Node-specific overrides (config/build files)
+  {
+    files: ['vite.config.js', '**/*.config.js', '**/scripts/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {},
+  },
+  // Component file exporting helpers: relax react-refresh constraint for this file
+  {
+    files: ['src/components/ToolCard.jsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

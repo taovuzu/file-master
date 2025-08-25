@@ -6,10 +6,10 @@ import Footer from '@/components/Footer';
 
 const { Content } = Layout;
 
-const MainLayout = ({ 
-  children, 
-  showSidebar = false, 
-  showHeader = true, 
+const MainLayout = ({
+  children,
+  showSidebar = false,
+  showHeader = true,
   showFooter = true
 }) => {
   return (
@@ -24,8 +24,8 @@ const MainLayout = ({
           {showFooter && <Footer />}
         </Layout>
       </Layout>
-    </Layout>
-  );
+    </Layout>);
+
 };
 
 export default MainLayout;

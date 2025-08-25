@@ -11,8 +11,8 @@ const NotFoundPage = () => {
 
   return (
     <MainLayout showSidebar={false}>
-      <div style={{ 
-        textAlign: 'center', 
+      <div style={{
+        textAlign: 'center',
         padding: '100px 20px',
         maxWidth: '600px',
         margin: '0 auto'
@@ -29,19 +29,19 @@ const NotFoundPage = () => {
           </div>
 
           <Space size="middle">
-            <Button 
-              type="primary" 
+            <Button
+              type="primary"
               icon={<HomeOutlined />}
               size="large"
-              onClick={() => navigate('/')}
-            >
+              onClick={() => navigate('/')}>
+              
               Go Home
             </Button>
-            <Button 
+            <Button
               icon={<ArrowLeftOutlined />}
               size="large"
-              onClick={() => navigate(-1)}
-            >
+              onClick={() => navigate(-1)}>
+              
               Go Back
             </Button>
           </Space>
@@ -56,8 +56,8 @@ const NotFoundPage = () => {
           </div>
         </Space>
       </div>
-    </MainLayout>
-  );
+    </MainLayout>);
+
 };
 
 export default NotFoundPage;

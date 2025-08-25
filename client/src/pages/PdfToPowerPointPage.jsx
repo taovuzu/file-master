@@ -15,12 +15,10 @@ const PdfToPowerPointPage = () => {
         maxFiles: 1,
         maxSize: 50,
         acceptedTypes: ['application/pdf'],
-        allowedTypes: ['application/pdf'],
-      }}
-    />
-  );
+        allowedTypes: ['application/pdf']
+      }} />);
+
+
 };
 
 export default PdfToPowerPointPage;
-
-

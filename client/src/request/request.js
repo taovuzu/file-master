@@ -5,7 +5,7 @@ import successHandler from './successHandler';
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  withCredentials: true
 });
 
 axiosInstance.interceptors.response.use(
@@ -14,10 +14,16 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Avoid retry/refresh loop if the 401 came from the refresh endpoint itself
+      const isRefreshRequest = typeof originalRequest.url === 'string' && originalRequest.url.includes('users/refresh');
+      if (isRefreshRequest) {
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       try {
-        await axiosInstance.get(`${API_BASE_URL}/users/refresh-access-token`);
+        await axiosInstance.get('users/refresh-access-token');
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         return Promise.reject(refreshError);
@@ -39,76 +45,86 @@ const sendRequest = async (method, url, data = null, config = {}, successOptions
 };
 
 const buildQuery = (options = {}) =>
-  Object.entries(options).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+Object.entries(options).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
 
 const request = {
   create: (p) =>
-    sendRequest('post', `${p.entity}/create`, p.jsonData, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
+  sendRequest('post', `${p.entity}/create`, p.jsonData, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
 
   createAndUpload: (p) =>
-    sendRequest('post', `${p.entity}/create`, p.jsonData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }, { notifyOnSuccess: true, notifyOnFailed: true }),
+  sendRequest('post', `${p.entity}/create`, p.jsonData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }, { notifyOnSuccess: true, notifyOnFailed: true }),
 
   read: (p) =>
-    sendRequest('get', `${p.entity}/read/${p.id}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: true }),
+  sendRequest('get', `${p.entity}/read/${p.id}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: true }),
 
   update: (p) =>
-    sendRequest('patch', `${p.entity}/update/${p.id}`, p.jsonData, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
+  sendRequest('patch', `${p.entity}/update/${p.id}`, p.jsonData, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
 
   updateAndUpload: (p) =>
-    sendRequest('patch', `${p.entity}/update/${p.id}`, p.jsonData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }, { notifyOnSuccess: true, notifyOnFailed: true }),
+  sendRequest('patch', `${p.entity}/update/${p.id}`, p.jsonData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }, { notifyOnSuccess: true, notifyOnFailed: true }),
 
   delete: (p) =>
-    sendRequest('delete', `${p.entity}/delete/${p.id}`, null, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
+  sendRequest('delete', `${p.entity}/delete/${p.id}`, null, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
 
   filter: (p) => {
     const query = buildQuery({
       ...(p.options.filter && { filter: p.options.filter }),
-      ...(p.options.equal && { equal: p.options.equal }),
+      ...(p.options.equal && { equal: p.options.equal })
     });
     return sendRequest('get', `${p.entity}/filter?${query}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: false });
   },
 
   search: (p) =>
-    sendRequest('get', `${p.entity}/search?${buildQuery(p.options)}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: false }),
+  sendRequest('get', `${p.entity}/search?${buildQuery(p.options)}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: false }),
 
   list: (p) =>
-    sendRequest('get', `${p.entity}/list?${buildQuery(p.options)}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: false }),
+  sendRequest('get', `${p.entity}/list?${buildQuery(p.options)}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: false }),
 
   listAll: (p) =>
-    sendRequest('get', `${p.entity}/listAll?${buildQuery(p.options)}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: false }),
+  sendRequest('get', `${p.entity}/listAll?${buildQuery(p.options)}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: false }),
 
   post: (p) => {
     const config = {};
+
+
+    const isFileUpload = p.jsonData instanceof FormData;
+
+    if (isFileUpload) {
+
+      config.headers = {};
+    }
+
     if (p.onUploadProgress) {
       config.onUploadProgress = p.onUploadProgress;
     }
+
     return sendRequest('post', p.entity, p.jsonData, config);
   },
 
   get: (p) => sendRequest('get', p.entity),
 
   patch: (p) =>
-    sendRequest('patch', p.entity, p.jsonData, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
+  sendRequest('patch', p.entity, p.jsonData, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
 
   upload: (p) =>
-    sendRequest('patch', `${p.entity}/upload/${p.id}`, p.jsonData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }, { notifyOnSuccess: true, notifyOnFailed: true }),
+  sendRequest('patch', `${p.entity}/upload/${p.id}`, p.jsonData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }, { notifyOnSuccess: true, notifyOnFailed: true }),
 
   source: () => axios.CancelToken.source(),
 
   summary: (p) =>
-    sendRequest('get', `${p.entity}/summary?${buildQuery(p.options)}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: false }),
+  sendRequest('get', `${p.entity}/summary?${buildQuery(p.options)}`, null, {}, { notifyOnSuccess: false, notifyOnFailed: false }),
 
   mail: (p) =>
-    sendRequest('post', `${p.entity}/mail/`, p.jsonData, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
+  sendRequest('post', `${p.entity}/mail/`, p.jsonData, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
 
   convert: (p) =>
-    sendRequest('get', `${p.entity}/convert/${p.id}`, null, {}, { notifyOnSuccess: true, notifyOnFailed: true }),
+  sendRequest('get', `${p.entity}/convert/${p.id}`, null, {}, { notifyOnSuccess: true, notifyOnFailed: true })
 };
 
 export default request;

@@ -6,7 +6,7 @@ import { User } from '../models/user.model.js';
 const PLAN_LIMITS = {
   FREE: { dailyOps: 100, maxSizeMB: 50 },
   PRO: { dailyOps: 500, maxSizeMB: 1024 },
-  BUSINESS: { dailyOps: 1000, maxSizeMB: 2048 },
+  BUSINESS: { dailyOps: 1000, maxSizeMB: 2048 }
 };
 
 const getLimitsFor = (user) => {
@@ -56,5 +56,3 @@ export const enforceUsageLimits = asyncHandler(async (req, res, next) => {
   await user.save();
   next();
 });
-
-

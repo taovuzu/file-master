@@ -1,4 +1,4 @@
-// src/components/SplitPdfForm.jsx
+
 import React, { useState } from "react";
 import { Form, Button, InputNumber, message, Alert, Divider, Space } from "antd";
 import { PartitionOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined } from "@ant-design/icons";
@@ -20,7 +20,7 @@ const SplitPdfForm = ({ onFinish, file }) => {
   const updateRange = (index, field, value) => {
     const numeric = typeof value === 'number' ? value : parseInt(value, 10);
     if (!Number.isFinite(numeric) || numeric < 1) return;
-    setRanges(prev => {
+    setRanges((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: numeric };
       return next;
@@ -62,8 +62,8 @@ const SplitPdfForm = ({ onFinish, file }) => {
         name="split-pdf"
         layout="vertical"
         onFinish={handleFinish}
-        style={{ flex: 1, overflowY: "auto", padding: "16px" }}
-      >
+        style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+        
         <Form.Item>
           <div style={{ fontSize: "18px", fontWeight: 600 }}>Split PDF</div>
         </Form.Item>
@@ -71,55 +71,55 @@ const SplitPdfForm = ({ onFinish, file }) => {
         <Divider orientation="left">Page Ranges</Divider>
 
         <Form.Item label="Define Page Ranges" help="Specify which pages to extract. Each range creates a separate PDF.">
-          {ranges.map((range, index) => (
-            <Space key={index} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+          {ranges.map((range, index) =>
+          <Space key={index} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
               <span style={{ minWidth: '60px' }}>Range {index + 1}:</span>
               <InputNumber
-                min={1}
-                placeholder="Start"
-                value={range.start}
-                onChange={(val) => updateRange(index, 'start', val)}
-                style={{ width: '100px' }}
-              />
+              min={1}
+              placeholder="Start"
+              value={range.start}
+              onChange={(val) => updateRange(index, 'start', val)}
+              style={{ width: '100px' }} />
+            
               <span>to</span>
               <InputNumber
-                min={1}
-                placeholder="End"
-                value={range.end}
-                onChange={(val) => updateRange(index, 'end', val)}
-                style={{ width: '100px' }}
-              />
-              {ranges.length > 1 && (
-                <Button
-                  type="text"
-                  danger
-                  icon={<MinusCircleOutlined />}
-                  onClick={() => removeRange(index)}
-                  size="small"
-                />
-              )}
+              min={1}
+              placeholder="End"
+              value={range.end}
+              onChange={(val) => updateRange(index, 'end', val)}
+              style={{ width: '100px' }} />
+            
+              {ranges.length > 1 &&
+            <Button
+              type="text"
+              danger
+              icon={<MinusCircleOutlined />}
+              onClick={() => removeRange(index)}
+              size="small" />
+
+            }
             </Space>
-          ))}
+          )}
 
           <Button type="dashed" onClick={addRange} icon={<PlusOutlined />} style={{ marginTop: 8 }}>
             Add Another Range
           </Button>
         </Form.Item>
 
-        {ranges.length > 0 && (
-          <Form.Item>
+        {ranges.length > 0 &&
+        <Form.Item>
             <div style={{ padding: '12px', backgroundColor: '#f6f8fa', borderRadius: '6px', border: '1px solid #e1e4e8' }}>
               <strong>Ranges to extract ({ranges.length}):</strong>
               <div style={{ marginTop: '8px', fontSize: '13px' }}>
-                {ranges.map((range, index) => (
-                  <div key={index} style={{ marginBottom: '4px', color: '#586069' }}>
+                {ranges.map((range, index) =>
+              <div key={index} style={{ marginBottom: '4px', color: '#586069' }}>
                     Range {index + 1}: Pages {range.start} - {range.end}
                   </div>
-                ))}
+              )}
               </div>
             </div>
           </Form.Item>
-        )}
+        }
       </Form>
 
       <Alert
@@ -128,16 +128,16 @@ const SplitPdfForm = ({ onFinish, file }) => {
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
-        style={{ marginBottom: 24 }}
-      />
+        style={{ marginBottom: 24 }} />
+      
 
       <div style={{ padding: '12px 16px', borderTop: '1px solid #f0f0f0', background: '#fff', position: 'sticky', bottom: 0, zIndex: 10 }}>
         <Button type="primary" htmlType="submit" block icon={<PartitionOutlined />} size="large" disabled={!file || ranges.length === 0} onClick={handleFinish}>
           Split PDF into {ranges.length} File{ranges.length !== 1 ? 's' : ''}
         </Button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default SplitPdfForm;

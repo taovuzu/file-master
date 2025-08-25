@@ -12,7 +12,7 @@ const CompressPdfForm = ({ onFinish, file }) => {
       message.error("Please upload a PDF file first!");
       return;
     }
-    // Only pass serializable options; the page already has the file
+
     onFinish({ level: compressionLevel });
   };
 
@@ -24,7 +24,7 @@ const CompressPdfForm = ({ onFinish, file }) => {
           description: "High quality, minimal compression",
           quality: "High",
           size: "Larger file size",
-          color: "#52c41a",
+          color: "#52c41a"
         };
       case 2:
         return {
@@ -32,7 +32,7 @@ const CompressPdfForm = ({ onFinish, file }) => {
           description: "Balanced quality and compression",
           quality: "Medium",
           size: "Balanced",
-          color: "#1890ff",
+          color: "#1890ff"
         };
       case 3:
         return {
@@ -40,7 +40,7 @@ const CompressPdfForm = ({ onFinish, file }) => {
           description: "Maximum compression, lower quality",
           quality: "Lower",
           size: "Smallest file size",
-          color: "#fa8c16",
+          color: "#fa8c16"
         };
       default:
         return {
@@ -48,7 +48,7 @@ const CompressPdfForm = ({ onFinish, file }) => {
           description: "Balanced quality and compression",
           quality: "Medium",
           size: "Balanced",
-          color: "#1890ff",
+          color: "#1890ff"
         };
     }
   };
@@ -60,9 +60,9 @@ const CompressPdfForm = ({ onFinish, file }) => {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100%", // sidebar full height
-      }}
-    >
+        height: "100%"
+      }}>
+      
       <Form
         name="compress-pdf"
         layout="vertical"
@@ -70,20 +70,20 @@ const CompressPdfForm = ({ onFinish, file }) => {
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "16px",
-        }}
-      >
+          padding: "16px"
+        }}>
+        
         <Form.Item
           label="Compression Level"
           name="compressionLevel"
           initialValue={2}
-          rules={[{ required: true, message: "Select compression level!" }]}
-        >
+          rules={[{ required: true, message: "Select compression level!" }]}>
+          
           <Select
             size="large"
             value={compressionLevel}
-            onChange={setCompressionLevel}
-          >
+            onChange={setCompressionLevel}>
+            
             <Option value={1}>
               <ShrinkOutlined style={{ color: "#52c41a" }} /> Printer Quality
               (Minimal)
@@ -99,7 +99,7 @@ const CompressPdfForm = ({ onFinish, file }) => {
           </Select>
         </Form.Item>
 
-        {/* Compression Level Information */}
+        {}
         <Form.Item>
           <div
             style={{
@@ -107,9 +107,9 @@ const CompressPdfForm = ({ onFinish, file }) => {
               backgroundColor: "#f6f8fa",
               borderRadius: "8px",
               border: `2px solid ${currentInfo.color}`,
-              borderLeft: `6px solid ${currentInfo.color}`,
-            }}
-          >
+              borderLeft: `6px solid ${currentInfo.color}`
+            }}>
+            
             <div
               style={{
                 display: "flex",
@@ -117,9 +117,9 @@ const CompressPdfForm = ({ onFinish, file }) => {
                 marginBottom: "12px",
                 fontSize: "16px",
                 fontWeight: "bold",
-                color: currentInfo.color,
-              }}
-            >
+                color: currentInfo.color
+              }}>
+              
               <ShrinkOutlined style={{ marginRight: "8px" }} />
               {currentInfo.name}
             </div>
@@ -132,9 +132,9 @@ const CompressPdfForm = ({ onFinish, file }) => {
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                fontSize: "13px",
-              }}
-            >
+                fontSize: "13px"
+              }}>
+              
               <span>
                 <strong>Quality:</strong> {currentInfo.quality}
               </span>
@@ -145,7 +145,7 @@ const CompressPdfForm = ({ onFinish, file }) => {
           </div>
         </Form.Item>
 
-        {/* Compression Quality Bar */}
+        {}
         <Form.Item>
           <div style={{ marginBottom: "8px" }}>
             <span style={{ fontSize: "13px", color: "#666" }}>
@@ -154,21 +154,21 @@ const CompressPdfForm = ({ onFinish, file }) => {
           </div>
           <Progress
             percent={
-              compressionLevel === 1 ? 25 : compressionLevel === 2 ? 50 : 75
+            compressionLevel === 1 ? 25 : compressionLevel === 2 ? 50 : 75
             }
             strokeColor={currentInfo.color}
             showInfo={false}
-            size="small"
-          />
+            size="small" />
+          
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               fontSize: "11px",
               color: "#999",
-              marginTop: "4px",
-            }}
-          >
+              marginTop: "4px"
+            }}>
+            
             <span>High Quality</span>
             <span>Balanced</span>
             <span>Small Size</span>
@@ -182,10 +182,10 @@ const CompressPdfForm = ({ onFinish, file }) => {
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
-        style={{ marginBottom: 24 }}
-      />
+        style={{ marginBottom: 24 }} />
+      
 
-      {/* Sticky footer button */}
+      {}
       <div
         style={{
           padding: "12px 16px",
@@ -193,9 +193,9 @@ const CompressPdfForm = ({ onFinish, file }) => {
           background: "#fff",
           position: "sticky",
           bottom: 0,
-          zIndex: 10,
-        }}
-      >
+          zIndex: 10
+        }}>
+        
         <Button
           type="primary"
           htmlType="submit"
@@ -203,13 +203,13 @@ const CompressPdfForm = ({ onFinish, file }) => {
           icon={<ShrinkOutlined />}
           size="large"
           disabled={!file}
-          onClick={handleFinish}
-        >
+          onClick={handleFinish}>
+          
           Compress PDF with {currentInfo.name}
         </Button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default CompressPdfForm;

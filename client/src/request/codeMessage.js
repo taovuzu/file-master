@@ -1,11 +1,11 @@
 const codeMessage = {
-  // 1xx - Informational
+
   100: 'Continue: The server has received the request headers, and the client should proceed to send the request body.',
   101: 'Switching Protocols: The requester has asked the server to switch protocols.',
   102: 'Processing: WebDAV - The server has received and is processing the request, but no response is available yet.',
   103: 'Early Hints: The server is likely to send the final response with the headers included in the informational response.',
 
-  // 2xx - Success
+
   200: 'OK: The server successfully returned the requested data.',
   201: 'Created: Data created or modified successfully.',
   202: 'Accepted: The request has been accepted for processing, but the processing has not been completed.',
@@ -14,7 +14,7 @@ const codeMessage = {
   205: 'Reset Content: Request processed successfully, please reset the view.',
   206: 'Partial Content: The server is delivering only part of the resource due to a range header sent by the client.',
 
-  // 3xx - Redirection
+
   300: 'Multiple Choices: The requested resource has multiple options for the client to follow.',
   301: 'Moved Permanently: The requested resource has been permanently moved to a new URL.',
   302: 'Found: The requested resource is temporarily located at a different URL.',
@@ -23,7 +23,7 @@ const codeMessage = {
   307: 'Temporary Redirect: The resource is temporarily located at a different URL, request method should not change.',
   308: 'Permanent Redirect: The resource is permanently located at a different URL, request method should not change.',
 
-  // 4xx - Client Error
+
   400: 'Bad Request: The request was invalid, and the server could not process it.',
   401: 'Unauthorized: Authentication is required or has failed.',
   403: 'Forbidden: The server understood the request but refuses to authorize it.',
@@ -53,7 +53,7 @@ const codeMessage = {
   431: 'Request Header Fields Too Large: The server is unwilling to process the request because its header fields are too large.',
   451: 'Unavailable For Legal Reasons: The resource is unavailable due to legal demands.',
 
-  // 5xx - Server Error
+
   500: 'Internal Server Error: The server encountered an unexpected condition.',
   501: 'Not Implemented: The server does not support the functionality required to fulfill the request.',
   502: 'Bad Gateway: The server received an invalid response from the upstream server.',
@@ -64,7 +64,7 @@ const codeMessage = {
   507: 'Insufficient Storage: The server is unable to store the representation needed to complete the request.',
   508: 'Loop Detected: The server detected an infinite loop while processing the request.',
   510: 'Not Extended: Further extensions to the request are required for the server to fulfill it.',
-  511: 'Network Authentication Required: The client needs to authenticate to gain network access.',
+  511: 'Network Authentication Required: The client needs to authenticate to gain network access.'
 };
 
 export default codeMessage;

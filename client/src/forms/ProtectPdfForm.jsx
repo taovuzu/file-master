@@ -1,4 +1,4 @@
-// src/components/ProtectPdfForm.jsx
+
 import React, { useState } from "react";
 import { Form, Button, Input, message, Alert, Card, Row, Col, Divider } from "antd";
 import { LockOutlined, InfoCircleOutlined, KeyOutlined, SecurityScanOutlined } from "@ant-design/icons";
@@ -57,7 +57,7 @@ const ProtectPdfForm = ({ onFinish, file }) => {
           <Password size="large" placeholder="Confirm password" prefix={<KeyOutlined />} maxLength={50} />
         </Form.Item>
 
-        {/* Password Requirements */}
+        {}
         <Form.Item>
           <div style={{ padding: '16px', backgroundColor: '#f6f8fa', borderRadius: '8px', border: '1px solid #e1e4e8' }}>
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
@@ -73,13 +73,13 @@ const ProtectPdfForm = ({ onFinish, file }) => {
           </div>
         </Form.Item>
 
-        {/* Info Cards */}
+        {}
         <div style={{ marginBottom: 24 }}>
           <Row gutter={16}>
             <Col span={12}>
               <Card size="small" style={{ textAlign: 'center', border: '1px solid #d9d9d9', backgroundColor: '#f6ffed' }}>
                 <div style={{ fontSize: '12px', color: '#666' }}>
-                  <strong>Original PDF</strong><br/>
+                  <strong>Original PDF</strong><br />
                   No protection
                 </div>
               </Card>
@@ -87,7 +87,7 @@ const ProtectPdfForm = ({ onFinish, file }) => {
             <Col span={12}>
               <Card size="small" style={{ textAlign: 'center', border: '1px solid #d9d9d9', backgroundColor: '#fff2e8' }}>
                 <div style={{ fontSize: '12px', color: '#666' }}>
-                  <strong>Protected PDF</strong><br/>
+                  <strong>Protected PDF</strong><br />
                   Password required
                 </div>
               </Card>
@@ -103,8 +103,8 @@ const ProtectPdfForm = ({ onFinish, file }) => {
           Protect PDF with Password
         </Button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default ProtectPdfForm;

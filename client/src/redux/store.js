@@ -10,7 +10,7 @@ const AUTH_INITIAL_STATE = {
   current: {},
   isLoggedIn: false,
   isLoading: false,
-  isSuccess: false,
+  isSuccess: false
 };
 
 const auth_state = storePersist.get('auth') ? storePersist.get('auth') : AUTH_INITIAL_STATE;
@@ -22,10 +22,10 @@ const store = configureStore({
     auth: authReducer,
     settings: settingsReducer,
     pdfTools: pdfToolsReducer,
-    app: appReducer,
+    app: appReducer
   },
   preloadedState: initialState,
-  devTools: import.meta.env.PROD === false,
+  devTools: import.meta.env.PROD === false
 });
 
 export default store;

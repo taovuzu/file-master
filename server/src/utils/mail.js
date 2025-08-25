@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import Mailgen from "mailgen";
 import { ApiError } from "./ApiError.js";
 
-// input : {email,mailgenContent,subject}
+
 
 const sendEmail = async (input) => {
 
@@ -17,11 +17,11 @@ const sendEmail = async (input) => {
   const transporter = nodemailer.createTransport({
     host: process.env.MAILTRAP_SMTP_HOST,
     port: process.env.MAILTRAP_SMTP_PORT,
-    secure: false, // true for port 465, false for other ports
+    secure: false,
     auth: {
       user: process.env.MAILTRAP_SMTP_USER,
-      pass: process.env.MAILTRAP_SMTP_PASS,
-    },
+      pass: process.env.MAILTRAP_SMTP_PASS
+    }
   });
 
   const emailHTML = mailGenerator.generate(input.mailgenContent);
@@ -29,18 +29,18 @@ const sendEmail = async (input) => {
   const emailText = mailGenerator.generatePlaintext(input.mailgenContent);
 
   const mail = {
-    from: "narmankalyan@gmail.com", 
-    to: input.email, 
-    subject: input.subject, 
-    text: emailText, 
-    html: emailHTML, 
-  }
+    from: "narmankalyan@gmail.com",
+    to: input.email,
+    subject: input.subject,
+    text: emailText,
+    html: emailHTML
+  };
   try {
     await transporter.sendMail(mail);
   } catch (error) {
-    throw new ApiError(400, "Email could not be send",error);
+    throw new ApiError(400, "Email could not be send", error);
   }
-}
+};
 
 
 

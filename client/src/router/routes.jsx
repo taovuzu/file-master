@@ -1,7 +1,7 @@
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 
-// Lazy load components
+
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
@@ -16,7 +16,7 @@ const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 const HelpCenterPage = lazy(() => import("@/pages/HelpCenterPage"));
 const PricingPage = lazy(() => import("@/pages/PricingPage"));
 
-// PDF Tool Pages
+
 const MergePdfPage = lazy(() => import("@/pages/MergePdfPage"));
 const SplitPdfPage = lazy(() => import("@/pages/SplitPdfPage"));
 const CompressPdfPage = lazy(() => import("@/pages/CompressPdfPage"));
@@ -31,105 +31,105 @@ const PdfToPowerPointPage = lazy(() => import("@/pages/PdfToPowerPointPage"));
 
 const routes = {
   default: [
-    {
-      path: "/",
-      element: <LandingPage />,
-    },
-    {
-      path: "/home",
-      element: <HomePage />,
-    },
-    {
-      path: "/login",
-      element: <LoginPage />,
-    },
-    {
-      path: "/register",
-      element: <RegisterPage />,
-    },
-    {
-      path: "/forgot-password",
-      element: <ForgotPasswordPage />,
-    },
-    {
-      path: "/reset-password",
-      element: <ResetPasswordPage />,
-    },
-    {
-      path: "/change-password",
-      element: <ChangePasswordPage />,
-    },
-    {
-      path: "/logout",
-      element: <LogoutPage />,
-    },
-    {
-      path: "/profile",
-      element: <ProfilePage />,
-    },
-    {
-      path: "/auth/callback",
-      element: <AuthCallbackPage />,
-    },
-    // Help and Support
-    {
-      path: "/help",
-      element: <HelpCenterPage />,
-    },
-    { path: "/contact", element: <HelpCenterPage initialTab="contact" /> },
-    { path: "/privacy", element: <HelpCenterPage initialTab="privacy" /> },
-    { path: "/terms", element: <HelpCenterPage initialTab="terms" /> },
-    { path: "/pricing", element: <PricingPage /> },
-    // PDF Tool Routes
-    {
-      path: "/merge",
-      element: <MergePdfPage />,
-    },
-    {
-      path: "/split",
-      element: <SplitPdfPage />,
-    },
-    {
-      path: "/compress",
-      element: <CompressPdfPage />,
-    },
-    {
-      path: "/convert",
-      element: <ConvertPdfPage />,
-    },
-    {
-      path: "/pdf-to-powerpoint",
-      element: <PdfToPowerPointPage />,
-    },
-    {
-      path: "/protect",
-      element: <ProtectPdfPage />,
-    },
-    {
-      path: "/unlock",
-      element: <UnlockPdfPage />,
-    },
-    {
-      path: "/rotate",
-      element: <RotatePdfPage />,
-    },
-    {
-      path: "/watermark",
-      element: <WatermarkPdfPage />,
-    },
-    {
-      path: "/page-numbers",
-      element: <PageNumbersPdfPage />,
-    },
-    {
-      path: "/download",
-      element: <DownloadPage />,
-    },
-    {
-      path: "*",
-      element: <NotFoundPage />,
-    },
-  ],
+  {
+    path: "/",
+    element: <LandingPage />
+  },
+  {
+    path: "/home",
+    element: <HomePage />
+  },
+  {
+    path: "/login",
+    element: <LoginPage />
+  },
+  {
+    path: "/register",
+    element: <RegisterPage />
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPasswordPage />
+  },
+  {
+    path: "/reset-password",
+    element: <ResetPasswordPage />
+  },
+  {
+    path: "/change-password",
+    element: <ChangePasswordPage />
+  },
+  {
+    path: "/logout",
+    element: <LogoutPage />
+  },
+  {
+    path: "/profile",
+    element: <ProfilePage />
+  },
+  {
+    path: "/auth/callback",
+    element: <AuthCallbackPage />
+  },
+
+  {
+    path: "/help",
+    element: <HelpCenterPage />
+  },
+  { path: "/contact", element: <HelpCenterPage initialTab="contact" /> },
+  { path: "/privacy", element: <HelpCenterPage initialTab="privacy" /> },
+  { path: "/terms", element: <HelpCenterPage initialTab="terms" /> },
+  { path: "/pricing", element: <PricingPage /> },
+
+  {
+    path: "/merge",
+    element: <MergePdfPage />
+  },
+  {
+    path: "/split",
+    element: <SplitPdfPage />
+  },
+  {
+    path: "/compress",
+    element: <CompressPdfPage />
+  },
+  {
+    path: "/convert",
+    element: <ConvertPdfPage />
+  },
+  {
+    path: "/pdf-to-powerpoint",
+    element: <PdfToPowerPointPage />
+  },
+  {
+    path: "/protect",
+    element: <ProtectPdfPage />
+  },
+  {
+    path: "/unlock",
+    element: <UnlockPdfPage />
+  },
+  {
+    path: "/rotate",
+    element: <RotatePdfPage />
+  },
+  {
+    path: "/watermark",
+    element: <WatermarkPdfPage />
+  },
+  {
+    path: "/page-numbers",
+    element: <PageNumbersPdfPage />
+  },
+  {
+    path: "/download",
+    element: <DownloadPage />
+  },
+  {
+    path: "*",
+    element: <NotFoundPage />
+  }]
+
 };
 
 export default routes;

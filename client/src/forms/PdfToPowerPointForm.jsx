@@ -25,18 +25,16 @@ const PdfToPowerPointForm = ({ onFinish, file }) => {
         type="info"
         showIcon
         icon={<InfoCircleOutlined />}
-        style={{ marginBottom: 24 }}
-      />
+        style={{ marginBottom: 24 }} />
+      
 
       <div style={{ padding: "12px 16px", borderTop: "1px solid #f0f0f0", background: "#fff", position: "sticky", bottom: 0, zIndex: 10 }}>
         <Button type="primary" htmlType="submit" block icon={<FilePdfOutlined />} size="large" disabled={!file} onClick={handleFinish}>
           Convert PDF to PowerPoint
         </Button>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default PdfToPowerPointForm;
-
-
