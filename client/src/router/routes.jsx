@@ -28,6 +28,7 @@ const WatermarkPdfPage = lazy(() => import("@/pages/WatermarkPdfPage"));
 const PageNumbersPdfPage = lazy(() => import("@/pages/PageNumbersPdfPage"));
 const DownloadPage = lazy(() => import("@/pages/DownloadPage"));
 const PdfToPowerPointPage = lazy(() => import("@/pages/PdfToPowerPointPage"));
+const PdfEditorPage = lazy(() => import("@/pages/PdfEditorPage"));
 
 const routes = {
   default: [
@@ -116,6 +117,10 @@ const routes = {
   {
     path: "/watermark",
     element: <WatermarkPdfPage />
+  },
+  {
+    path: "/edit",
+    element: <PdfEditorPage />
   },
   {
     path: "/page-numbers",

@@ -56,7 +56,6 @@ export async function mergeProcessor(jobId, jobData) {
       }
     }
 
-    throw new ApiError(500, "");
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
       message: `Successfully merged ${inputPaths.length} PDF files`,
