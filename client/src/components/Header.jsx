@@ -37,15 +37,15 @@ const Header = () => {
   const navigate = useNavigate();
 
   const toolCategories = {
-    organize: {
-      title: "Organize PDF",
-      tools: [
-      { name: "Merge PDF", path: "/merge", icon: Merge },
-      { name: "Split PDF", path: "/split", icon: Split },
-      { name: "Organize PDF", path: "/split", icon: FileText },
-      { name: "Add Page Numbers", path: "/page-numbers", icon: Hash }]
+    // organize: {
+    //   title: "Organize PDF",
+    //   tools: [
+    //   { name: "Merge PDF", path: "/merge", icon: Merge },
+    //   { name: "Split PDF", path: "/split", icon: Split },
+    //   { name: "Organize PDF", path: "/split", icon: FileText },
+    //   { name: "Add Page Numbers", path: "/page-numbers", icon: Hash }]
 
-    },
+    // },
     optimize: {
       title: "Optimize PDF",
       tools: [{ name: "Compress PDF", path: "/compress", icon: FileDown }]
@@ -64,8 +64,9 @@ const Header = () => {
       tools: [
       { name: "Convert PDF", path: "/convert", icon: Download },
       { name: "PDF to PowerPoint", path: "/pdf-to-powerpoint", icon: Download },
-      { name: "PDF to JPG", path: "/convert", icon: Download },
-      { name: "Edit PDF", path: "/convert", icon: FileText }]
+      // { name: "PDF to JPG", path: "/convert", icon: Download },
+      // { name: "Edit PDF", path: "/convert", icon: FileText }
+    ]
 
     },
     edit: {
@@ -109,30 +110,31 @@ const Header = () => {
 
 
   const companyMenuItems = [
-  {
-    key: "products",
-    label: "Other products",
-    children: [
-    {
-      key: "iloveimg",
-      label: "iLoveIMG",
-      description: "Effortless image editing",
-      onClick: () => window.open("https://iloveimg.com", "_blank")
-    },
-    {
-      key: "ilovesign",
-      label: "iLoveSign",
-      description: "e-Signing made simple",
-      onClick: () => window.open("https://ilovesign.com", "_blank")
-    },
-    {
-      key: "iloveapi",
-      label: "iLoveAPI",
-      description: "Document automation for developers",
-      onClick: () => window.open("https://iloveapi.com", "_blank")
-    }]
+  // {
+  //   key: "products",
+  //   label: "Other products",
+  //   children: [
+  //   {
+  //     key: "",
+  //     label: "",
+  //     description: "",
+  //     onClick: () => window.open("", "_blank")
+  //   },
+  //   {
+  //     key: "",
+  //     label: "",
+  //     description: "",
+  //     onClick: () => window.open("", "_blank")
+  //   },
+  //   {
+  //     key: "",
+  //     label: "",
+  //     description: "",
+  //     onClick: () => window.open("", "_blank")
+  //   }
+  // ]
 
-  },
+  // },
   {
     key: "solutions",
     label: "Solutions",
@@ -190,21 +192,6 @@ const Header = () => {
     }]
 
   }];
-
-
-  const languageOptions = [
-  { key: "en", label: "English", flag: "🇺🇸" },
-  { key: "es", label: "Español", flag: "🇪🇸" },
-  { key: "fr", label: "Français", flag: "🇫🇷" },
-  { key: "de", label: "Deutsch", flag: "🇩🇪" },
-  { key: "it", label: "Italiano", flag: "🇮🇹" },
-  { key: "pt", label: "Português", flag: "🇵🇹" },
-  { key: "ja", label: "日本語", flag: "🇯🇵" },
-  { key: "ru", label: "Pусский", flag: "🇷🇺" },
-  { key: "ko", label: "한국어", flag: "🇰🇷" },
-  { key: "zh-cn", label: "中文 (简体)", flag: "🇨🇳" },
-  { key: "zh-tw", label: "中文 (繁體)", flag: "🇹🇼" },
-  { key: "ar", label: "العربية", flag: "🇸🇦" }];
 
 
   const handleToolClick = (path) => {

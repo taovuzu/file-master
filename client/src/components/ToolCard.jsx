@@ -160,30 +160,30 @@ const TOOL_CONFIG = {
     premium: false,
     route: '/convert?type=excel-to-pdf'
   },
-  'Edit PDF': {
-    title: 'Edit PDF',
-    description: 'Edit text, images, and content in PDF files',
-    icon: FileText,
-    color: 'purple',
-    features: ['Text editing', 'Image editing', 'Content modification'],
-    popularity: 76,
-    processingTime: '40 seconds',
-    users: '1.3M+',
-    premium: true,
-    route: '/edit'
-  },
-  'PDF to JPG': {
-    title: 'PDF to JPG',
-    description: 'Convert PDF pages to high-quality JPG images',
-    icon: Download,
-    color: 'yellow',
-    features: ['High resolution', 'Batch conversion', 'Custom settings'],
-    popularity: 74,
-    processingTime: '35 seconds',
-    users: '1.1M+',
-    premium: false,
-    route: '/convert?type=pdf-to-jpg'
-  },
+  // 'Edit PDF': {
+  //   title: 'Edit PDF',
+  //   description: 'Edit text, images, and content in PDF files',
+  //   icon: FileText,
+  //   color: 'purple',
+  //   features: ['Text editing', 'Image editing', 'Content modification'],
+  //   popularity: 76,
+  //   processingTime: '40 seconds',
+  //   users: '1.3M+',
+  //   premium: true,
+  //   route: '/edit'
+  // },
+  // 'PDF to JPG': {
+  //   title: 'PDF to JPG',
+  //   description: 'Convert PDF pages to high-quality JPG images',
+  //   icon: Download,
+  //   color: 'yellow',
+  //   features: ['High resolution', 'Batch conversion', 'Custom settings'],
+  //   popularity: 74,
+  //   processingTime: '35 seconds',
+  //   users: '1.1M+',
+  //   premium: false,
+  //   route: '/convert?type=pdf-to-jpg'
+  // },
   'JPG to PDF': {
     title: 'JPG to PDF',
     description: 'Convert JPG images to PDF documents',
@@ -196,18 +196,18 @@ const TOOL_CONFIG = {
     premium: false,
     route: '/convert?type=image-to-pdf'
   },
-  'Organize PDF': {
-    title: 'Organize PDF',
-    description: 'Reorder, delete, and organize PDF pages',
-    icon: FileText,
-    color: 'teal',
-    features: ['Page reordering', 'Page deletion', 'Batch operations'],
-    popularity: 69,
-    processingTime: '15 seconds',
-    users: '900K+',
-    premium: false,
-    route: '/split'
-  },
+  // 'Organize PDF': {
+  //   title: 'Organize PDF',
+  //   description: 'Reorder, delete, and organize PDF pages',
+  //   icon: FileText,
+  //   color: 'teal',
+  //   features: ['Page reordering', 'Page deletion', 'Batch operations'],
+  //   popularity: 69,
+  //   processingTime: '15 seconds',
+  //   users: '900K+',
+  //   premium: false,
+  //   route: '/organize'
+  // },
   'Page numbers': {
     title: 'Add Page Numbers',
     description: 'Add page numbers to PDF documents',

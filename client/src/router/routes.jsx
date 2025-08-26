@@ -29,6 +29,7 @@ const PageNumbersPdfPage = lazy(() => import("@/pages/PageNumbersPdfPage"));
 const DownloadPage = lazy(() => import("@/pages/DownloadPage"));
 const PdfToPowerPointPage = lazy(() => import("@/pages/PdfToPowerPointPage"));
 const PdfEditorPage = lazy(() => import("@/pages/PdfEditorPage"));
+const OrganizePdfPage = lazy(() => import("@/pages/OrganizePdfPage"));
 
 const routes = {
   default: [
@@ -121,6 +122,10 @@ const routes = {
   {
     path: "/edit",
     element: <PdfEditorPage />
+  },
+  {
+    path: "/organize",
+    element: <OrganizePdfPage/>
   },
   {
     path: "/page-numbers",

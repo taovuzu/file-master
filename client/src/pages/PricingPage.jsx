@@ -22,7 +22,7 @@ const plans = [
 {
   key: 'pro',
   name: 'Pro',
-  price: '$9',
+  price: '₹299',
   period: '/mo',
   cta: 'Upgrade to Pro',
   features: [
@@ -36,7 +36,7 @@ const plans = [
 {
   key: 'business',
   name: 'Business',
-  price: '$29',
+  price: '₹3999',
   period: '/mo',
   cta: 'Contact Sales',
   features: [
