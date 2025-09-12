@@ -2,7 +2,6 @@ const isJsonString = (str) => {
   try {
     JSON.parse(str);
   } catch (e) {
-    console.error(e.message);
     return false;
   }
   return true;
@@ -20,7 +19,6 @@ export const localStorageHealthCheck = async () => {
       }
     } catch (error) {
       window.localStorage.clear();
-      console.error('window.localStorage Exception occurred:', error);
     }
   }
 };

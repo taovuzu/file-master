@@ -3,8 +3,9 @@ import {
   CLOSE_NAV_MENU,
   COLLAPSE_NAV_MENU,
   CHANGE_APP,
-  DEFAULT_APP } from
-'./actions';
+  DEFAULT_APP
+} from
+  './actions';
 
 const initialState = {
   isNavMenuClose: false,

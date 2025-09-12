@@ -1,5 +1,3 @@
-
-
 export const OPEN_NAV_MENU = 'app/OPEN_NAV_MENU';
 export const CLOSE_NAV_MENU = 'app/CLOSE_NAV_MENU';
 export const COLLAPSE_NAV_MENU = 'app/COLLAPSE_NAV_MENU';
