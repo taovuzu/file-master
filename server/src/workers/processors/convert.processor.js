@@ -8,7 +8,6 @@ import { v4 as uuidv4 } from "uuid";
 import { PDFDocument, PageSizes } from "pdf-lib";
 import archiver from "archiver";
 import pptxgen from "pptxgenjs";
-import pdf from "pdf-poppler";
 import { imageSizeFromFile } from 'image-size/fromFile';
 
 export async function convertProcessor(jobId, jobData) {
@@ -97,7 +96,7 @@ async function convertDocToPdf(jobId, inputPath, outputDir) {
 
   await new Promise((resolve, reject) => {
     exec(libreCmd, (error, stdout, stderr) => {
-      if (error || stderr) {
+      if (error) {
         reject(new Error(`LibreOffice error: ${error.message}`));
       } else {
         resolve();
@@ -288,6 +287,18 @@ async function convertToWord(jobId, inputPath, outputPath) {
   });
 }
 
+async function convertPdfToImages(inputPath, outDir) {
+  return new Promise((resolve, reject) => {
+    const outPrefix = path.join(outDir, "slide");
+
+    const cmd = `pdftoppm -png "${inputPath}" "${outPrefix}"`;
+    exec(cmd, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
+      if (error) return reject(new Error(`pdftoppm failed: ${stderr || error.message}`));
+      resolve();
+    });
+  });
+}
+
 async function convertToPowerPoint(jobId, inputPath, outputPath) {
   await updateJobStatus(jobId, 'processing', 30, {
     message: 'Converting PDF to PowerPoint...'
@@ -300,14 +311,7 @@ async function convertToPowerPoint(jobId, inputPath, outputPath) {
     message: 'Extracting images from PDF...'
   });
 
-  const options = {
-    format: 'png',
-    out_dir: baseOutDir,
-    out_prefix: 'slide',
-    page: null
-  };
-
-  await pdf.convert(inputPath, options);
+  await convertPdfToImages(inputPath, baseOutDir);
 
   await updateJobStatus(jobId, 'processing', 50, {
     message: 'Creating PowerPoint slides...'

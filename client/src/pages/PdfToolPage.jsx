@@ -158,7 +158,6 @@ const PdfToolPage = ({
         }
       }
 
-      // Avoid logging file payloads/values in production to protect privacy
       updateProgress(15, "Uploading files...");
 
       const result = await processPdfTool(

@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useLocation } from "react-router-dom";
-import PdfToolPage from "@/Pages/PdfToolPage";
+import PdfToolPage from "@/pages/PdfToolPage";
 import ConvertPdfForm from "@/forms/ConvertPdfForm";
 
 const ConvertPdfPage = () => {
@@ -9,7 +9,7 @@ const ConvertPdfPage = () => {
     () => new URLSearchParams(location.search),
     [location.search]
   );
-  const defaultType = useMemo(
+  const defaultType = useMemo( 
     () => params.get("type") || "doc-to-pdf",
     [params]
   );

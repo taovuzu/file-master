@@ -83,10 +83,10 @@ export { app };
 // pdf-to-ppt -> { pptxgenjs, pdf-poppler, pdf-lib }
 // merge -> { PDFMerger from "pdf-merger-js" }
 // split -> { PDFDocument from "pdf-lib" }
-// compress -> { ghostscript }
+// compress -> { qpdf }
 // rotate -> { PDFDocument, degrees from "pdf-lib" }
 // page-numbers -> { PDFDocument, StandardFonts, rgb from "pdf-lib" }
 // watermark -> { PDFDocument, rgb, StandardFonts, degrees from "pdf-lib" }
 // esign -> { PDFDocument from "pdf-lib" }
-// unlock -> { ghostscript }
-// protect -> { ghostscript }
+// unlock -> { qpdf }
+// protect -> { qpdf }

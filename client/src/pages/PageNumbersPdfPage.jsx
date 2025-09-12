@@ -1,5 +1,5 @@
 import React from 'react';
-import PdfToolPage from '@/Pages/PdfToolPage';
+import PdfToolPage from '@/pages/PdfToolPage';
 import PageNumbersPdfForm from '@/forms/PageNumbersPdfForm';
 
 const PageNumbersPdfPage = () => {
