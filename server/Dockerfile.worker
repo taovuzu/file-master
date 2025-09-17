@@ -1,0 +1,23 @@
+FROM node:20-bookworm
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  qpdf \
+  libreoffice \
+  poppler-utils \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+RUN npm install
+
+COPY src ./src
+
+ENV NODE_ENV=production
+
+RUN useradd -m -u 10001 appuser
+USER appuser
+
+CMD ["node", "src/worker.js"]
+
+

@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon -r dotenv/config src/index.js dotenv_config_path=./.env dotenv_config_debug=true",
+    "dev": "concurrently  \"nodemon -r dotenv/config src/server.js dotenv_config_path=./.env dotenv_config_debug=true\" \"nodemon src/worker.js\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "ryuzen",
@@ -17,6 +17,7 @@
     "bullmq": "^5.58.0",
     "busboy": "^1.6.0",
     "cloudinary": "^2.7.0",
+    "concurrently": "^9.2.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",

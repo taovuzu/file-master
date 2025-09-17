@@ -8,10 +8,8 @@ import tailwindcss from '@tailwindcss/vite'
 export default ({ mode }) => {
   process.env = { ...process.env, ...loadEnv(mode, process.cwd()) };
 
-  const proxy_url =
-    process.env.VITE_DEV_REMOTE === 'remote'
-      ? process.env.VITE_BACKEND_SERVER
-      : 'http://localhost:8080/';
+  const proxy_url = process.env.VITE_API_BASE_URL || process.env.VITE_BACKEND_SERVER || 'http://localhost:8080/';
+  console.log(proxy_url, process.env);
 
   const config = {
     plugins: [react(), tailwindcss()],

@@ -145,5 +145,5 @@ sendAuthRequest(
 );
 
 export const googleLogin = () => {
-  window.location.href = "http://localhost:8080/api/v1/users/google";
+  window.location.href = `${API_BASE_URL}users/google`;
 };

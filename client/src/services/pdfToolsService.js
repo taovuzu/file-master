@@ -177,7 +177,6 @@ const processPdfToolWithPolling = async (endpoint, files, options, onProgress, o
   });
 
 
-  // Avoid logging FormData entries to protect privacy and reduce noise
 
   if (onProgress) {
     onProgress(10, 'Preparing files...');

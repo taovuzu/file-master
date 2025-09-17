@@ -14,7 +14,6 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Avoid retry/refresh loop if the 401 came from the refresh endpoint itself
       const isRefreshRequest = typeof originalRequest.url === 'string' && originalRequest.url.includes('users/refresh');
       if (isRefreshRequest) {
         return Promise.reject(error);
@@ -36,6 +35,7 @@ axiosInstance.interceptors.response.use(
 
 const sendRequest = async (method, url, data = null, config = {}, successOptions) => {
   try {
+    console.log(API_BASE_URL, url);
     const response = await axiosInstance({ method, url, data, ...config });
     if (successOptions) successHandler(response, successOptions);
     return response.data;

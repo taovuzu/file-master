@@ -1,7 +1,8 @@
 export const DB_NAME = "PDFMonster";
-export const GS_PATH = `"C:\\Program Files\\gs\\gs9.56.0\\bin\\gswin64c.exe"`;
-export const LIBRE_PATH = `"C:\\Program Files\\LibreOffice\\program\\soffice.exe"`;
-export const QPDF_PATH = `"C:\\Program Files\\qpdf-12.2.0-mingw64\\bin\\qpdf.exe"`;
+// Prefer environment-provided binary paths. Fallbacks assume Linux packages are installed in PATH.
+export const GS_PATH = process.env.GS_PATH || 'gs';
+export const LIBRE_PATH = process.env.LIBRE_PATH || 'soffice';
+export const QPDF_PATH = process.env.QPDF_PATH || 'qpdf';
 
 export const USERLOGIN_TYPES = {
   GOOGLE: "GOOGLE",

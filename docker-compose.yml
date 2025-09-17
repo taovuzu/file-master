@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.client
+    ports:
+      - "5173:80"
+    env_file:
+      - ./client/.env
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.api
+    env_file:
+      - ./server/.env
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    volumes:
+      - shared-files:/app/files
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  worker:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.worker
+    env_file:
+      - ./server/.env
+    restart: unless-stopped
+    volumes:
+      - shared-files:/app/files
+    deploy:
+      resources:
+        limits:
+          cpus: "6.0"
+          memory: 4096M
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+      - /app/temp:rw,noexec,nosuid,nodev
+      - /app/jobs:rw,noexec,nosuid,nodev
+
+volumes:
+  shared-files:

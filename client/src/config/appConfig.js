@@ -7,9 +7,9 @@ export const APP_CONFIG = {
 
 
   api: {
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
-    timeout: 30000,
-    retryAttempts: 3
+    baseURL: import.meta.env.VITE_APP_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || '/api',
+    timeout: Number(import.meta.env.VITE_API_TIMEOUT || 30000),
+    retryAttempts: Number(import.meta.env.VITE_API_RETRY_ATTEMPTS || 3)
   },
 
 
@@ -104,50 +104,13 @@ export const APP_CONFIG = {
 export const getConfig = () => {
   const env = import.meta.env.MODE;
 
-  switch (env) {
-    case 'development':
-      return {
-        ...APP_CONFIG,
-        api: {
-          ...APP_CONFIG.api,
-          baseURL: 'http://localhost:3000/api'
-        },
-        features: {
-          ...APP_CONFIG.features,
-          analytics: false
-        }
-      };
-
-    case 'production':
-      return {
-        ...APP_CONFIG,
-        api: {
-          ...APP_CONFIG.api,
-          baseURL: 'https://api.filemaster.com'
-        },
-        features: {
-          ...APP_CONFIG.features,
-          analytics: true
-        }
-      };
-
-    case 'test':
-      return {
-        ...APP_CONFIG,
-        api: {
-          ...APP_CONFIG.api,
-          baseURL: 'http://localhost:3001/api'
-        },
-        features: {
-          ...APP_CONFIG.features,
-          analytics: false,
-          notifications: false
-        }
-      };
-
-    default:
-      return APP_CONFIG;
-  }
+  return {
+    ...APP_CONFIG,
+    features: {
+      ...APP_CONFIG.features,
+      analytics: import.meta.env.VITE_FEATURE_ANALYTICS === 'true' || env === 'production'
+    }
+  };
 };
 
 export default getConfig();

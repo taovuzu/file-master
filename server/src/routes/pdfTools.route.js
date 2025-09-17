@@ -18,9 +18,6 @@ router.post("/compress", upload.single("PDFFILE"), compressPdf);
 router.post("/merge", upload.array("PDFFILE"), mergePdfFiles);
 router.post("/watermark/text", upload.single("PDFFILE"), addTextWatermark);
 
-
-
-
 router.post("/page-numbers", upload.single("PDFFILE"), AddPageNumber);
 router.post("/convert/doc-to-pdf", upload.single("DOCFILE"), convertDocToPdf);
 router.post("/convert/images-to-pdf", upload.array("IMAGEFILE"), convertImagesToPdf);

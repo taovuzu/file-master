@@ -5,11 +5,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { GS_PATH } from "../constants.js";
 import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.queue.js";
 
 const compressPdf = asyncHandler(async (req, res) => {
   const file = req.file;
+  console.log(file);
   if (!file) {
     throw new ApiError.notFound("File could not be found on server");
   }
