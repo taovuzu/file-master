@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
+import crypto from "crypto";
 
 const extractToken = (req) => {
   return (
@@ -19,16 +20,7 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
-    const user = await User.findById(decoded?._id).select(
-      "-password -refreshToken -forgetPasswordExpiry -forgetPasswordToken -isUsernameChanged"
-    );
-
-    if (!user) {
-      throw new ApiError(401, "JsonWebTokenError");
-    }
-
-    req.user = user;
+    req.user = decoded;
     next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
@@ -44,18 +36,26 @@ const getUserLoggedInOrNot = asyncHandler(async (req, res, next) => {
   if (!token) return next();
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
-    const user = await User.findById(decoded?._id).select(
-      "-password -refreshToken -emailVerificationToken -emailVerificationExpiry -isUsernameChanged"
-    );
-
-    if (user) {
-      req.user = user;
-    }
+    req.user = decoded;
     next();
   } catch (error) {
     next();
   }
 });
 
-export { verifyJWT, getUserLoggedInOrNot };
+const verifyCSRF = asyncHandler(async (req, res, next) => {
+  const method = (req.method || '').toUpperCase();
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    return next();
+  }
+
+  const cookieToken = req.cookies && req.cookies['csrf-token'];
+  const headerToken = req.headers && (req.headers['x-csrf-token'] || req.headers['X-CSRF-Token']);
+
+  if (!cookieToken || !headerToken || String(cookieToken) !== String(headerToken)) {
+    throw new ApiError(403, "Invalid CSRF token");
+  }
+  next();
+});
+
+export { verifyJWT, getUserLoggedInOrNot, verifyCSRF };

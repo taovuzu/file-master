@@ -25,6 +25,7 @@ const RegisterPage = () => {
   const [currentStep, setCurrentStep] = useState("email");
   const [emailData, setEmailData] = useState(null);
   const [resendTimer, setResendTimer] = useState(0);
+  const [registrationToken, setRegistrationToken] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -36,15 +37,29 @@ const RegisterPage = () => {
     if (emailRegistrationStep && isSuccess) {
       setCurrentStep("otp");
     }
+
+    if (!registrationToken) {
+      const storedToken = window.localStorage.getItem('registrationToken');
+      const storedEmail = window.localStorage.getItem('registrationEmail');
+      if (storedToken && storedEmail) {
+        setRegistrationToken(storedToken);
+        setEmailData(storedEmail);
+        setCurrentStep('userDetails');
+      }
+    }
   }, [emailRegistrationStep, isSuccess]);
 
   useEffect(() => {
     const query = new URLSearchParams(location.search);
     const verified = query.get("verified");
     const email = query.get("email");
+    const linkToken = query.get("registrationToken");
 
-    if (verified === "true" && email) {
+    if (verified === "true" && email && linkToken) {
       setEmailData(email);
+      setRegistrationToken(linkToken);
+      window.localStorage.setItem('registrationToken', linkToken);
+      window.localStorage.setItem('registrationEmail', email);
       setCurrentStep("userDetails");
       message.success("Email verified by link! Please complete registration.");
     }
@@ -93,7 +108,7 @@ const RegisterPage = () => {
   const handleResendOTP = async () => {
     if (resendTimer > 0) return;
     try {
-      const result = await dispatch(resendVerification());
+      const result = await dispatch(resendVerification({ email: emailData }));
       if (result.meta.requestStatus === "fulfilled") {
         setResendTimer(120);
         message.success("OTP resent! Please check your inbox.");
@@ -115,6 +130,12 @@ const RegisterPage = () => {
         })
       );
       if (result.meta.requestStatus === "fulfilled") {
+        const token = result.payload?.registrationToken;
+        if (token) {
+          setRegistrationToken(token);
+          window.localStorage.setItem('registrationToken', token);
+          window.localStorage.setItem('registrationEmail', emailData);
+        }
         setCurrentStep("userDetails");
         message.success("Email verified! Please complete your registration.");
       } else {
@@ -132,11 +153,14 @@ const RegisterPage = () => {
     try {
       const registerData = {
         fullName: values.fullName,
-        password: values.password
+        password: values.password,
+        registrationToken
       };
 
       const result = await dispatch(registerUser({ registerData }));
       if (result.meta.requestStatus === "fulfilled") {
+        window.localStorage.removeItem('registrationToken');
+        window.localStorage.removeItem('registrationEmail');
         navigate("/");
       } else {
         message.error("Registration failed. Please try again.");

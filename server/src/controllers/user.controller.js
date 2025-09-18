@@ -8,6 +8,7 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import { sendEmail, emailVerificationMailgen, forgetPasswordMailgen } from "../utils/mail.js";
 import { request } from "http";
+import { redisClient, healthCheck } from "../queues/pdf.queue.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -35,9 +36,6 @@ const registerEmail = asyncHandler(async (req, res) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) throw ApiError.conflict("User already exists with this email");
 
-  req.session.email = email;
-  req.session.emailVerified = false;
-
   await sendRegistrationTokens(email, req);
 
   return ApiResponse
@@ -47,12 +45,14 @@ const registerEmail = asyncHandler(async (req, res) => {
 });
 
 const resendEmailVerification = asyncHandler(async (req, res) => {
-  const email = req.session.email;
+  const { email } = req.body || {};
   if (!email) {
-    throw ApiError.notFound("Email not found on system");
+    throw ApiError.badRequest("Email is empty");
   }
+  const existingUser = await User.findOne({ email });
+  if (existingUser) throw ApiError.conflict("User already exists with this email");
+
   await sendRegistrationTokens(email, req);
-  console.log("resend success");
 
   return ApiResponse
     .success({}, "OTP and verification link sent to email", 200)
@@ -66,50 +66,84 @@ const verifyEmailByLink = asyncHandler(async (req, res) => {
   if (!email || !unHashedToken) {
     throw ApiError.badRequest("Email or unHashedToken is empty");
   }
+
   const hashedToken = crypto.
   createHash("sha256").
   update(unHashedToken).
   digest("hex");
 
-  if (email != req.session.email || hashedToken != req.session.hashedToken || Date.now() > req.session.tokenExpiry) {
-    throw ApiError.notFound("Email or unHashedToken is invalid or expired");
+  await healthCheck();
+  const key = `email:verify:${email}`;
+  const data = await redisClient.hGetAll(key);
+  if (!data || Object.keys(data).length === 0) {
+    throw ApiError.notFound("Verification token not found or expired");
+  }
+  if (data.hashedToken !== hashedToken) {
+    throw ApiError.unauthorized("Invalid verification token");
   }
 
-  req.session.emailVerified = true;
+  const registrationToken = issueRegistrationToken(email);
+
+  // const wantsJson = req.accepts(["json", "html"]) === "json" || req.query?.response === 'json';
+  // if (wantsJson) {
+  //   return ApiResponse
+  //     .success({ registrationToken, email }, "Email verified successfully by link", 200)
+  //     .withRequest(req)
+  //     .send(res);
+  // }
+
   return res.redirect(
-    `${process.env.FRONTEND_URL}/register?verified=true&email=${encodeURIComponent(email)}`
+    `${process.env.FRONTEND_URL}/register?verified=true&email=${encodeURIComponent(email)}&registrationToken=${registrationToken}`
   );
 });
 
 const verifyEmailByOTP = asyncHandler(async (req, res) => {
   const { email, otp } = req.body;
-  if (!email || !otp || otp >= 999999 || otp <= 100000) {
+  if (!email || !otp || Number(otp) >= 999999 || Number(otp) <= 100000) {
     throw ApiError.badRequest("Email or otp is empty or incomplete");
   }
 
-  if (email != req.session.email || otp != req.session.otp || Date.now() > req.session.tokenExpiry) {
-    throw ApiError.notFound("Email or otp is invalid or expired");
+  await healthCheck();
+  const key = `email:verify:${email}`;
+  const data = await redisClient.hGetAll(key);
+  if (!data || Object.keys(data).length === 0) {
+    throw ApiError.notFound("OTP not found or expired");
+  }
+  if (String(data.otp) !== String(otp)) {
+    throw ApiError.unauthorized("Invalid OTP");
   }
 
-  req.session.emailVerified = true;
+  const registrationToken = issueRegistrationToken(email);
   return ApiResponse
-    .success({}, "Email verified successfully by otp", 200)
+    .success({ registrationToken }, "Email verified successfully by otp", 200)
     .withRequest(req)
     .send(res);
 });
 
 const registerUser = asyncHandler(async (req, res) => {
-  const { fullName, password } = req.body;
-
-  if (!req.session.email || !req.session.emailVerified) {
-    throw ApiError.badRequest("Email is not verified yet");
-  }
+  const { fullName, password, registrationToken } = req.body;
 
   if (!fullName || !password) {
     throw ApiError.badRequest("All fields are required");
   }
 
-  const existingUser = await User.findOne({ email: req.session.email });
+  const token = registrationToken || req.headers["x-registration-token"] || req.query?.registrationToken;
+  if (!token) {
+    throw ApiError.unauthorized("Missing registration token. Verify email first.");
+  }
+
+  const secret = process.env.REGISTRATION_TOKEN_SECRET || process.env.ACCESS_TOKEN_SECRET;
+  let decoded;
+  try {
+    decoded = jwt.verify(token, secret);
+  } catch (e) {
+    throw ApiError.unauthorized("Invalid or expired registration token");
+  }
+
+  const email = decoded?.email;
+  if (!email) throw ApiError.unauthorized("Invalid registration token payload");
+
+  const existingUser = await User.findOne({ email });
   if (existingUser) {
     throw new ApiError.conflict("Account already exists with this email");
   }
@@ -117,7 +151,7 @@ const registerUser = asyncHandler(async (req, res) => {
   let user;
   try {
     user = await User.create({
-      email: req.session.email,
+      email,
       fullName,
       password
     });
@@ -125,24 +159,21 @@ const registerUser = asyncHandler(async (req, res) => {
     throw ApiError.internal("Failed to create user", [error]);
   }
 
+  try { await redisClient.del(`email:verify:${email}`); } catch (_) {}
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
   const createdUser = await User.findById(user._id).select("-password -refreshToken");
 
-
-  req.session.email = null;
-  req.session.emailVerified = null;
-  req.session.hashedToken = null;
-  req.session.otp = null;
-  req.session.tokenExpiry = null;
-
   const options = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' };
+  const csrfToken = crypto.randomBytes(100).toString('hex');
+  const csrfCookie = { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' };
 
   const response = ApiResponse.created({ createdUser, accessToken, refreshToken }, "Account created successfully").withRequest(req);
   return res
     .status(response.statusCode)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
+    .cookie("csrf-token", csrfToken, csrfCookie)
     .json(response.toJSON());
 });
 
@@ -165,12 +196,15 @@ const loginUser = asyncHandler(async (req, res) => {
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
   };
+  const csrfToken = crypto.randomBytes(100).toString('hex');
+  const csrfCookie = { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' };
 
   const response = ApiResponse.success({ loggedInUser, accessToken, refreshToken }, "User loggedIn successfully", 200).withRequest(req);
   return res
     .status(response.statusCode)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
+    .cookie("csrf-token", csrfToken, csrfCookie)
     .json(response.toJSON());
 });
 
@@ -202,12 +236,15 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
     };
+    const csrfToken = crypto.randomBytes(100).toString('hex');
+    const csrfCookie = { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' };
 
     const response = ApiResponse.success({ accessToken, refreshToken }, "refreshed accessToken successfully", 200).withRequest(req);
     return res
       .status(response.statusCode)
       .cookie("accessToken", accessToken, options)
       .cookie("refreshToken", refreshToken, options)
+      .cookie("csrf-token", csrfToken, csrfCookie)
       .json(response.toJSON());
 
   } catch (error) {
@@ -227,6 +264,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     .status(response.statusCode)
     .clearCookie("accessToken")
     .clearCookie("refreshToken")
+    .clearCookie("csrf-token")
     .json(response.toJSON());
 });
 
@@ -242,11 +280,14 @@ const userSocialLogin = asyncHandler(async (req, res) => {
     httpOnly: true,
     secure: true
   };
+  const csrfToken = crypto.randomBytes(100).toString('hex');
+  const csrfCookie = { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' };
 
   return res.
   status(200).
   cookie("accessToken", accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' }).
   cookie("refreshToken", refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' }).
+  cookie("csrf-token", csrfToken, csrfCookie).
   redirect(`${process.env.CLIENT_SSO_REDIRECT_URL}/auth/callback?success=true`);
 });
 
@@ -351,23 +392,34 @@ const sendRegistrationTokens = async (email, req) => {
   update(unHashedToken).
   digest("hex");
 
-  const tokenExpiry = Date.now() + process.env.USER_TEMPORARY_TOKEN_EXPIRY;
+  const expiryMs = Number(process.env.USER_TEMPORARY_TOKEN_EXPIRY) || (15 * 60 * 1000);
+  const ttlSeconds = Math.ceil(expiryMs / 1000);
 
-  req.session.otp = otp;
-  req.session.email = email;
-  req.session.hashedToken = hashedToken;
-  req.session.tokenExpiry = tokenExpiry;
+  await healthCheck();
+  const key = `email:verify:${email}`;
+  await redisClient.hSet(key, {
+    otp: String(otp),
+    hashedToken,
+    createdAt: new Date().toISOString()
+  });
+  await redisClient.expire(key, ttlSeconds);
 
+  const verifyUrl = `${req.protocol}://${req.get("host")}/api/v1/users/verify-email-link?email=${encodeURIComponent(email)}&unHashedToken=${unHashedToken}`;
   console.log(otp);
-  console.log(`${req.protocol}://${req.get("host")}/api/v1/users/verify-email-link?email=${encodeURIComponent(email)}&unHashedToken=${unHashedToken}`);
+  console.log(verifyUrl);
   await sendEmail({
     email: email,
     subject: "Email Verification Tokens",
     mailgenContent: emailVerificationMailgen(
-      `${req.protocol}://${req.get("host")}/api/v1/users/verify-email-link?email=${encodeURIComponent(email)}&unHashedToken=${unHashedToken}`,
+      verifyUrl,
       otp
     )
   });
+};
+
+const issueRegistrationToken = (email) => {
+  const secret = process.env.REGISTRATION_TOKEN_SECRET || process.env.ACCESS_TOKEN_SECRET;
+  return jwt.sign({ email, purpose: "registration" }, secret, { expiresIn: "15m" });
 };
 
 export { registerUser, registerEmail, verifyEmailByLink, verifyEmailByOTP, loginUser, refreshAccessToken, logoutUser, userSocialLogin, changeCurrentPassword, forgotPasswordRequest, resetForgottenPassword, getCurrentUser, resendEmailVerification };

@@ -27,7 +27,6 @@ services:
       - ./server/.env
     environment:
       - SHARED_BASE_DIR=/app/shared
-      - CORS_ORIGIN=http://localhost:5173
     ports:
       - "8080:8080"
     restart: unless-stopped

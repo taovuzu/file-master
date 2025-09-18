@@ -3,9 +3,27 @@ import { API_BASE_URL } from '@/config/serverApiConfig';
 import errorHandler from './errorHandler';
 import successHandler from './successHandler';
 
+function getCsrfToken() {
+  const parts = document.cookie.split(';');
+  for (const part of parts) {
+    const [name, value] = part.trim().split('=');
+    if (name === 'csrf-token') return decodeURIComponent(value || '');
+  }
+  return null;
+}
+
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true
+});
+
+axiosInstance.interceptors.request.use((config) => {
+  const needsCsrf = ['post', 'put', 'patch', 'delete'].includes((config.method || '').toLowerCase());
+  if (needsCsrf) {
+    const token = getCsrfToken();
+    if (token) config.headers['X-CSRF-Token'] = token;
+  }
+  return config;
 });
 
 axiosInstance.interceptors.response.use(

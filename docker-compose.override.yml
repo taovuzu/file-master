@@ -1,0 +1,21 @@
+services:
+  api:
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - shared-files:/app/shared
+    command: sh -c "mkdir -p /app/shared/temp/uploads /app/shared/public/processed \
+      && chmod -R 0777 /app/shared || true \
+      && npm run dev:server"
+    environment:
+      - NODE_ENV=development
+
+  worker:
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - shared-files:/app/shared
+    command: npm run dev:worker
+    environment:
+      - NODE_ENV=development
+

@@ -82,14 +82,33 @@ const authSlice = createSlice({
     });
 
     builder.
-    addCase(verifyEmailByLink.pending, handlePending).
-    addCase(verifyEmailByLink.fulfilled, handleFulfilled).
-    addCase(verifyEmailByLink.rejected, handleRejected);
+    addCase(verifyEmailByLink.pending, (state) => {
+      state.isLoading = true;
+      state.isSuccess = false;
+    }).
+    addCase(verifyEmailByLink.fulfilled, (state) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isLoggedIn = false;
+    }).
+    addCase(verifyEmailByLink.rejected, (state) => {
+      state.isLoading = false;
+      state.isSuccess = false;
+    });
 
     builder.
-    addCase(verifyEmailByOTP.pending, handlePending).
-    addCase(verifyEmailByOTP.fulfilled, handleFulfilled).
-    addCase(verifyEmailByOTP.rejected, handleRejected);
+    addCase(verifyEmailByOTP.pending, (state) => {
+      state.isLoading = true;
+      state.isSuccess = false;
+    }).
+    addCase(verifyEmailByOTP.fulfilled, (state) => {
+      state.isLoading = false;
+      state.isSuccess = true;
+      state.isLoggedIn = false;
+    }).
+    addCase(verifyEmailByOTP.rejected, (state) => {
+      return INITIAL_STATE;
+    });
 
     builder.
     addCase(resendVerification.pending, (state) => {

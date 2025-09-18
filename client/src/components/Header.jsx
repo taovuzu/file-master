@@ -203,7 +203,8 @@ const Header = () => {
     if (isLoggedIn) {
       navigate("/profile");
     } else {
-      navigate("/login");
+      const from = window.location.pathname + window.location.search;
+      navigate(`/login?redirectTo=${encodeURIComponent(from)}`);
     }
   };
 
@@ -421,7 +422,10 @@ const Header = () => {
             <div className="flex items-center gap-4">
                 {}
                 <button
-                onClick={() => navigate("/login")}
+                onClick={() => {
+                  const from = window.location.pathname + window.location.search;
+                  navigate(`/login?redirectTo=${encodeURIComponent(from)}`);
+                }}
                 className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors">
                 
                   Sign In

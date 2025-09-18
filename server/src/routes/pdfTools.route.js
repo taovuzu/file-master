@@ -11,8 +11,14 @@ import { splitPdf } from "../controllers/splitPdf.controller.js";
 import { protectPdf } from "../controllers/protectPdf.controller.js";
 import { unlockPdf } from "../controllers/unlockPdf.controller.js";
 import { ApiError } from "../utils/ApiError.js";
+import { verifyCSRF, getUserLoggedInOrNot } from "../middlewares/auth.middleware.js";
+import { enforceUsageLimits } from "../middlewares/usageLimit.middleware.js";
 
 const router = Router();
+
+router.use(getUserLoggedInOrNot);
+router.use(enforceUsageLimits);
+router.use(verifyCSRF);
 
 router.post("/compress", upload.single("PDFFILE"), compressPdf);
 router.post("/merge", upload.array("PDFFILE"), mergePdfFiles);

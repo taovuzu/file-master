@@ -45,14 +45,11 @@ export const registerUser = createAsyncThunk(
 
 export const verifyEmailByLink = createAsyncThunk(
   'auth/verifyEmailByLink',
-  async ({ token }, { rejectWithValue }) => {
-    const data = await authService.verifyEmailByLink({ token });
+  async ({ email, unHashedToken }, { rejectWithValue }) => {
+    const data = await authService.verifyEmailByLink({ email, unHashedToken });
 
     if (data.success === true) {
-      const authState = buildAuthState(data.result);
-      window.localStorage.setItem('auth', JSON.stringify(authState));
-      window.localStorage.removeItem('isLogout');
-      return data.result;
+      return data.result; // { registrationToken, email }
     }
     return rejectWithValue(data?.error || 'Email verification failed');
   }
@@ -64,10 +61,7 @@ export const verifyEmailByOTP = createAsyncThunk(
     const data = await authService.verifyEmailByOTP({ email, otp });
 
     if (data.success === true) {
-      const authState = buildAuthState(data.result);
-      window.localStorage.setItem('auth', JSON.stringify(authState));
-      window.localStorage.removeItem('isLogout');
-      return data.result;
+      return data.result; // { registrationToken }
     }
     return rejectWithValue(data?.error || 'OTP verification failed');
   }
@@ -75,8 +69,8 @@ export const verifyEmailByOTP = createAsyncThunk(
 
 export const resendVerification = createAsyncThunk(
   'auth/resendVerification',
-  async (_, { rejectWithValue }) => {
-    const data = await authService.resendVerification();
+  async ({ email }, { rejectWithValue }) => {
+    const data = await authService.resendVerification({ email });
 
     if (data.success === true) {
       return data.result;

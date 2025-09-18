@@ -1,8 +1,8 @@
 import express from "express";
-import session from "express-session";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { rateLimit } from "express-rate-limit";
+import { globalSlowDown, sensitiveRateLimiter } from "./middlewares/rateLimit.middleware.js";
 import requestIp from "request-ip";
 import passport from "passport";
 import { ApiError } from "./utils/ApiError.js";
@@ -16,42 +16,18 @@ app.use(cors({
 
 app.use(requestIp.mw());
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5000,
-  standardHeaders: true,
-  legacyHeaders: false,
-  keyGenerator: (req, res) => {
-    return req.clientIp;
-  },
-  handler: (_, __, ___, options) => {
-    throw new ApiError(
-      options.statusCode || 500,
-      `There are too many requests. You are only allowed ${options.max} requests per ${
-      options.windowMs / 60000} minutes`
-    );
-  }
-});
-app.use(limiter);
+app.use(globalSlowDown({ windowMs: 15 * 60 * 1000, threshold: 100 }));
 app.use(express.json({ limit: "32kb" }));
 app.use(express.urlencoded({ extended: true, limit: "32kb" }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.static("public"));
 
-app.use(session({
-  secret: process.env.EXPRESS_SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 3600000,
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-  }
-}));
+
 
 import "./middlewares/passport.js";
 app.use(passport.initialize());
+
+console.log("App booted up");
 
 app.use((req, res, next) => {
   console.log(`Incoming Request: ${req.method} ${req.originalUrl}`);
@@ -68,7 +44,7 @@ import { enforceUsageLimits } from "./middlewares/usageLimit.middleware.js";
 import { uploadLimitMiddleware } from "./middlewares/uploadLimit.middleware.js";
 
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/pdf-tools", enforceUsageLimits, uploadLimitMiddleware, pdfToolsRouter);
+app.use("/api/v1/pdf-tools", uploadLimitMiddleware, pdfToolsRouter);
 app.use("/api/v1/download", downloadRouter);
 app.use("/api/v1/health", healthRouter);
 

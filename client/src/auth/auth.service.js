@@ -3,9 +3,27 @@ import errorHandler from '@/request/errorHandler';
 import successHandler from '@/request/successHandler';
 import axios from 'axios';
 
+function getCsrfToken() {
+  const parts = document.cookie.split(';');
+  for (const part of parts) {
+    const [name, value] = part.trim().split('=');
+    if (name === 'csrf-token') return decodeURIComponent(value || '');
+  }
+  return null;
+}
+
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true
+});
+
+axiosInstance.interceptors.request.use((config) => {
+  const needsCsrf = ['post', 'put', 'patch', 'delete'].includes((config.method || '').toLowerCase());
+  if (needsCsrf) {
+    const token = getCsrfToken();
+    if (token) config.headers['X-CSRF-Token'] = token;
+  }
+  return config;
 });
 
 axiosInstance.interceptors.response.use(
@@ -14,7 +32,6 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
-      // Avoid retry/refresh loop if the 401 came from the refresh endpoint itself
       const isRefreshRequest = typeof originalRequest.url === 'string' && originalRequest.url.includes('users/refresh');
       if (isRefreshRequest) {
         return Promise.reject(error);
@@ -36,7 +53,6 @@ axiosInstance.interceptors.response.use(
 
 const sendAuthRequest = async (method, endpoint, data = {}, successOptions) => {
   try {
-    // Avoid logging auth payloads
     let response = await axiosInstance({ method, url: endpoint, data, headers: { 'Content-Type': 'application/json' }, withCredentials: true });
 
     if (successOptions) {
@@ -64,18 +80,18 @@ sendAuthRequest(
   { notifyOnSuccess: false, notifyOnFailed: false }
 );
 
-export const resendVerification = () =>
+export const resendVerification = ({ email }) =>
 sendAuthRequest(
   'post',
   'users/resend-verification',
-  {},
+  { email },
   { notifyOnSuccess: false, notifyOnFailed: false }
 );
 
-export const verifyEmailByLink = ({ token }) =>
+export const verifyEmailByLink = ({ email, unHashedToken }) =>
 sendAuthRequest(
   'get',
-  `users/verify-email-link?token=${token}`,
+  `users/verify-email-link?email=${encodeURIComponent(email)}&unHashedToken=${encodeURIComponent(unHashedToken)}&response=json`,
   null,
   { notifyOnSuccess: false, notifyOnFailed: false }
 );

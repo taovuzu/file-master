@@ -4,7 +4,10 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "concurrently  \"nodemon -r dotenv/config src/server.js dotenv_config_path=./.env dotenv_config_debug=true\" \"nodemon src/worker.js\"",
+    "dev:server": "nodemon -r dotenv/config src/server.js dotenv_config_path=./.env dotenv_config_debug=true",
+    "dev:worker": "nodemon src/worker.js",
+    "start": "node src/server.js",
+    "worker": "node src/worker.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "ryuzen",
@@ -43,6 +46,7 @@
     "pdf-lib": "^1.17.1",
     "pdf-merger-js": "^5.1.2",
     "pptxgenjs": "^4.0.1",
+    "rate-limit-redis": "^4.2.2",
     "redis": "^5.8.2",
     "request-ip": "^3.3.0",
     "sanitize-filename": "^1.6.3",

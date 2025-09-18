@@ -27,8 +27,9 @@ const resetIfNeeded = (usage) => {
 export const enforceUsageLimits = asyncHandler(async (req, res, next) => {
   const ip = requestIp.getClientIp(req);
 
-  let user = req.user ? await User.findById(req.user._id) : null;
-  const limits = getLimitsFor(user);
+  // Stateless: use claims from req.user if present, without DB lookup
+  const claims = req.user || null;
+  const limits = getLimitsFor(claims);
 
   const files = Object.values(req.files || {}).flat().concat(req.file ? [req.file] : []);
   const tooLarge = files.some((f) => (f.size || 0) / 1024 / 1024 > limits.maxSizeMB);
@@ -36,7 +37,7 @@ export const enforceUsageLimits = asyncHandler(async (req, res, next) => {
     throw new ApiError(413, `File too large. Max size ${limits.maxSizeMB}MB on your plan`);
   }
 
-  if (!user) {
+  if (!claims) {
     if (!global.__anonUsage) global.__anonUsage = new Map();
     const record = global.__anonUsage.get(ip) || { lastResetAt: new Date(), dailyOperations: 0 };
     const fresh = resetIfNeeded(record);
@@ -48,11 +49,16 @@ export const enforceUsageLimits = asyncHandler(async (req, res, next) => {
     return next();
   }
 
-  user.usage = resetIfNeeded(user.usage || { lastResetAt: new Date(), dailyOperations: 0 });
-  if (user.usage.dailyOperations >= limits.dailyOps) {
+  // For logged-in user: rely on claims.plan only for limits; skip DB writes to stay stateless
+  // Optional: implement Redis counters if persistence across instances is needed
+  const key = `usage:${claims._id}:${new Date().toDateString()}`;
+  if (!global.__userUsage) global.__userUsage = new Map();
+  const record = global.__userUsage.get(key) || { lastResetAt: new Date(), dailyOperations: 0 };
+  const fresh = resetIfNeeded(record);
+  if (fresh.dailyOperations >= limits.dailyOps) {
     throw new ApiError(429, 'Daily plan limit reached. Upgrade plan to continue.');
   }
-  user.usage.dailyOperations += 1;
-  await user.save();
+  fresh.dailyOperations += 1;
+  global.__userUsage.set(key, fresh);
   next();
 });

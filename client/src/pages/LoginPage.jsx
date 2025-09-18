@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { GoogleOutlined } from "@ant-design/icons";
 import { Button, Space } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AuthLayout from "@/layout/AuthLayout";
 import AuthForm from "@/forms/AuthForm";
 import { useDispatch, useSelector } from "react-redux";
@@ -13,19 +13,40 @@ const LoginPage = () => {
   const { isLoading } = useSelector(selectAuthState);
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
 
   const handleLogin = (values) => {
+    const query = new URLSearchParams(location.search);
+    const qsRedirect = query.get("redirectTo");
+    const stateRedirect = location.state && location.state.from;
+    const current = qsRedirect || stateRedirect || "/home";
+    try {
+      window.localStorage.setItem("postLoginRedirect", current);
+    } catch (_) {}
     dispatch(login({ loginData: values }));
   };
 
   const handleGoogleLogin = () => {
+    const query = new URLSearchParams(location.search);
+    const qsRedirect = query.get("redirectTo");
+    const stateRedirect = location.state && location.state.from;
+    const current = qsRedirect || stateRedirect || "/home";
+    try {
+      window.localStorage.setItem("postLoginRedirect", current);
+    } catch (_) {}
     dispatch(googleLogin());
   };
 
   useEffect(() => {
     if (isLoggedIn) {
-      navigate("/home", { replace: true });
+      let target = "/home";
+      try {
+        const stored = window.localStorage.getItem("postLoginRedirect");
+        if (stored) target = stored;
+        window.localStorage.removeItem("postLoginRedirect");
+      } catch (_) {}
+      navigate(target, { replace: true });
     }
   }, [isLoggedIn, navigate]);
 
