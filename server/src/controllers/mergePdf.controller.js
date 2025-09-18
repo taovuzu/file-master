@@ -5,6 +5,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.queue.js";
+import { SHARED_PROCESSED_PATH } from "../constants.js";
 
 const mergePdfFiles = asyncHandler(async (req, res) => {
   const files = req.files;
@@ -14,8 +15,8 @@ const mergePdfFiles = asyncHandler(async (req, res) => {
 
   const jobId = uuidv4();
   const outputName = `${uuidv4()}___file_master_merged.pdf`;
-  const outputDir = path.join(process.cwd(), "public", "processed");
-  const outputPath = path.join(outputDir, outputName);
+  fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
+  const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
 
   const inputPaths = files.map((file) => file.path);
   const originalFileNames = files.map((file) => file.originalname);

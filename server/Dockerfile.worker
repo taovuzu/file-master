@@ -1,6 +1,8 @@
 FROM node:20-bookworm
-
 WORKDIR /app
+
+ARG UID=1000
+ARG GID=1000
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   qpdf \
@@ -10,14 +12,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY package*.json ./
 RUN npm install
-
 COPY src ./src
 
 ENV NODE_ENV=production
 
-RUN useradd -m -u 10001 appuser
-USER appuser
-
-CMD ["node", "src/worker.js"]
+RUN \
+    if [ "${GID}" != "1000" ]; then groupmod -g ${GID} node; fi && \
+    if [ "${UID}" != "1000" ]; then usermod -u ${UID} node; fi
 
 

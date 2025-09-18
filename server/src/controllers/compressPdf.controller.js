@@ -6,6 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.queue.js";
+import { SHARED_PROCESSED_PATH } from "../constants.js";
 
 const compressPdf = asyncHandler(async (req, res) => {
   const file = req.file;
@@ -24,8 +25,8 @@ const compressPdf = asyncHandler(async (req, res) => {
   const inputPath = path.resolve(file.path);
   const name = path.basename(file.originalname, path.extname(file.originalname));
   const outputName = `${uuidv4()}___${name}_compressed.pdf`;
-  const outputDir = path.join(process.cwd(), "public", "processed");
-  const outputPath = path.join(outputDir, outputName);
+  fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
+  const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
 
   try {
 

@@ -1,5 +1,8 @@
 version: "3.9"
 
+volumes:
+  shared-files:
+
 services:
   client:
     build:
@@ -17,13 +20,20 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile.api
+      args:
+        UID: "${UID}"
+        GID: "${GID}"
     env_file:
       - ./server/.env
+    environment:
+      - SHARED_BASE_DIR=/app/shared
+      - CORS_ORIGIN=http://localhost:5173
     ports:
       - "8080:8080"
     restart: unless-stopped
     volumes:
-      - shared-files:/app/files
+      - shared-files:/app/shared
+    command: sh -c "mkdir -p /app/shared/temp/uploads /app/shared/public/processed && chmod -R 0777 /app/shared || true && (chown -R node:node /app/shared || true) && su node -s /bin/sh -c 'node src/server.js'"
     deploy:
       resources:
         limits:
@@ -34,11 +44,17 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile.worker
+      args:
+        UID: "${UID}"
+        GID: "${GID}"
     env_file:
       - ./server/.env
+    environment:
+      - SHARED_BASE_DIR=/app/shared
     restart: unless-stopped
     volumes:
-      - shared-files:/app/files
+      - shared-files:/app/shared
+    command: sh -c "mkdir -p /app/shared/temp/uploads /app/shared/public/processed && chmod -R 0777 /app/shared || true && (chown -R node:node /app/shared || true) && node src/worker.js"
     deploy:
       resources:
         limits:
@@ -50,8 +66,5 @@ services:
       - no-new-privileges:true
     tmpfs:
       - /tmp:rw,noexec,nosuid,nodev
-      - /app/temp:rw,noexec,nosuid,nodev
       - /app/jobs:rw,noexec,nosuid,nodev
 
-volumes:
-  shared-files:

@@ -5,6 +5,7 @@ import { createReadStream } from 'fs';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { SHARED_PROCESSED_PATH } from '../constants.js';
 
 export const checkJobStatus = asyncHandler(async (req, res) => {
   const { jobId } = req.params;
@@ -118,7 +119,7 @@ export const downloadFileByPath = asyncHandler(async (req, res) => {
     throw new ApiError.badRequest('File parameter is required');
   }
 
-  const filePath = path.join(process.cwd(), 'public', 'processed', file);
+  const filePath = path.join(SHARED_PROCESSED_PATH, file);
 
   try {
     await fs.access(filePath);
@@ -140,7 +141,7 @@ export const downloadFileByPath = asyncHandler(async (req, res) => {
 
 export const listProcessedFiles = asyncHandler(async (req, res) => {
   try {
-    const processedDir = path.join(process.cwd(), 'public', 'processed');
+    const processedDir = SHARED_PROCESSED_PATH;
 
     try {
       await fs.access(processedDir);
@@ -194,7 +195,7 @@ export const deleteProcessedFile = asyncHandler(async (req, res) => {
   }
 
   try {
-    const filePath = path.join(process.cwd(), 'public', 'processed', file);
+    const filePath = path.join(SHARED_PROCESSED_PATH, file);
 
     try {
       await fs.access(filePath);

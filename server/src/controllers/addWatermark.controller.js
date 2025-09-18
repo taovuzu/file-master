@@ -6,6 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.queue.js";
+import { SHARED_PROCESSED_PATH } from "../constants.js";
 
 
 const addTextWatermark = asyncHandler(async (req, res) => {
@@ -33,9 +34,8 @@ const addTextWatermark = asyncHandler(async (req, res) => {
   const inputPath = path.resolve(file.path);
   const name = path.basename(file.originalname, path.extname(file.originalname));
   const outputName = `${uuidv4()}___${name}_watermarked.pdf`;
-  const outputDir = path.join(process.cwd(), "public", "processed");
-  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-  const outputPath = path.join(outputDir, outputName);
+  if (!fs.existsSync(SHARED_PROCESSED_PATH)) fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
+  const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
 
   try {
 
@@ -161,9 +161,8 @@ const addImageWatermark = asyncHandler(async (req, res) => {
 
   const name = path.basename(pdfFile.originalname, path.extname(pdfFile.originalname));
   const outputName = `${uuidv4()}___${name}_watermarked.pdf`;
-  const outputDir = path.join(process.cwd(), "public", "processed");
-  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-  const outputPath = path.join(outputDir, outputName);
+  if (!fs.existsSync(SHARED_PROCESSED_PATH)) fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
+  const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
 
   try {
 

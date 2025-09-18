@@ -1,14 +1,15 @@
 import { promises as fs } from 'fs';
 import { join, dirname } from 'path';
+import { SHARED_BASE_DIR, SHARED_UPLOADS_PATH, SHARED_PROCESSED_PATH } from '../constants.js';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const cleanupTargets = [
-{ path: join(__dirname, '..', '..', 'temp', 'uploads'), maxAge: 1 * 60 * 1000 },
-{ path: join(__dirname, '..', '..', 'temp'), maxAge: 1 * 60 * 1000 },
-{ path: join(__dirname, '..', '..', 'public', 'processed'), maxAge: 5 * 60 * 1000 }];
+{ path: SHARED_UPLOADS_PATH, maxAge: 1 * 60 * 1000 },
+{ path: join(SHARED_BASE_DIR, 'temp'), maxAge: 1 * 60 * 1000 },
+{ path: SHARED_PROCESSED_PATH, maxAge: 5 * 60 * 1000 }];
 
 
 const excludedDirs = ['important-job', 'do-not-delete', 'uploads'];
