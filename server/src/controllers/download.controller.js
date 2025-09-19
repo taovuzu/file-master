@@ -6,19 +6,20 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { SHARED_PROCESSED_PATH } from '../constants.js';
+import { createPresignedGetUrl } from '../utils/s3.js';
 
 export const checkJobStatus = asyncHandler(async (req, res) => {
   const { jobId } = req.params;
 
   if (!jobId) {
-    throw new ApiError.badRequest('Job ID is required');
+    throw ApiError.badRequest('Job ID is required');
   }
 
   try {
     const jobData = await redisClient.hGetAll(`job:${jobId}`);
 
     if (!jobData || Object.keys(jobData).length === 0) {
-      throw new ApiError.notFound('Job not found');
+      throw ApiError.notFound('Job not found');
     }
 
 
@@ -61,7 +62,7 @@ export const checkJobStatus = asyncHandler(async (req, res) => {
     return resp.withRequest(req).send(res);
   } catch (error) {
     console.error('Error checking job status:', error);
-    throw new ApiError.internal('Internal server error while checking job status');
+    throw ApiError.internal('Internal server error while checking job status');
   }
 });
 
@@ -69,43 +70,70 @@ export const downloadFile = asyncHandler(async (req, res) => {
   const { jobId } = req.params;
 
   if (!jobId) {
-    throw new ApiError.badRequest('Job ID is required');
+    throw ApiError.badRequest('Job ID is required');
   }
 
   try {
     const jobData = await redisClient.hGetAll(`job:${jobId}`);
 
     if (!jobData || Object.keys(jobData).length === 0) {
-      throw new ApiError.notFound('Job not found');
+      throw ApiError.notFound('Job not found');
     }
+
 
     if (jobData.status !== 'completed') {
-      throw new ApiError.badRequest(`Job is not completed. Current status: ${jobData.status}`);
+      throw ApiError.badRequest(`Job is not completed. Current status: ${jobData.status}`);
     }
 
-    if (!jobData.outputFilePath) {
-      throw new ApiError.notFound('Output file path not found for completed job');
-    }
-
-    const filePath = jobData.outputFilePath;
-
-    try {
-      await fs.access(filePath);
-    } catch (error) {
-      throw new ApiError.notFound('Output file not found on server');
-    }
-
-    const fileName = path.basename(filePath);
-    const match = fileName.match(/^.+___(.+)$/);
-    const downloadFileName = match ? match[1] : fileName;
-
-    return res.download(filePath, downloadFileName, (err) => {
-      if (err) {
-        console.error('File download failed:', err);
-      } else {
-        console.log('File downloaded successfully.');
+    if (jobData.outputS3Key) {
+      // authorize user if needed (omitted for brevity)
+      const url = await createPresignedGetUrl(jobData.outputS3Key, 60);
+      
+      // Determine the correct file name based on operation type
+      let fileName = jobData.originalFileName || 'processed-document.pdf';
+      if (jobData.operation === 'split') {
+        const baseName = jobData.originalFileName?.replace(/\.pdf$/i, '') || 'document';
+        // Check if it's a single split (PDF) or multiple splits (ZIP)
+        // We'll determine this based on the S3 key or job data
+        const isSingleSplit = jobData.ranges && Array.isArray(jobData.ranges) && jobData.ranges.length === 1;
+        if (isSingleSplit) {
+          fileName = `${baseName}-split.pdf`;
+        } else {
+          fileName = `${baseName}-split.zip`;
+        }
+      } else if (jobData.operation === 'merge') {
+        const baseName = jobData.originalFileName?.replace(/\.pdf$/i, '') || 'document';
+        fileName = `${baseName}-merged.pdf`;
       }
-    });
+      
+      return res.json({
+        success: true,
+        downloadUrl: url,
+        fileName: fileName,
+        expiresIn: 60
+      });
+    }
+
+    if (jobData.outputFilePath) {
+      const filePath = jobData.outputFilePath;
+      try {
+        await fs.access(filePath);
+      } catch (error) {
+        throw ApiError.notFound('Output file not found on server');
+      }
+      const fileName = path.basename(filePath);
+      const match = fileName.match(/^.+___(.+)$/);
+      const downloadFileName = match ? match[1] : fileName;
+      return res.download(filePath, downloadFileName, (err) => {
+        if (err) {
+          console.error('File download failed:', err);
+        } else {
+          console.log('File downloaded successfully.');
+        }
+      });
+    }
+
+    throw ApiError.notFound('No output available for this job');
   } catch (error) {
     console.error('Error downloading file:', error);
     throw error;
@@ -116,7 +144,7 @@ export const downloadFileByPath = asyncHandler(async (req, res) => {
   const { file } = req.params;
 
   if (!file) {
-    throw new ApiError.badRequest('File parameter is required');
+    throw ApiError.badRequest('File parameter is required');
   }
 
   const filePath = path.join(SHARED_PROCESSED_PATH, file);
@@ -124,7 +152,7 @@ export const downloadFileByPath = asyncHandler(async (req, res) => {
   try {
     await fs.access(filePath);
   } catch (error) {
-    throw new ApiError.notFound('File not found');
+    throw ApiError.notFound('File not found');
   }
 
   const match = file.match(/^.+___(.+)$/);
@@ -183,7 +211,7 @@ export const listProcessedFiles = asyncHandler(async (req, res) => {
       .send(res);
   } catch (error) {
     console.error('Error listing processed files:', error);
-    throw new ApiError.internal('Internal server error while listing processed files');
+    throw ApiError.internal('Internal server error while listing processed files');
   }
 });
 
@@ -191,7 +219,7 @@ export const deleteProcessedFile = asyncHandler(async (req, res) => {
   const { file } = req.params;
 
   if (!file) {
-    throw new ApiError.badRequest('File parameter is required');
+    throw ApiError.badRequest('File parameter is required');
   }
 
   try {
@@ -200,7 +228,7 @@ export const deleteProcessedFile = asyncHandler(async (req, res) => {
     try {
       await fs.access(filePath);
     } catch (error) {
-      throw new ApiError.notFound('File not found');
+      throw ApiError.notFound('File not found');
     }
 
     await fs.unlink(filePath);
@@ -211,6 +239,6 @@ export const deleteProcessedFile = asyncHandler(async (req, res) => {
       .send(res);
   } catch (error) {
     console.error('Error deleting file:', error);
-    throw new ApiError.internal('Internal server error while deleting file');
+    throw ApiError.internal('Internal server error while deleting file');
   }
 });

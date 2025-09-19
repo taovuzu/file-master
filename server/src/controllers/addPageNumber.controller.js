@@ -28,7 +28,7 @@ const fontChoices = {
 const AddPageNumber = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError.notFound("File could not be found on server");
+    throw ApiError.notFound("File could not be found on server");
   }
 
   let {
@@ -68,7 +68,7 @@ const AddPageNumber = asyncHandler(async (req, res) => {
       }
     }
     if (retryCount > maxRetries) {
-      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+      throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
 

@@ -11,7 +11,7 @@ import { SHARED_PROCESSED_PATH } from "../constants.js";
 
 const addTextWatermark = asyncHandler(async (req, res) => {
   const file = req.file;
-  if (!file) throw new ApiError.notFound("File could not be found on server");
+  if (!file) throw ApiError.notFound("File could not be found on server");
 
   let {
     text,
@@ -27,7 +27,7 @@ const addTextWatermark = asyncHandler(async (req, res) => {
   } = req.body;
 
   if (!text) {
-    throw new ApiError.badRequest("Text is required for watermark");
+    throw ApiError.badRequest("Text is required for watermark");
   }
 
   const jobId = uuidv4();
@@ -53,7 +53,7 @@ const addTextWatermark = asyncHandler(async (req, res) => {
       }
     }
     if (retryCount > maxRetries) {
-      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+      throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
 
@@ -130,7 +130,7 @@ const addTextWatermark = asyncHandler(async (req, res) => {
 
 const addImageWatermark = asyncHandler(async (req, res) => {
   const { pdfFile, imageFile } = req.files;
-  if (!pdfFile || !imageFile) throw new ApiError.notFound("Both PDF and image files are required");
+  if (!pdfFile || !imageFile) throw ApiError.notFound("Both PDF and image files are required");
 
   let {
     position = "bottom-right",
@@ -180,7 +180,7 @@ const addImageWatermark = asyncHandler(async (req, res) => {
       }
     }
     if (retryCount > maxRetries) {
-      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+      throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
 

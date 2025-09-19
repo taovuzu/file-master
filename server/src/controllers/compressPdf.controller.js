@@ -7,26 +7,26 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.queue.js";
 import { SHARED_PROCESSED_PATH } from "../constants.js";
+import { s3Bucket } from "../utils/s3.js";
 
 const compressPdf = asyncHandler(async (req, res) => {
-  const file = req.file;
-  console.log(file);
-  if (!file) {
-    throw new ApiError.notFound("File could not be found on server");
+  const { s3Key, compressionLevel: compressionLevelRaw, originalFileName } = req.body || {};
+  if (!s3Key) {
+    throw ApiError.badRequest("Missing s3Key. Upload the file to S3 first.");
   }
 
-  let compressionLevel = req.body.compressionLevel;
+  let compressionLevel = compressionLevelRaw;
   if (!compressionLevel) compressionLevel = "ebook";else
   if (compressionLevel == 1) compressionLevel = "printer";else
   if (compressionLevel == 2) compressionLevel = "ebook";else
   compressionLevel = "screen";
 
   const jobId = uuidv4();
-  const inputPath = path.resolve(file.path);
-  const name = path.basename(file.originalname, path.extname(file.originalname));
+  const name = path.basename(originalFileName || "file.pdf", path.extname(originalFileName || "file.pdf"));
   const outputName = `${uuidv4()}___${name}_compressed.pdf`;
   fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
   const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
+  const outputS3Key = `processed/${jobId}/result.pdf`;
 
   try {
 
@@ -46,25 +46,26 @@ const compressPdf = asyncHandler(async (req, res) => {
     }
 
     if (retryCount > maxRetries) {
-      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+      throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
 
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'compress',
-      originalFileName: file.originalname
+      originalFileName: originalFileName || "file.pdf"
     });
 
 
     await pdfProcessingQueue.add('compress-pdf', {
       jobId,
       operation: 'compress',
-      inputPath,
+      s3Key,
       outputPath,
+      outputS3Key,
       compressionLevel,
-      originalFileName: file.originalname
-    });
+      originalFileName: originalFileName || "file.pdf"
+    }, { attempts: 3, backoff: { type: 'exponential', delay: 10000 } });
 
   } catch (error) {
     console.error(`Failed to queue compress job ${jobId}:`, error);
@@ -91,7 +92,8 @@ const compressPdf = asyncHandler(async (req, res) => {
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'compress',
       compressionLevel,
-      originalFileName: file.originalname
+      originalFileName: originalFileName || "file.pdf",
+      input: { bucket: s3Bucket, key: s3Key }
     }, "PDF compression job queued successfully", 200)
     .withRequest(req)
     .send(res);

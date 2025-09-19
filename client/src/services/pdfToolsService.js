@@ -157,42 +157,38 @@ const toClientResult = (resp) => {
 
 
 const processPdfToolWithPolling = async (endpoint, files, options, onProgress, onPollingStart, fieldName = 'PDFFILE', abortSignal = null) => {
-  const formData = new FormData();
+  if (endpoint === 'compress') {
+    const fileArray = Array.isArray(files) ? files : [files];
+    const file = fileArray[0];
+    if (!file) throw new Error('No file provided');
 
+    if (onProgress) onProgress(5, 'Requesting secure upload link...');
+    const presign = await request.post({ entity: 'upload/presign', jsonData: { fileName: file.name, contentType: file.type || 'application/pdf' } });
+    if (!presign?.success) throw new Error(presign?.message || 'Failed to get upload URL');
+    const { url, key } = presign;
 
-  const fileArray = Array.isArray(files) ? files : [files];
-  fileArray.forEach((file) => {
-    formData.append(fieldName, file);
-  });
+    if (onProgress) onProgress(15, 'Uploading to secure storage...');
+    const putResp = await fetch(url, { method: 'PUT', headers: { 'Content-Type': file.type || 'application/pdf' }, body: file });
+    if (!putResp.ok) throw new Error('Failed to upload file');
+    if (onProgress) onProgress(35, 'Upload complete. Enqueuing job...');
 
+    const resp = await request.post({ entity: `pdf-tools/${endpoint}`, jsonData: { s3Key: key, compressionLevel: options?.compressionLevel || options?.level, originalFileName: file.name } });
+    const result = toClientResult(resp);
+    if (!result.success) throw new Error(result.error);
+    if (onProgress) onProgress(45, 'Job submitted, starting processing...');
 
-  Object.entries(options).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      if (typeof value === 'object') {
-        formData.append(key, JSON.stringify(value));
-      } else {
-        formData.append(key, value);
-      }
-    }
-  });
-
-
-
-  if (onProgress) {
-    onProgress(10, 'Preparing files...');
+    if (onPollingStart) onPollingStart();
+    const jobResult = await pollJobStatus(result.statusUrl, onProgress, undefined, abortSignal);
+    const downloadUrl = `${DOWNLOAD_BASE_URL}${result.jobId}`;
+    return { success: true, file: result.jobId, fileUrl: downloadUrl, originalFileName: result.originalFileName, operation: result.operation };
   }
 
-
-  const resp = await request.post({
-    entity: `pdf-tools/${endpoint}`,
-    jsonData: formData,
-    onUploadProgress: (progressEvent) => {
-      if (onProgress && progressEvent.total) {
-        const uploadProgress = Math.round(progressEvent.loaded / progressEvent.total * 30);
-        onProgress(10 + uploadProgress, `Uploading files... ${Math.round(progressEvent.loaded / progressEvent.total * 100)}%`);
-      }
-    }
-  });
+  const formData = new FormData();
+  const fileArray = Array.isArray(files) ? files : [files];
+  fileArray.forEach((file) => { formData.append(fieldName, file); });
+  Object.entries(options).forEach(([key, value]) => { if (value !== undefined && value !== null) { if (typeof value === 'object') { formData.append(key, JSON.stringify(value)); } else { formData.append(key, value); } } });
+  if (onProgress) { onProgress(10, 'Preparing files...'); }
+  const resp = await request.post({ entity: `pdf-tools/${endpoint}`, jsonData: formData });
 
   const result = toClientResult(resp);
   if (!result.success) {
@@ -238,13 +234,98 @@ const processPdfToolWithPolling = async (endpoint, files, options, onProgress, o
 
 
 export const mergePdfs = async (files, options = {}, onProgress, onPollingStart, abortSignal = null) => {
-  return processPdfToolWithPolling('merge', files, options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
+  const fileArray = Array.isArray(files) ? files : [files];
+  if (fileArray.length === 0) throw new Error('No files provided');
+
+  if (onProgress) onProgress(5, 'Requesting secure upload links...');
+  
+  // Get presigned URLs for all files
+  const uploadPromises = fileArray.map(async (file) => {
+    const presign = await request.post({ 
+      entity: 'upload/presign', 
+      jsonData: { fileName: file.name, contentType: file.type || 'application/pdf' } 
+    });
+    if (!presign?.success) throw new Error(presign?.message || 'Failed to get upload URL');
+    return { file, presign };
+  });
+  
+  const uploadData = await Promise.all(uploadPromises);
+  
+  if (onProgress) onProgress(15, 'Uploading files to secure storage...');
+  
+  // Upload all files to S3
+  const uploadPromises2 = uploadData.map(async ({ file, presign }) => {
+    const putResp = await fetch(presign.url, { 
+      method: 'PUT', 
+      headers: { 'Content-Type': file.type || 'application/pdf' }, 
+      body: file 
+    });
+    if (!putResp.ok) throw new Error('Failed to upload file');
+    return presign.key;
+  });
+  
+  const s3Keys = await Promise.all(uploadPromises2);
+  
+  if (onProgress) onProgress(35, 'Upload complete. Enqueuing job...');
+  
+  const resp = await request.post({ 
+    entity: 'pdf-tools/merge', 
+    jsonData: { 
+      s3Keys, 
+      originalFileNames: fileArray.map(f => f.name) 
+    } 
+  });
+  
+  const result = toClientResult(resp);
+  if (!result.success) throw new Error(result.error);
+  
+  if (onProgress) onProgress(45, 'Job submitted, starting processing...');
+  
+  if (onPollingStart) onPollingStart();
+  const jobResult = await pollJobStatus(result.statusUrl, onProgress, undefined, abortSignal);
+  const downloadUrl = `${DOWNLOAD_BASE_URL}${result.jobId}`;
+  return { success: true, file: result.jobId, fileUrl: downloadUrl, originalFileName: result.originalFileName, operation: result.operation };
 };
 
 
 export const splitPdf = async (file, ranges = [], options = {}, onProgress, onPollingStart, abortSignal = null) => {
-  options = { ranges };
-  return processPdfToolWithPolling('split', file, options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
+  if (!file) throw new Error('No file provided');
+
+  if (onProgress) onProgress(5, 'Requesting secure upload link...');
+  const presign = await request.post({ 
+    entity: 'upload/presign', 
+    jsonData: { fileName: file.name, contentType: file.type || 'application/pdf' } 
+  });
+  if (!presign?.success) throw new Error(presign?.message || 'Failed to get upload URL');
+  const { url, key } = presign;
+
+  if (onProgress) onProgress(15, 'Uploading to secure storage...');
+  const putResp = await fetch(url, { 
+    method: 'PUT', 
+    headers: { 'Content-Type': file.type || 'application/pdf' }, 
+    body: file 
+  });
+  if (!putResp.ok) throw new Error('Failed to upload file');
+  if (onProgress) onProgress(35, 'Upload complete. Enqueuing job...');
+
+  const resp = await request.post({ 
+    entity: 'pdf-tools/split', 
+    jsonData: { 
+      s3Key: key, 
+      ranges, 
+      originalFileName: file.name 
+    } 
+  });
+  
+  const result = toClientResult(resp);
+  if (!result.success) throw new Error(result.error);
+  
+  if (onProgress) onProgress(45, 'Job submitted, starting processing...');
+  
+  if (onPollingStart) onPollingStart();
+  const jobResult = await pollJobStatus(result.statusUrl, onProgress, undefined, abortSignal);
+  const downloadUrl = `${DOWNLOAD_BASE_URL}${result.jobId}`;
+  return { success: true, file: result.jobId, fileUrl: downloadUrl, originalFileName: result.originalFileName, operation: result.operation };
 };
 
 
@@ -330,13 +411,69 @@ export const addPageNumbers = async (file, options = {}, onProgress, onPollingSt
 
 export const downloadFile = async (fileOrUrl, fileName) => {
   const url = fileOrUrl?.startsWith('http') ? fileOrUrl : `${DOWNLOAD_BASE_URL}${fileOrUrl}`;
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', fileName || 'processed-document.pdf');
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  return { success: true };
+  
+  // If it's a jobId (not a full URL), we need to get the download URL from the API
+  if (!fileOrUrl?.startsWith('http')) {
+    try {
+      // Make a request to get the download URL
+      const response = await fetch(url, { 
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.success && data.downloadUrl) {
+          // Force download by creating a blob and downloading it
+          const downloadResponse = await fetch(data.downloadUrl);
+          const blob = await downloadResponse.blob();
+          
+          // Create object URL and download
+          const objectUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = objectUrl;
+          link.setAttribute('download', data.fileName || fileName || 'processed-document.pdf');
+          link.style.display = 'none';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Clean up object URL
+          URL.revokeObjectURL(objectUrl);
+          
+          return { success: true };
+        } else {
+          throw new Error('Invalid response from download endpoint');
+        }
+      } else {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback to direct link
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName || 'processed-document.pdf');
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return { success: true };
+    }
+  } else {
+    // Direct URL - use normal link download
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName || 'processed-document.pdf');
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return { success: true };
+  }
 };
 
 

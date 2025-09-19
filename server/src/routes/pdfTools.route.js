@@ -18,10 +18,15 @@ const router = Router();
 
 router.use(getUserLoggedInOrNot);
 router.use(enforceUsageLimits);
-router.use(verifyCSRF);
+// router.use((req, res, next) => {
+//   if (req.user) {
+//     return verifyCSRF(req, res, next);
+//   }  
+//   next();
+// });
 
-router.post("/compress", upload.single("PDFFILE"), compressPdf);
-router.post("/merge", upload.array("PDFFILE"), mergePdfFiles);
+router.post("/compress", compressPdf);
+router.post("/merge", mergePdfFiles);
 router.post("/watermark/text", upload.single("PDFFILE"), addTextWatermark);
 
 router.post("/page-numbers", upload.single("PDFFILE"), AddPageNumber);
@@ -30,7 +35,7 @@ router.post("/convert/images-to-pdf", upload.array("IMAGEFILE"), convertImagesTo
 
 router.post("/convert/pdf-to-ppt", upload.single("PDFFILE"), convertPdfToPpt);
 router.post("/rotate", upload.single("PDFFILE"), rotatePdf);
-router.post("/split", upload.single("PDFFILE"), splitPdf);
+router.post("/split", splitPdf);
 router.post("/protect", upload.single("PDFFILE"), protectPdf);
 router.post("/unlock", upload.single("PDFFILE"), unlockPdf);
 

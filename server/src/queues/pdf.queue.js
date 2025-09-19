@@ -78,8 +78,8 @@ async function initializeQueue() {
       defaultJobOptions: {
         removeOnComplete: 100,
         removeOnFail: 100,
-        attempts: 1,
-        backoff: { type: 'exponential', delay: 2000 }
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 10000 }
       }
     });
     pdfQueueEvents = new QueueEvents('pdf-processing-queue', {
@@ -104,6 +104,7 @@ async function updateJobStatus(jobId, status, progress, additionalData = {}) {
     if (additionalData) {
 
       if (additionalData.outputFilePath) essentialJobData.outputFilePath = additionalData.outputFilePath;
+      if (additionalData.outputS3Key) essentialJobData.outputS3Key = additionalData.outputS3Key;
       if (additionalData.message) essentialJobData.message = additionalData.message;
       if (additionalData.operation) essentialJobData.operation = additionalData.operation;
       if (additionalData.originalFileName) essentialJobData.originalFileName = additionalData.originalFileName;

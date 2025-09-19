@@ -11,12 +11,12 @@ import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.
 const unlockPdf = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError.notFound("File could not be found on server");
+    throw ApiError.notFound("File could not be found on server");
   }
 
   const password = req.body.PASSWORD;
   if (!password) {
-    throw new ApiError.badRequest("Password is required to unlock PDF");
+    throw ApiError.badRequest("Password is required to unlock PDF");
   }
 
   const jobId = uuidv4();
@@ -42,7 +42,7 @@ const unlockPdf = asyncHandler(async (req, res) => {
       }
     }
     if (retryCount > maxRetries) {
-      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+      throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
 

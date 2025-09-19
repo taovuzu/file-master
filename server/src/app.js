@@ -27,7 +27,7 @@ app.use(express.static("public"));
 import "./middlewares/passport.js";
 app.use(passport.initialize());
 
-console.log("App booted up");
+console.log(process.env.AWS_REGION);
 
 app.use((req, res, next) => {
   console.log(`Incoming Request: ${req.method} ${req.originalUrl}`);
@@ -38,13 +38,14 @@ app.use((req, res, next) => {
 import userRouter from "./routes/user.route.js";
 import pdfToolsRouter from "./routes/pdfTools.route.js";
 import downloadRouter from "./routes/download.route.js";
+import uploadRouter from "./routes/upload.route.js";
 import healthRouter from "./routes/health.routes.js";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
-import { enforceUsageLimits } from "./middlewares/usageLimit.middleware.js";
 import { uploadLimitMiddleware } from "./middlewares/uploadLimit.middleware.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/pdf-tools", uploadLimitMiddleware, pdfToolsRouter);
+app.use("/api/v1/upload", uploadRouter);
 app.use("/api/v1/download", downloadRouter);
 app.use("/api/v1/health", healthRouter);
 

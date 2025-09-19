@@ -10,13 +10,13 @@ import { SHARED_PROCESSED_PATH } from "../constants.js";
 const rotatePdf = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError.notFound("File could not be found on server");
+    throw ApiError.notFound("File could not be found on server");
   }
 
   const angle = Number(req.body.angle);
 
   if (![1, 2, 3, -1, -2, -3].includes(angle)) {
-    throw new ApiError.badRequest("angle of rotation value should be one of 1, 2, 3, -1, -2 , -3");
+    throw ApiError.badRequest("angle of rotation value should be one of 1, 2, 3, -1, -2 , -3");
   }
 
   const jobId = uuidv4();
@@ -42,7 +42,7 @@ const rotatePdf = asyncHandler(async (req, res) => {
       }
     }
     if (retryCount > maxRetries) {
-      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+      throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
 

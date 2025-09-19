@@ -11,7 +11,7 @@ import { SHARED_PROCESSED_PATH } from "../constants.js";
 const convertDocToPdf = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError.notFound("No files were uploaded.");
+    throw ApiError.notFound("No files were uploaded.");
   }
 
   const jobId = uuidv4();
@@ -36,7 +36,7 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
       }
     }
     if (retryCount > maxRetries) {
-      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+      throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
     await updateJobStatus(jobId, 'queued', 0, {
@@ -88,7 +88,7 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
 const convertImagesToPdf = asyncHandler(async (req, res) => {
   const files = req.files;
   if (!files || files.length === 0) {
-    throw new ApiError.notFound("No files were uploaded.");
+    throw ApiError.notFound("No files were uploaded.");
   }
 
   const {
@@ -119,7 +119,7 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
       }
     }
     if (retryCount > maxRetries) {
-      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+      throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
     await updateJobStatus(jobId, 'queued', 0, {
@@ -181,7 +181,7 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
 const convertPdfToDoc = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError.notFound("No files were uploaded.");
+    throw ApiError.notFound("No files were uploaded.");
   }
 
   const jobId = uuidv4();
@@ -206,7 +206,7 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
       }
     }
     if (retryCount > maxRetries) {
-      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+      throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
     await updateJobStatus(jobId, 'queued', 0, {
@@ -256,7 +256,7 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
 const convertPdfToPpt = asyncHandler(async (req, res) => {
   const file = req.file;
   if (!file) {
-    throw new ApiError.notFound("No files were uploaded.");
+    throw ApiError.notFound("No files were uploaded.");
   }
 
   const jobId = uuidv4();
@@ -281,7 +281,7 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
       }
     }
     if (retryCount > maxRetries) {
-      throw new ApiError.serviceUnavailable("Unable to establish Redis connection");
+      throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
     await updateJobStatus(jobId, 'queued', 0, {
