@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { updateJobStatus } from '../../queues/pdf.queue.js';
+import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
 
 const fontSizes = {
   small: 10,
@@ -22,7 +23,7 @@ const fontChoices = {
 };
 
 export async function addPageNumbersProcessor(jobId, jobData) {
-  let { inputPath, outputPath, pageMode,
+  let { s3Key, outputPath, outputS3Key, pageMode,
     firstPageCover,
     position,
     margin,
@@ -36,11 +37,21 @@ export async function addPageNumbersProcessor(jobId, jobData) {
     originalFileName
   } = jobData;
 
-  try {
+  const tempDir = path.join('/tmp', jobId);
+  const inputPath = path.join(tempDir, 'input.pdf');
+  const localOutputPath = path.join(tempDir, 'output.pdf');
 
+  try {
+    await fs.mkdir(tempDir, { recursive: true });
     await updateJobStatus(jobId, 'processing', 20, {
       message: 'Starting page numbers addition process...'
     });
+
+    await updateJobStatus(jobId, 'processing', 25, {
+      message: 'Downloading file from S3...'
+    });
+
+    await downloadFromS3ToFile(s3Key, inputPath);
     firstPageCover = firstPageCover === true || firstPageCover === "true";
     firstNumber = isNaN(Number(firstNumber)) ? 1 : Number(firstNumber);
     position = position || "bottom-right";
@@ -180,17 +191,22 @@ export async function addPageNumbersProcessor(jobId, jobData) {
     });
 
     const numberedPdfBytes = await pdfDoc.save();
-    await fs.writeFile(outputPath, numberedPdfBytes);
+    await fs.writeFile(localOutputPath, numberedPdfBytes);
 
-    try {
-      await fs.unlink(inputPath);
-    } catch (unlinkError) {
-      console.error(`Error deleting input file ${inputPath}:`, unlinkError);
+    await updateJobStatus(jobId, 'processing', 95, {
+      message: 'Uploading result to S3...'
+    });
+
+    if (outputS3Key) {
+      await uploadFileToS3(localOutputPath, outputS3Key, 'application/pdf');
     }
 
+    // Copy to shared path for backward compatibility
+    await fs.copyFile(localOutputPath, outputPath);
 
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
+      outputS3Key: outputS3Key || null,
       message: `Successfully added page numbers to ${numberOfPages} pages`,
       completedAt: new Date().toISOString(),
       originalFileName: originalFileName,
@@ -201,6 +217,7 @@ export async function addPageNumbersProcessor(jobId, jobData) {
 
     return {
       outputPath,
+      outputS3Key: outputS3Key || null,
       originalFileName,
       numberOfPages,
       options: { fontSize, position, fromPageIndex, color: 'black' },
@@ -210,5 +227,11 @@ export async function addPageNumbersProcessor(jobId, jobData) {
   } catch (error) {
     console.error(`Add page numbers failed for job ${jobId}:`, error);
     throw error;
+  } finally {
+    try {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch (cleanupError) {
+      console.error(`Failed to cleanup temp directory for job ${jobId}:`, cleanupError);
+    }
   }
 }

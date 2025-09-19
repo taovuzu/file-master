@@ -17,7 +17,7 @@ const UnlockPdfForm = ({ onFinish, file }) => {
       message.error("Please enter the PDF password!");
       return;
     }
-    onFinish({ PASSWORD: password });
+    onFinish({ password: password });
   };
 
   return (

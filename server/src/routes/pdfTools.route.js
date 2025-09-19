@@ -12,31 +12,23 @@ import { protectPdf } from "../controllers/protectPdf.controller.js";
 import { unlockPdf } from "../controllers/unlockPdf.controller.js";
 import { ApiError } from "../utils/ApiError.js";
 import { verifyCSRF, getUserLoggedInOrNot } from "../middlewares/auth.middleware.js";
-import { enforceUsageLimits } from "../middlewares/usageLimit.middleware.js";
-
 const router = Router();
 
 router.use(getUserLoggedInOrNot);
-router.use(enforceUsageLimits);
-// router.use((req, res, next) => {
-//   if (req.user) {
-//     return verifyCSRF(req, res, next);
-//   }  
-//   next();
-// });
 
 router.post("/compress", compressPdf);
 router.post("/merge", mergePdfFiles);
-router.post("/watermark/text", upload.single("PDFFILE"), addTextWatermark);
+router.post("/watermark/text", addTextWatermark);
 
-router.post("/page-numbers", upload.single("PDFFILE"), AddPageNumber);
-router.post("/convert/doc-to-pdf", upload.single("DOCFILE"), convertDocToPdf);
-router.post("/convert/images-to-pdf", upload.array("IMAGEFILE"), convertImagesToPdf);
+router.post("/page-numbers", AddPageNumber);
+router.post("/convert/doc-to-pdf", convertDocToPdf);
+router.post("/convert/images-to-pdf", upload.array('IMAGEFILE', 20), convertImagesToPdf);
+router.post("/convert/pdf-to-doc", convertPdfToDoc);
 
-router.post("/convert/pdf-to-ppt", upload.single("PDFFILE"), convertPdfToPpt);
-router.post("/rotate", upload.single("PDFFILE"), rotatePdf);
+router.post("/convert/pdf-to-ppt", convertPdfToPpt);
+router.post("/rotate", rotatePdf);
 router.post("/split", splitPdf);
-router.post("/protect", upload.single("PDFFILE"), protectPdf);
-router.post("/unlock", upload.single("PDFFILE"), unlockPdf);
+router.post("/protect", protectPdf);
+router.post("/unlock", unlockPdf);
 
 export default router;

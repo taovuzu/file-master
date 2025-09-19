@@ -46,10 +46,15 @@ const splitPdf = asyncHandler(async (req, res) => {
 
   const jobId = uuidv4();
   const name = path.basename(originalFileName || "file.pdf", path.extname(originalFileName || "file.pdf"));
-  const outputName = `${uuidv4()}___${name}_splited.zip`;
+  
+  // Determine if it's a single range (PDF) or multiple ranges (ZIP)
+  const isSingleRange = parsedRanges.length === 1;
+  const fileExtension = isSingleRange ? 'pdf' : 'zip';
+  const outputName = `${uuidv4()}___${name}_splited.${fileExtension}`;
+  
   fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
   const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
-  const outputS3Key = `processed/${jobId}/result.zip`;
+  const outputS3Key = `processed/${jobId}/result.${fileExtension}`;
 
   try {
 
@@ -73,7 +78,9 @@ const splitPdf = asyncHandler(async (req, res) => {
       createdAt: new Date().toISOString(),
       operation: 'split',
       originalFileName: originalFileName || "file.pdf",
-      ranges: parsedRanges
+      ranges: parsedRanges,
+      isSingleRange: isSingleRange,
+      fileExtension: fileExtension
     });
 
 
@@ -86,7 +93,9 @@ const splitPdf = asyncHandler(async (req, res) => {
       outputDir: SHARED_PROCESSED_PATH,
       name,
       ranges: parsedRanges,
-      originalFileName: originalFileName || "file.pdf"
+      originalFileName: originalFileName || "file.pdf",
+      isSingleRange: isSingleRange,
+      fileExtension: fileExtension
     }, { attempts: 3, backoff: { type: 'exponential', delay: 10000 } });
 
   } catch (error) {

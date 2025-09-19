@@ -8,11 +8,11 @@ import archiver from "archiver";
 import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
 
 export async function splitProcessor(jobId, jobData) {
-  const { s3Key, outputPath, outputS3Key, outputDir, name, ranges, originalFileName } = jobData;
+  const { s3Key, outputPath, outputS3Key, outputDir, name, ranges, originalFileName, isSingleRange, fileExtension } = jobData;
 
   const tempDir = path.join('/tmp', jobId);
   const inputPath = path.join(tempDir, 'input.pdf');
-  let localOutputPath = path.join(tempDir, 'output.zip');
+  let localOutputPath = path.join(tempDir, `output.${fileExtension || 'zip'}`);
 
   try {
     await fs.mkdir(tempDir, { recursive: true });
@@ -92,9 +92,9 @@ export async function splitProcessor(jobId, jobData) {
     }
 
     // Handle single split differently - just copy the file instead of creating ZIP
-    if (outputPaths.length === 1) {
+    if (isSingleRange || outputPaths.length === 1) {
       console.log('Single split detected - copying file directly');
-      const pdfOutputPath = localOutputPath.replace('.zip', '.pdf');
+      const pdfOutputPath = localOutputPath.replace(/\.(zip|pdf)$/, '.pdf');
       await fs.copyFile(outputPaths[0], pdfOutputPath);
       
       // Update the local output path for single splits
@@ -142,7 +142,8 @@ export async function splitProcessor(jobId, jobData) {
 
     // Check if output file was created successfully
     const fileStats = await fs.stat(localOutputPath);
-    const fileType = localOutputPath.endsWith('.zip') ? 'ZIP' : 'PDF';
+    const actualFileExtension = path.extname(localOutputPath).toLowerCase();
+    const fileType = actualFileExtension === '.zip' ? 'ZIP' : 'PDF';
     console.log(`${fileType} file created: ${localOutputPath} (${fileStats.size} bytes)`);
     
     if (fileStats.size === 0) {
@@ -158,7 +159,7 @@ export async function splitProcessor(jobId, jobData) {
     });
 
     if (outputS3Key) {
-      const contentType = localOutputPath.endsWith('.zip') ? 'application/zip' : 'application/pdf';
+      const contentType = actualFileExtension === '.zip' ? 'application/zip' : 'application/pdf';
       await uploadFileToS3(localOutputPath, outputS3Key, contentType);
       console.log(`Uploaded ${fileType} to S3: ${outputS3Key}`);
     }

@@ -171,7 +171,14 @@ export const usePdfTools = (toolType) => {
 
     for (const file of fileArray) {
       if (!allowedTypes.includes(file.type)) {
-        return { valid: false, error: 'Invalid file type. Only PDF files are allowed.' };
+        const allowedTypesText = allowedTypes.map(type => {
+          if (type === 'application/pdf') return 'PDF';
+          if (type === 'image/jpeg') return 'JPG';
+          if (type === 'image/png') return 'PNG';
+          if (type === 'image/jpg') return 'JPG';
+          return type;
+        }).join(', ');
+        return { valid: false, error: `Invalid file type. Only ${allowedTypesText} files are allowed.` };
       }
 
       if (file.size / 1024 / 1024 > maxSize) {

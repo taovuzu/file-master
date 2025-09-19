@@ -113,6 +113,7 @@ async function updateJobStatus(jobId, status, progress, additionalData = {}) {
       if (additionalData.filesCount) essentialJobData.filesCount = additionalData.filesCount;
       if (additionalData.error) essentialJobData.error = additionalData.error;
       if (additionalData.failedAt) essentialJobData.failedAt = additionalData.failedAt;
+      if (additionalData.mergeImagesInOnePdf !== undefined) essentialJobData.mergeImagesInOnePdf = additionalData.mergeImagesInOnePdf;
     }
 
 

@@ -2,14 +2,26 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { updateJobStatus } from '../../queues/pdf.queue.js';
 import { PDFDocument, degrees } from 'pdf-lib';
+import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
 
 export async function rotateProcessor(jobId, jobData) {
-  const { inputPath, outputPath, angle, originalFileName } = jobData;
+  const { s3Key, outputPath, outputS3Key, angle, originalFileName } = jobData;
+
+  const tempDir = path.join('/tmp', jobId);
+  const inputPath = path.join(tempDir, 'input.pdf');
+  const localOutputPath = path.join(tempDir, 'output.pdf');
 
   try {
+    await fs.mkdir(tempDir, { recursive: true });
     await updateJobStatus(jobId, 'processing', 20, {
       message: 'Starting PDF rotation process...'
     });
+
+    await updateJobStatus(jobId, 'processing', 25, {
+      message: 'Downloading file from S3...'
+    });
+
+    await downloadFromS3ToFile(s3Key, inputPath);
 
     const pdfBytes = await fs.readFile(inputPath);
     const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -27,21 +39,27 @@ export async function rotateProcessor(jobId, jobData) {
     });
 
     const rotatedPdfBytes = await pdfDoc.save();
-    await fs.writeFile(outputPath, rotatedPdfBytes);
+    await fs.writeFile(localOutputPath, rotatedPdfBytes);
 
-    await updateJobStatus(jobId, 'processing', 90, {
-      message: 'Cleaning up input file...'
+    await updateJobStatus(jobId, 'processing', 85, {
+      message: 'Uploading result to S3...'
     });
 
-    try {
-      await fs.unlink(inputPath);
-    } catch (unlinkError) {
-      console.error(`Error deleting input file ${inputPath}:`, unlinkError);
+    if (outputS3Key) {
+      await uploadFileToS3(localOutputPath, outputS3Key, 'application/pdf');
     }
+
+    // Copy to shared path for backward compatibility
+    await fs.copyFile(localOutputPath, outputPath);
+
+    await updateJobStatus(jobId, 'processing', 90, {
+      message: 'Cleaning up temporary files...'
+    });
 
 
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
+      outputS3Key: outputS3Key || null,
       message: `Successfully rotated PDF by ${angle * 90} degrees`,
       completedAt: new Date().toISOString(),
       originalFileName: originalFileName,
@@ -52,6 +70,7 @@ export async function rotateProcessor(jobId, jobData) {
 
     return {
       outputPath,
+      outputS3Key: outputS3Key || null,
       originalFileName,
       angle,
       numberOfPages,
@@ -61,5 +80,11 @@ export async function rotateProcessor(jobId, jobData) {
   } catch (error) {
     console.error(`Rotation failed for job ${jobId}:`, error);
     throw error;
+  } finally {
+    try {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch (cleanupError) {
+      console.error(`Failed to cleanup temp directory for job ${jobId}:`, cleanupError);
+    }
   }
 }

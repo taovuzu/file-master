@@ -24,7 +24,7 @@ const ProtectPdfForm = ({ onFinish, file }) => {
       return;
     }
 
-    onFinish({ PASSWORD: confirmPassword });
+    onFinish({ password: confirmPassword });
   };
 
   const validatePassword = (_, value) => {

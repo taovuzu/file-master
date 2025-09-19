@@ -2,8 +2,14 @@ import { Router } from "express";
 import { createPresignedPutUrl } from "../utils/s3.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { v4 as uuidv4 } from "uuid";
+import { enforceUsageLimits } from "../middlewares/usageLimit.middleware.js";
+import { getUserLoggedInOrNot } from "../middlewares/auth.middleware.js";
 
 const router = Router();
+
+// Apply middleware to check usage limits before allowing upload
+router.use(getUserLoggedInOrNot);
+router.use(enforceUsageLimits);
 
 router.post("/presign", asyncHandler(async (req, res) => {
   const { fileName, contentType } = req.body || {};

@@ -6,7 +6,7 @@ const { Option } = Select;
 
 const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-pdf', formTitle = 'Convert' }) => {
   const [conversionType, setConversionType] = useState(defaultType);
-  const [isMultipleImages, setIsMultipleImages] = useState(true);
+  const [mergeImagesInOnePdf, setMergeImagesInOnePdf] = useState(true);
 
   useEffect(() => {
     setConversionType(defaultType);
@@ -30,7 +30,7 @@ const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-p
       orientation: values.orientation || "portrait",
       pagetype: values.pagetype || "A4",
       margin: values.margin || "none",
-      mergeImagesInOnePdf: isMultipleImages
+      mergeImagesInOnePdf: mergeImagesInOnePdf
     };
 
     onFinish(formData);
@@ -62,7 +62,7 @@ const ConvertPdfForm = ({ onFinish, file, fileList = [], defaultType = 'doc-to-p
       </Form.Item>
 
       <Form.Item label="Merge Images in One PDF" name="mergeImagesInOnePdf" initialValue={true}>
-        <Switch checked={isMultipleImages} onChange={(checked) => setIsMultipleImages(checked)} checkedChildren="Yes" unCheckedChildren="No" />
+        <Switch checked={mergeImagesInOnePdf} onChange={(checked) => setMergeImagesInOnePdf(checked)} checkedChildren="Yes" unCheckedChildren="No" />
       </Form.Item>
     </>;
 

@@ -10,8 +10,11 @@ import { SHARED_PROCESSED_PATH } from "../constants.js";
 
 
 const addTextWatermark = asyncHandler(async (req, res) => {
-  const file = req.file;
-  if (!file) throw ApiError.notFound("File could not be found on server");
+  const { s3Key, originalFileName } = req.body || {};
+  
+  if (!s3Key) {
+    throw ApiError.badRequest("Missing s3Key. Upload the file to S3 first.");
+  }
 
   let {
     text,
@@ -31,11 +34,11 @@ const addTextWatermark = asyncHandler(async (req, res) => {
   }
 
   const jobId = uuidv4();
-  const inputPath = path.resolve(file.path);
-  const name = path.basename(file.originalname, path.extname(file.originalname));
+  const name = path.basename(originalFileName || "file.pdf", path.extname(originalFileName || "file.pdf"));
   const outputName = `${uuidv4()}___${name}_watermarked.pdf`;
   if (!fs.existsSync(SHARED_PROCESSED_PATH)) fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
   const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
+  const outputS3Key = `processed/${jobId}/result.pdf`;
 
   try {
 
@@ -60,7 +63,7 @@ const addTextWatermark = asyncHandler(async (req, res) => {
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'addTextWatermark',
-      originalFileName: file.originalname,
+      originalFileName: originalFileName || "file.pdf",
       text,
       position,
       transparency,
@@ -75,8 +78,9 @@ const addTextWatermark = asyncHandler(async (req, res) => {
     await pdfProcessingQueue.add('add-text-watermark', {
       jobId,
       operation: 'addTextWatermark',
-      inputPath,
+      s3Key,
       outputPath,
+      outputS3Key,
       text,
       position,
       transparency,
@@ -87,7 +91,7 @@ const addTextWatermark = asyncHandler(async (req, res) => {
       fontFamily,
       fontSize,
       textColor,
-      originalFileName: file.originalname
+      originalFileName: originalFileName || "file.pdf"
     });
 
   } catch (error) {
@@ -114,7 +118,7 @@ const addTextWatermark = asyncHandler(async (req, res) => {
       statusUrl: `/api/v1/download/status/${jobId}`,
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'addTextWatermark',
-      originalFileName: file.originalname,
+      originalFileName: originalFileName || "file.pdf",
       text,
       position,
       transparency,
@@ -129,8 +133,11 @@ const addTextWatermark = asyncHandler(async (req, res) => {
 });
 
 const addImageWatermark = asyncHandler(async (req, res) => {
-  const { pdfFile, imageFile } = req.files;
-  if (!pdfFile || !imageFile) throw ApiError.notFound("Both PDF and image files are required");
+  const { pdfS3Key, imageS3Key, originalFileName } = req.body || {};
+  
+  if (!pdfS3Key || !imageS3Key) {
+    throw ApiError.badRequest("Missing pdfS3Key or imageS3Key. Upload both files to S3 first.");
+  }
 
   let {
     position = "bottom-right",
@@ -156,13 +163,11 @@ const addImageWatermark = asyncHandler(async (req, res) => {
   const toPageIndex = Math.min(Number(toPage) - 1, 1000000);
 
   const jobId = uuidv4();
-  const pdfPath = path.resolve(pdfFile.path);
-  const imagePath = path.resolve(imageFile.path);
-
-  const name = path.basename(pdfFile.originalname, path.extname(pdfFile.originalname));
+  const name = path.basename(originalFileName || "file.pdf", path.extname(originalFileName || "file.pdf"));
   const outputName = `${uuidv4()}___${name}_watermarked.pdf`;
   if (!fs.existsSync(SHARED_PROCESSED_PATH)) fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
   const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
+  const outputS3Key = `processed/${jobId}/result.pdf`;
 
   try {
 
@@ -187,7 +192,7 @@ const addImageWatermark = asyncHandler(async (req, res) => {
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'addImageWatermark',
-      originalFileName: pdfFile.originalname,
+      originalFileName: originalFileName || "file.pdf",
       position,
       transparency,
       rotation,
@@ -200,9 +205,10 @@ const addImageWatermark = asyncHandler(async (req, res) => {
     await pdfProcessingQueue.add('add-image-watermark', {
       jobId,
       operation: 'addImageWatermark',
-      pdfPath,
-      imagePath,
+      pdfS3Key,
+      imageS3Key,
       outputPath,
+      outputS3Key,
       position,
       transparency,
       rotation,
@@ -210,7 +216,7 @@ const addImageWatermark = asyncHandler(async (req, res) => {
       fromPage: fromPageIndex,
       toPage: toPageIndex,
       scale,
-      originalFileName: pdfFile.originalname
+      originalFileName: originalFileName || "file.pdf"
     });
 
   } catch (error) {
@@ -237,7 +243,7 @@ const addImageWatermark = asyncHandler(async (req, res) => {
       statusUrl: `/api/v1/download/status/${jobId}`,
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'addImageWatermark',
-      originalFileName: pdfFile.originalname,
+      originalFileName: originalFileName || "file.pdf",
       position,
       transparency,
       rotation,

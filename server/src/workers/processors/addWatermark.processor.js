@@ -1,6 +1,8 @@
 import { promises as fs } from 'fs';
+import path from 'path';
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { updateJobStatus } from '../../queues/pdf.queue.js';
+import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
 
 const fontSizes = {
   small: 20,
@@ -17,8 +19,11 @@ const fontChoices = {
 export async function addWatermarkProcessor(jobId, jobData) {
   let {
     operation,
-    inputPath,
+    s3Key,
+    pdfS3Key,
+    imageS3Key,
     outputPath,
+    outputS3Key,
     text,
     position,
     transparency,
@@ -32,10 +37,30 @@ export async function addWatermarkProcessor(jobId, jobData) {
     originalFileName
   } = jobData;
 
+  const tempDir = path.join('/tmp', jobId);
+  const inputPath = path.join(tempDir, 'input.pdf');
+  const imagePath = path.join(tempDir, 'image.png');
+  const localOutputPath = path.join(tempDir, 'output.pdf');
+
   try {
+    await fs.mkdir(tempDir, { recursive: true });
     await updateJobStatus(jobId, 'processing', 20, {
       message: 'Starting watermark addition process...'
     });
+
+    await updateJobStatus(jobId, 'processing', 25, {
+      message: 'Downloading files from S3...'
+    });
+
+    // Download PDF file
+    const pdfS3KeyToUse = s3Key || pdfS3Key;
+    await downloadFromS3ToFile(pdfS3KeyToUse, inputPath);
+
+    // Download image file if it's an image watermark
+    if (operation === 'addImageWatermark' && imageS3Key) {
+      await downloadFromS3ToFile(imageS3Key, imagePath);
+    }
+
     const uint8Array = await fs.readFile(inputPath);
     const pdfDoc = await PDFDocument.load(uint8Array);
     const numberOfPages = pdfDoc.getPages().length;
@@ -208,16 +233,22 @@ export async function addWatermarkProcessor(jobId, jobData) {
     });
 
     const pdfBytes = await pdfDoc.save();
-    await fs.writeFile(outputPath, pdfBytes);
-    try {
-      await fs.unlink(inputPath);
-    } catch (unlinkError) {
-      console.error(`Error deleting input file ${inputPath}:`, unlinkError);
+    await fs.writeFile(localOutputPath, pdfBytes);
+
+    await updateJobStatus(jobId, 'processing', 95, {
+      message: 'Uploading result to S3...'
+    });
+
+    if (outputS3Key) {
+      await uploadFileToS3(localOutputPath, outputS3Key, 'application/pdf');
     }
 
+    // Copy to shared path for backward compatibility
+    await fs.copyFile(localOutputPath, outputPath);
 
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
+      outputS3Key: outputS3Key || null,
       message: `Successfully processed ${operation} for ${numberOfPages} pages`,
       completedAt: new Date().toISOString(),
       originalFileName: originalFileName,
@@ -227,6 +258,7 @@ export async function addWatermarkProcessor(jobId, jobData) {
 
     return {
       outputPath,
+      outputS3Key: outputS3Key || null,
       originalFileName,
       operation,
       numberOfPages,
@@ -235,6 +267,12 @@ export async function addWatermarkProcessor(jobId, jobData) {
   } catch (error) {
     console.error(`Watermark job failed for ${jobId}:`, error);
     throw error;
+  } finally {
+    try {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch (cleanupError) {
+      console.error(`Failed to cleanup temp directory for job ${jobId}:`, cleanupError);
+    }
   }
 }
 

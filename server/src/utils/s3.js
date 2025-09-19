@@ -44,6 +44,16 @@ export async function uploadFileToS3(filePath, key, contentType = "application/p
   await s3Client.send(command);
 }
 
+export async function getS3ObjectMetadata(key) {
+  const command = new GetObjectCommand({ Bucket: s3Bucket, Key: key });
+  const response = await s3Client.send(command);
+  return {
+    contentType: response.ContentType,
+    contentLength: response.ContentLength,
+    lastModified: response.LastModified
+  };
+}
+
 export { s3Bucket };
 
 

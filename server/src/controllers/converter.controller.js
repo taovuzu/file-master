@@ -9,17 +9,18 @@ import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.
 import { SHARED_PROCESSED_PATH } from "../constants.js";
 
 const convertDocToPdf = asyncHandler(async (req, res) => {
-  const file = req.file;
-  if (!file) {
-    throw ApiError.notFound("No files were uploaded.");
+  const { s3Key, originalFileName } = req.body || {};
+  
+  if (!s3Key) {
+    throw ApiError.badRequest("Missing s3Key. Upload the file to S3 first.");
   }
 
   const jobId = uuidv4();
-  const inputPath = path.resolve(file.path);
-  const name = path.basename(inputPath, path.extname(file.originalname));
-  const outputName = `${name}.pdf`;
+  const name = path.basename(originalFileName || "file", path.extname(originalFileName || "file"));
+  const outputName = `${uuidv4()}___${name}.pdf`;
   fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
   const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
+  const outputS3Key = `processed/${jobId}/result.pdf`;
 
   try {
     let retryCount = 0;
@@ -42,17 +43,18 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'convertDocToPdf',
-      originalFileName: file.originalname
+      originalFileName: originalFileName || "file"
     });
 
     await pdfProcessingQueue.add('convert-doc-to-pdf', {
       jobId,
       operation: 'convertDocToPdf',
-      inputPath,
+      s3Key,
+      outputPath,
+      outputS3Key,
       outputName,
       outputDir: SHARED_PROCESSED_PATH,
-      outputPath,
-      originalFileName: file.originalname
+      originalFileName: originalFileName || "file"
     });
 
   } catch (error) {
@@ -79,7 +81,7 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
       statusUrl: `/api/v1/download/status/${jobId}`,
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'convertDocToPdf',
-      originalFileName: file.originalname
+      originalFileName: originalFileName || "file"
     }, 'Document conversion job queued successfully', 200)
     .withRequest(req)
     .send(res);
@@ -97,12 +99,15 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
     margin = "none",
     mergeImagesInOnePdf = true
   } = req.body;
+  
+  console.log('Controller - mergeImagesInOnePdf:', mergeImagesInOnePdf, typeof mergeImagesInOnePdf);
 
   const jobId = uuidv4();
   let outputName = `${uuidv4()}___images_converted.zip`;
   if (mergeImagesInOnePdf === "true" || mergeImagesInOnePdf === true) outputName = `${uuidv4()}___images_converted.pdf`;
   fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
   const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
+  const outputS3Key = `processed/${jobId}/result${mergeImagesInOnePdf === "true" || mergeImagesInOnePdf === true ? '.pdf' : '.zip'}`;
 
   try {
     let retryCount = 0;
@@ -137,6 +142,7 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
       operation: 'convertImagesToPdf',
       files,
       outputPath,
+      outputS3Key,
       orientation,
       pagetype,
       margin,
@@ -179,17 +185,18 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
 });
 
 const convertPdfToDoc = asyncHandler(async (req, res) => {
-  const file = req.file;
-  if (!file) {
-    throw ApiError.notFound("No files were uploaded.");
+  const { s3Key, originalFileName } = req.body || {};
+  
+  if (!s3Key) {
+    throw ApiError.badRequest("Missing s3Key. Upload the file to S3 first.");
   }
 
   const jobId = uuidv4();
-  const inputPath = path.resolve(file.path);
-  const name = path.basename(inputPath, path.extname(file.originalname));
+  const name = path.basename(originalFileName || "file", path.extname(originalFileName || "file"));
   const outputName = `${uuidv4()}___${name}.docx`;
   fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
   const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
+  const outputS3Key = `processed/${jobId}/result.docx`;
 
   try {
     let retryCount = 0;
@@ -212,15 +219,16 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'convertPdfToDoc',
-      originalFileName: file.originalname
+      originalFileName: originalFileName || "file.pdf"
     });
 
     await pdfProcessingQueue.add('convert-pdf-to-doc', {
       jobId,
       operation: 'convertPdfToDoc',
-      inputPath,
+      s3Key,
       outputPath,
-      originalFileName: file.originalname
+      outputS3Key,
+      originalFileName: originalFileName || "file.pdf"
     });
 
   } catch (error) {
@@ -247,24 +255,25 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
       statusUrl: `/api/v1/download/status/${jobId}`,
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'convertPdfToDoc',
-      originalFileName: file.originalname
+      originalFileName: originalFileName || "file.pdf"
     }, 'PDF to DOC conversion job queued successfully', 200)
     .withRequest(req)
     .send(res);
 });
 
 const convertPdfToPpt = asyncHandler(async (req, res) => {
-  const file = req.file;
-  if (!file) {
-    throw ApiError.notFound("No files were uploaded.");
+  const { s3Key, originalFileName } = req.body || {};
+  
+  if (!s3Key) {
+    throw ApiError.badRequest("Missing s3Key. Upload the file to S3 first.");
   }
 
   const jobId = uuidv4();
-  const inputPath = path.resolve(file.path);
-  const name = path.basename(inputPath, path.extname(file.originalname));
+  const name = path.basename(originalFileName || "file", path.extname(originalFileName || "file"));
   const outputName = `${uuidv4()}___${name}.pptx`;
   fs.mkdirSync(SHARED_PROCESSED_PATH, { recursive: true });
   const outputPath = path.join(SHARED_PROCESSED_PATH, outputName);
+  const outputS3Key = `processed/${jobId}/result.pptx`;
 
   try {
     let retryCount = 0;
@@ -287,15 +296,16 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'convertPdfToPpt',
-      originalFileName: file.originalname
+      originalFileName: originalFileName || "file.pdf"
     });
 
     await pdfProcessingQueue.add('convert-pdf-to-ppt', {
       jobId,
       operation: 'convertPdfToPpt',
-      inputPath,
+      s3Key,
       outputPath,
-      originalFileName: file.originalname
+      outputS3Key,
+      originalFileName: originalFileName || "file.pdf"
     });
 
   } catch (error) {
@@ -322,7 +332,7 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
       statusUrl: `/api/v1/download/status/${jobId}`,
       downloadUrl: `/api/v1/download/${jobId}`,
       operation: 'convertPdfToPpt',
-      originalFileName: file.originalname
+      originalFileName: originalFileName || "file.pdf"
     }, 'PDF to PPT conversion job queued successfully', 200)
     .withRequest(req)
     .send(res);

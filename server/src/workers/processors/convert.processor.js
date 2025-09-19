@@ -9,40 +9,98 @@ import { PDFDocument, PageSizes } from "pdf-lib";
 import archiver from "archiver";
 import pptxgen from "pptxgenjs";
 import { imageSizeFromFile } from 'image-size/fromFile';
+import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
 
 export async function convertProcessor(jobId, jobData) {
-  const { inputPath, files, outputName, outputDir, outputPath, operation, orientation, pagetype, margin, mergeImagesInOnePdf, originalFileName } = jobData;
+  const { s3Key, s3Keys, inputPath, files, outputName, outputDir, outputPath, outputS3Key, operation, orientation, pagetype, margin, mergeImagesInOnePdf, originalFileName } = jobData;
+  
+  console.log('convertProcessor - mergeImagesInOnePdf:', mergeImagesInOnePdf, typeof mergeImagesInOnePdf);
+
+  const tempDir = path.join('/tmp', jobId);
+  
+  // Determine input and output file extensions based on operation
+  let inputExtension = '.pdf';
+  let outputExtension = '.pptx';
+  
+  switch (operation) {
+    case 'convertDocToPdf':
+      inputExtension = '.docx';
+      outputExtension = '.pdf';
+      break;
+    case 'convertPdfToPpt':
+      inputExtension = '.pdf';
+      outputExtension = '.pptx';
+      break;
+    case 'convertPdfToDoc':
+      inputExtension = '.pdf';
+      outputExtension = '.docx';
+      break;
+    case 'convertImagesToPdf':
+      inputExtension = '.jpg'; // Individual image files, not zip
+      // Output extension depends on mergeImagesInOnePdf setting
+      const shouldMerge = (mergeImagesInOnePdf === "true" || mergeImagesInOnePdf === true);
+      outputExtension = shouldMerge ? '.pdf' : '.zip';
+      console.log('convertImagesToPdf - shouldMerge:', shouldMerge, 'outputExtension:', outputExtension);
+      break;
+    default:
+      inputExtension = '.pdf';
+      outputExtension = '.pdf';
+  }
+  
+  const localInputPath = path.join(tempDir, `input${inputExtension}`);
+  const localOutputPath = path.join(tempDir, `output${outputExtension}`);
+  
+  console.log('localOutputPath:', localOutputPath);
 
   try {
+    await fs.mkdir(tempDir, { recursive: true });
     await updateJobStatus(jobId, 'processing', 20, {
       message: 'Starting file conversion process...'
     });
+
+    await updateJobStatus(jobId, 'processing', 25, {
+      message: 'Downloading files from S3...'
+    });
+
+    // Download input file(s) from S3
+    if (s3Key) {
+      await downloadFromS3ToFile(s3Key, localInputPath);
+    } else if (s3Keys && Array.isArray(s3Keys)) {
+      // For multiple files (like images to PDF)
+      for (let i = 0; i < s3Keys.length; i++) {
+        const filePath = path.join(tempDir, `input_${i}`);
+        await downloadFromS3ToFile(s3Keys[i], filePath);
+      }
+    }
 
     let result;
 
     switch (operation) {
       case 'convertDocToPdf':
-        result = await convertDocToPdf(jobId, inputPath, outputDir);
+        result = await convertDocToPdf(jobId, localInputPath, outputDir, localOutputPath, outputS3Key);
         break;
       case 'convertPdfToPpt':
-        result = await convertToPowerPoint(jobId, inputPath, outputPath);
+        result = await convertToPowerPoint(jobId, localInputPath, localOutputPath, outputS3Key);
+        break;
+      case 'convertPdfToDoc':
+        result = await convertToWord(jobId, localInputPath, localOutputPath, outputS3Key);
         break;
       case 'convertImagesToPdf':
-        result = await convertImagesToPdf(jobId, files, outputPath, orientation, pagetype, margin, mergeImagesInOnePdf);
+        result = await convertImagesToPdf(jobId, files, localOutputPath, orientation, pagetype, margin, mergeImagesInOnePdf, outputS3Key);
         break;
       case 'docx':
       case 'doc':
-        result = await convertToWord(jobId, inputPath, outputPath);
+        result = await convertToWord(jobId, localInputPath, localOutputPath, outputS3Key);
         break;
       case 'xlsx':
       case 'xls':
-        result = await convertToExcel(jobId, inputPath, outputPath);
+        result = await convertToExcel(jobId, localInputPath, localOutputPath, outputS3Key);
         break;
       case 'html':
-        result = await convertToHtml(jobId, inputPath, outputPath);
+        result = await convertToHtml(jobId, localInputPath, localOutputPath, outputS3Key);
         break;
       case 'txt':
-        result = await convertToText(jobId, inputPath, outputPath);
+        result = await convertToText(jobId, localInputPath, localOutputPath, outputS3Key);
         break;
       default:
         throw new Error(`Unsupported target format: ${operation}`);
@@ -52,23 +110,24 @@ export async function convertProcessor(jobId, jobData) {
       message: 'Finalizing conversion and cleaning up...'
     });
 
-    try {
-      await fs.unlink(inputPath);
-    } catch (unlinkError) {
-      console.error(`Error deleting input file ${inputPath}:`, unlinkError);
+    // Copy to shared path for backward compatibility
+    if (result && result.outputPath) {
+      await fs.copyFile(localOutputPath, outputPath);
     }
-
 
     await updateJobStatus(jobId, 'completed', 100, {
       outputFilePath: outputPath,
+      outputS3Key: outputS3Key || null,
       message: `Successfully converted to ${operation.toUpperCase()}`,
       completedAt: new Date().toISOString(),
       originalFileName: originalFileName,
-      operation: operation
+      operation: operation,
+      mergeImagesInOnePdf: jobData.mergeImagesInOnePdf
     });
 
     return {
       outputPath,
+      outputS3Key: outputS3Key || null,
       originalFileName,
       operation,
       message: `Successfully converted PDF to ${operation.toUpperCase()}`
@@ -77,39 +136,84 @@ export async function convertProcessor(jobId, jobData) {
   } catch (error) {
     console.error(`Convert failed for job ${jobId}:`, error);
     throw error;
+  } finally {
+    try {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch (cleanupError) {
+      console.error(`Failed to cleanup temp directory for job ${jobId}:`, cleanupError);
+    }
   }
 }
 
-async function convertDocToPdf(jobId, inputPath, outputDir) {
+async function convertDocToPdf(jobId, inputPath, outputDir, localOutputPath, outputS3Key) {
   await updateJobStatus(jobId, 'processing', 30, {
     message: 'Converting document to PDF using LibreOffice...'
   });
 
+  // Check if input file exists
+  try {
+    await fs.access(inputPath);
+  } catch (error) {
+    throw new Error(`Input file not found: ${inputPath}`);
+  }
+
+  const tempOutputDir = path.dirname(localOutputPath);
   const libreCmd = [
-  LIBRE_PATH,
-  "--headless",
-  "--convert-to pdf",
-  "--outdir",
-  `"${outputDir}"`,
-  `"${inputPath}"`].
-  join(" ");
+    LIBRE_PATH,
+    "--headless",
+    "--convert-to", "pdf",
+    "--outdir", tempOutputDir,
+    inputPath
+  ].join(" ");
+
+  console.log(`LibreOffice command: ${libreCmd}`);
 
   await new Promise((resolve, reject) => {
-    exec(libreCmd, (error, stdout, stderr) => {
+    exec(libreCmd, { timeout: 60000 }, (error, stdout, stderr) => {
       if (error) {
-        reject(new Error(`LibreOffice error: ${error.message}`));
+        console.error(`LibreOffice error: ${error.message}`);
+        console.error(`LibreOffice stderr: ${stderr}`);
+        reject(new Error(`LibreOffice conversion failed: ${error.message}`));
       } else {
+        console.log(`LibreOffice stdout: ${stdout}`);
         resolve();
       }
     });
   });
 
+  // Find the generated PDF file
+  const inputFileName = path.basename(inputPath, path.extname(inputPath));
+  const generatedPdfPath = path.join(tempOutputDir, `${inputFileName}.pdf`);
+  
+  // Check if the generated PDF exists
+  try {
+    await fs.access(generatedPdfPath);
+  } catch (error) {
+    throw new Error(`Generated PDF not found: ${generatedPdfPath}`);
+  }
+
+  // Move to our local output path
+  await fs.rename(generatedPdfPath, localOutputPath);
+
+  // Verify the output file exists and has content
+  const stats = await fs.stat(localOutputPath);
+  if (stats.size === 0) {
+    throw new Error('Generated PDF file is empty');
+  }
+
   await updateJobStatus(jobId, 'processing', 70, {
-    message: 'Document conversion completed...'
+    message: 'Document conversion completed, uploading to S3...'
   });
+
+  if (outputS3Key) {
+    await uploadFileToS3(localOutputPath, outputS3Key, 'application/pdf');
+  }
 }
 
-async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetype, margin, mergeImagesInOnePdf) {
+async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetype, margin, mergeImagesInOnePdf, outputS3Key) {
+  console.log('convertImagesToPdf function - mergeImagesInOnePdf:', mergeImagesInOnePdf, typeof mergeImagesInOnePdf);
+  console.log('convertImagesToPdf function - outputPath:', outputPath);
+  
   await updateJobStatus(jobId, 'processing', 30, {
     message: 'Processing images for PDF conversion...'
   });
@@ -162,7 +266,10 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
     return { drawWidth, drawHeight };
   };
 
-  if (mergeImagesInOnePdf === "true" || mergeImagesInOnePdf === true) {
+  const shouldMerge = (mergeImagesInOnePdf === "true" || mergeImagesInOnePdf === true);
+  console.log('convertImagesToPdf - shouldMerge condition:', shouldMerge);
+  
+  if (shouldMerge) {
     await updateJobStatus(jobId, 'processing', 40, {
       message: 'Merging images into single PDF...'
     });
@@ -197,6 +304,11 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
     const pdfBytes = await pdfDoc.save();
     await fs.writeFile(outputPath, pdfBytes);
 
+    // Upload to S3 if outputS3Key is provided
+    if (outputS3Key) {
+      await uploadFileToS3(outputPath, outputS3Key, 'application/pdf');
+    }
+
   } else {
     await updateJobStatus(jobId, 'processing', 40, {
       message: 'Converting images to individual PDFs...'
@@ -229,7 +341,7 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
       });
 
       const name = path.basename(file.originalname, path.extname(file.originalname));
-      const outPath = path.join(baseOutDir, `${uuidv4()}___${name}.pdf`);
+      const outPath = path.join(baseOutDir, `${name}.pdf`);
       const pdfBytes = await pdfDoc.save();
 
       await fs.writeFile(outPath, pdfBytes);
@@ -248,6 +360,11 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
     archive.directory(baseOutDir, false);
     await archive.finalize();
 
+    // Upload to S3 if outputS3Key is provided
+    if (outputS3Key) {
+      await uploadFileToS3(outputPath, outputS3Key, 'application/zip');
+    }
+
     await fs.rm(baseOutDir, { recursive: true, force: true }, (err) => {
       if (err) console.error(`Error deleting temp dir: ${err}`);
     });
@@ -259,7 +376,7 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
   });
 }
 
-async function convertToWord(jobId, inputPath, outputPath) {
+async function convertToWord(jobId, inputPath, outputPath, outputS3Key) {
   await updateJobStatus(jobId, 'processing', 30, {
     message: 'Converting to Word document...'
   });
@@ -282,6 +399,11 @@ async function convertToWord(jobId, inputPath, outputPath) {
     });
   });
 
+  // Upload to S3 if outputS3Key is provided
+  if (outputS3Key) {
+    await uploadFileToS3(outputPath, outputS3Key, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  }
+
   await updateJobStatus(jobId, 'processing', 70, {
     message: 'Word conversion completed...'
   });
@@ -299,7 +421,7 @@ async function convertPdfToImages(inputPath, outDir) {
   });
 }
 
-async function convertToPowerPoint(jobId, inputPath, outputPath) {
+async function convertToPowerPoint(jobId, inputPath, outputPath, outputS3Key) {
   await updateJobStatus(jobId, 'processing', 30, {
     message: 'Converting PDF to PowerPoint...'
   });
@@ -336,6 +458,12 @@ async function convertToPowerPoint(jobId, inputPath, outputPath) {
   }
 
   await pptx.writeFile({ fileName: outputPath });
+  
+  // Upload to S3 if outputS3Key is provided
+  if (outputS3Key) {
+    await uploadFileToS3(outputPath, outputS3Key, 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+  }
+  
   await fs.rm(baseOutDir, { recursive: true, force: true }, (err) => {
     if (err) {
       console.error(`Error deleting directory: ${err}`);

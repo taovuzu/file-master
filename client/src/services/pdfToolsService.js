@@ -156,8 +156,49 @@ const toClientResult = (resp) => {
 };
 
 
+const processPdfToolDirectUpload = async (endpoint, files, options, onProgress, onPollingStart, fieldName = 'PDFFILE', abortSignal = null) => {
+  const formData = new FormData();
+  const fileArray = Array.isArray(files) ? files : [files];
+  
+  // Debug: Log files being processed
+  console.log('Processing files for direct upload:', fileArray);
+  
+  fileArray.forEach((file, index) => { 
+    console.log(`Appending file ${index}:`, file.name, file.type, file.size);
+    formData.append(fieldName, file); 
+  });
+  
+  Object.entries(options).forEach(([key, value]) => { 
+    if (value !== undefined && value !== null) { 
+      console.log(`Appending option ${key}:`, value, typeof value);
+      if (typeof value === 'object') { 
+        formData.append(key, JSON.stringify(value)); 
+      } else { 
+        formData.append(key, value); 
+      } 
+    } 
+  });
+  
+  if (onProgress) { onProgress(10, 'Preparing files...'); }
+  const resp = await request.post({ entity: `pdf-tools/${endpoint}`, jsonData: formData });
+
+  const result = toClientResult(resp);
+  if (!result.success) {
+    throw new Error(result.error);
+  }
+  if (onProgress) onProgress(45, 'Job submitted, starting processing...');
+
+  if (onPollingStart) onPollingStart();
+  const jobResult = await pollJobStatus(result.statusUrl, onProgress, undefined, abortSignal);
+  const downloadUrl = `${DOWNLOAD_BASE_URL}${result.jobId}`;
+  return { success: true, file: result.jobId, fileUrl: downloadUrl, originalFileName: result.originalFileName, operation: result.operation };
+};
+
 const processPdfToolWithPolling = async (endpoint, files, options, onProgress, onPollingStart, fieldName = 'PDFFILE', abortSignal = null) => {
-  if (endpoint === 'compress') {
+  // Tools that now support S3 upload
+  const s3SupportedTools = ['compress', 'rotate', 'protect', 'unlock', 'watermark/text', 'page-numbers', 'convert/doc-to-pdf', 'convert/pdf-to-ppt', 'convert/pdf-to-doc'];
+  
+  if (s3SupportedTools.includes(endpoint)) {
     const fileArray = Array.isArray(files) ? files : [files];
     const file = fileArray[0];
     if (!file) throw new Error('No file provided');
@@ -172,7 +213,58 @@ const processPdfToolWithPolling = async (endpoint, files, options, onProgress, o
     if (!putResp.ok) throw new Error('Failed to upload file');
     if (onProgress) onProgress(35, 'Upload complete. Enqueuing job...');
 
-    const resp = await request.post({ entity: `pdf-tools/${endpoint}`, jsonData: { s3Key: key, compressionLevel: options?.compressionLevel || options?.level, originalFileName: file.name } });
+    // Prepare the request data based on the endpoint
+    let requestData = { s3Key: key, originalFileName: file.name };
+    
+    // Add endpoint-specific options
+    switch (endpoint) {
+      case 'compress':
+        requestData.compressionLevel = options?.compressionLevel || options?.level;
+        break;
+      case 'rotate':
+        requestData.angle = options?.angle;
+        break;
+      case 'protect':
+        requestData.password = options?.password;
+        break;
+      case 'unlock':
+        requestData.password = options?.password;
+        break;
+      case 'watermark/text':
+        requestData.text = options?.text;
+        requestData.position = options?.position;
+        requestData.transparency = options?.transparency;
+        requestData.rotation = options?.rotation;
+        requestData.layer = options?.layer;
+        requestData.fromPage = options?.fromPage;
+        requestData.toPage = options?.toPage;
+        requestData.fontFamily = options?.fontFamily;
+        requestData.fontSize = options?.fontSize;
+        requestData.textColor = options?.textColor;
+        break;
+      case 'page-numbers':
+        requestData.pageMode = options?.pageMode;
+        requestData.firstPageCover = options?.firstPageCover;
+        requestData.position = options?.position;
+        requestData.margin = options?.margin;
+        requestData.firstNumber = options?.firstNumber;
+        requestData.fromPage = options?.fromPage;
+        requestData.toPage = options?.toPage;
+        requestData.textStyle = options?.textStyle;
+        requestData.fontFamily = options?.fontFamily;
+        requestData.fontSize = options?.fontSize;
+        requestData.textColor = options?.textColor;
+        break;
+      case 'convert/doc-to-pdf':
+      case 'convert/images-to-pdf':
+      case 'convert/pdf-to-ppt':
+      case 'convert/pdf-to-doc':
+        // For convert, we might need to handle different conversion types
+        requestData = { ...requestData, ...options };
+        break;
+    }
+
+    const resp = await request.post({ entity: `pdf-tools/${endpoint}`, jsonData: requestData });
     const result = toClientResult(resp);
     if (!result.success) throw new Error(result.error);
     if (onProgress) onProgress(45, 'Job submitted, starting processing...');
@@ -342,11 +434,15 @@ export const convertPdf = async (input, options = {}, onProgress, onPollingStart
   }
 
   if (conversionType === 'image-to-pdf') {
-    return processPdfToolWithPolling('convert/images-to-pdf', input, options, onProgress, onPollingStart, 'IMAGEFILE', abortSignal);
+    return processPdfToolDirectUpload('convert/images-to-pdf', input, options, onProgress, onPollingStart, 'IMAGEFILE', abortSignal);
   }
 
   if (conversionType === 'pdf-to-pptx') {
     return processPdfToolWithPolling('convert/pdf-to-ppt', [input], options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
+  }
+
+  if (conversionType === 'pdf-to-docx') {
+    return processPdfToolWithPolling('convert/pdf-to-doc', [input], options, onProgress, onPollingStart, 'PDFFILE', abortSignal);
   }
 
   return { success: false, error: 'Unknown conversion type' };
@@ -431,11 +527,18 @@ export const downloadFile = async (fileOrUrl, fileName) => {
           const downloadResponse = await fetch(data.downloadUrl);
           const blob = await downloadResponse.blob();
           
+          console.log('Download response content type:', downloadResponse.headers.get('content-type'));
+          console.log('API response fileName:', data.fileName);
+          console.log('API response contentType:', data.contentType);
+          
           // Create object URL and download
           const objectUrl = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = objectUrl;
-          link.setAttribute('download', data.fileName || fileName || 'processed-document.pdf');
+          
+          // Use the fileName from the API response, which now includes the correct extension
+          const downloadFileName = data.fileName || fileName || 'processed-document.pdf';
+          link.setAttribute('download', downloadFileName);
           link.style.display = 'none';
           document.body.appendChild(link);
           link.click();
@@ -444,7 +547,7 @@ export const downloadFile = async (fileOrUrl, fileName) => {
           // Clean up object URL
           URL.revokeObjectURL(objectUrl);
           
-          return { success: true };
+          return { success: true, fileName: downloadFileName, contentType: data.contentType };
         } else {
           throw new Error('Invalid response from download endpoint');
         }
