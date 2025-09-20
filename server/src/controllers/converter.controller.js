@@ -58,7 +58,6 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue doc to pdf conversion job ${jobId}:`, error);
 
 
     try {
@@ -68,7 +67,6 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
 
     throw error;
@@ -100,7 +98,6 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
     mergeImagesInOnePdf = true
   } = req.body;
   
-  console.log('Controller - mergeImagesInOnePdf:', mergeImagesInOnePdf, typeof mergeImagesInOnePdf);
 
   const jobId = uuidv4();
   let outputName = `${uuidv4()}___images_converted.zip`;
@@ -151,7 +148,6 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue images to pdf conversion job ${jobId}:`, error);
 
 
     try {
@@ -161,7 +157,6 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
 
     throw error;
@@ -232,7 +227,6 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue pdf to doc conversion job ${jobId}:`, error);
 
 
     try {
@@ -242,7 +236,6 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
 
     throw error;
@@ -309,7 +302,6 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue pdf to ppt conversion job ${jobId}:`, error);
 
 
     try {
@@ -319,7 +311,6 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
 
     throw error;

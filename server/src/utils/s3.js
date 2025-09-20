@@ -1,6 +1,6 @@
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { Readable } from "stream";
+import { Readable, PassThrough } from "stream";
 import fs from "fs/promises";
 import path from "path";
 
@@ -54,7 +54,95 @@ export async function getS3ObjectMetadata(key) {
   };
 }
 
+/**
+ * Creates a readable stream from S3 object for secure streaming processing
+ * @param {string} key - S3 object key
+ * @returns {Promise<Readable>} - Readable stream from S3
+ */
+export async function createS3DownloadStream(key) {
+  const command = new GetObjectCommand({ Bucket: s3Bucket, Key: key });
+  const response = await s3Client.send(command);
+  
+  // Convert AWS SDK stream to Node.js Readable stream
+  if (response.Body instanceof Readable) {
+    return response.Body;
+  }
+  
+  // Handle different AWS SDK stream types
+  const passThrough = new PassThrough();
+  if (response.Body && typeof response.Body.transformToByteArray === 'function') {
+    // Handle Uint8Array streams
+    response.Body.transformToByteArray().then(bytes => {
+      passThrough.write(Buffer.from(bytes));
+      passThrough.end();
+    }).catch(err => passThrough.destroy(err));
+  } else if (response.Body && typeof response.Body.transformToString === 'function') {
+    // Handle string streams
+    response.Body.transformToString().then(str => {
+      passThrough.write(str);
+      passThrough.end();
+    }).catch(err => passThrough.destroy(err));
+  } else {
+    // Fallback for other stream types
+    passThrough.end();
+  }
+  
+  return passThrough;
+}
+
+/**
+ * Processes a stream and uploads the result to S3
+ * @param {Readable} inputStream - Input stream to process
+ * @param {string} key - S3 object key
+ * @param {string} contentType - MIME type of the content
+ * @returns {Promise} - Upload completion promise
+ */
+export async function streamToS3(inputStream, key, contentType = 'application/pdf') {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    
+    inputStream.on('data', (chunk) => {
+      chunks.push(chunk);
+    });
+    
+    inputStream.on('end', async () => {
+      try {
+        const buffer = Buffer.concat(chunks);
+        const command = new PutObjectCommand({
+          Bucket: s3Bucket,
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+          ContentLength: buffer.length
+        });
+        
+        const result = await s3Client.send(command);
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    });
+    
+    inputStream.on('error', reject);
+  });
+}
+
+/**
+ * Streams data from S3 through a processing function to S3
+ * @param {string} inputKey - Source S3 key
+ * @param {string} outputKey - Destination S3 key
+ * @param {Function} processor - Function that takes input stream and returns output stream
+ * @param {string} contentType - Output content type
+ * @returns {Promise} - Upload completion promise
+ */
+export async function streamProcessS3ToS3(inputKey, outputKey, processor, contentType = 'application/pdf') {
+  const inputStream = await createS3DownloadStream(inputKey);
+  
+  // Process the stream
+  const outputStream = await processor(inputStream);
+  
+  // Upload the processed stream to S3
+  return await streamToS3(outputStream, outputKey, contentType);
+}
+
 export { s3Bucket };
-
-
-

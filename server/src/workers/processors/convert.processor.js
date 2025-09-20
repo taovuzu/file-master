@@ -14,7 +14,6 @@ import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
 export async function convertProcessor(jobId, jobData) {
   const { s3Key, s3Keys, inputPath, files, outputName, outputDir, outputPath, outputS3Key, operation, orientation, pagetype, margin, mergeImagesInOnePdf, originalFileName } = jobData;
   
-  console.log('convertProcessor - mergeImagesInOnePdf:', mergeImagesInOnePdf, typeof mergeImagesInOnePdf);
 
   const tempDir = path.join('/tmp', jobId);
   
@@ -40,7 +39,6 @@ export async function convertProcessor(jobId, jobData) {
       // Output extension depends on mergeImagesInOnePdf setting
       const shouldMerge = (mergeImagesInOnePdf === "true" || mergeImagesInOnePdf === true);
       outputExtension = shouldMerge ? '.pdf' : '.zip';
-      console.log('convertImagesToPdf - shouldMerge:', shouldMerge, 'outputExtension:', outputExtension);
       break;
     default:
       inputExtension = '.pdf';
@@ -50,7 +48,6 @@ export async function convertProcessor(jobId, jobData) {
   const localInputPath = path.join(tempDir, `input${inputExtension}`);
   const localOutputPath = path.join(tempDir, `output${outputExtension}`);
   
-  console.log('localOutputPath:', localOutputPath);
 
   try {
     await fs.mkdir(tempDir, { recursive: true });
@@ -134,13 +131,11 @@ export async function convertProcessor(jobId, jobData) {
     };
 
   } catch (error) {
-    console.error(`Convert failed for job ${jobId}:`, error);
     throw error;
   } finally {
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
     } catch (cleanupError) {
-      console.error(`Failed to cleanup temp directory for job ${jobId}:`, cleanupError);
     }
   }
 }
@@ -166,16 +161,12 @@ async function convertDocToPdf(jobId, inputPath, outputDir, localOutputPath, out
     inputPath
   ].join(" ");
 
-  console.log(`LibreOffice command: ${libreCmd}`);
 
   await new Promise((resolve, reject) => {
     exec(libreCmd, { timeout: 60000 }, (error, stdout, stderr) => {
       if (error) {
-        console.error(`LibreOffice error: ${error.message}`);
-        console.error(`LibreOffice stderr: ${stderr}`);
         reject(new Error(`LibreOffice conversion failed: ${error.message}`));
       } else {
-        console.log(`LibreOffice stdout: ${stdout}`);
         resolve();
       }
     });
@@ -211,8 +202,6 @@ async function convertDocToPdf(jobId, inputPath, outputDir, localOutputPath, out
 }
 
 async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetype, margin, mergeImagesInOnePdf, outputS3Key) {
-  console.log('convertImagesToPdf function - mergeImagesInOnePdf:', mergeImagesInOnePdf, typeof mergeImagesInOnePdf);
-  console.log('convertImagesToPdf function - outputPath:', outputPath);
   
   await updateJobStatus(jobId, 'processing', 30, {
     message: 'Processing images for PDF conversion...'
@@ -267,7 +256,6 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
   };
 
   const shouldMerge = (mergeImagesInOnePdf === "true" || mergeImagesInOnePdf === true);
-  console.log('convertImagesToPdf - shouldMerge condition:', shouldMerge);
   
   if (shouldMerge) {
     await updateJobStatus(jobId, 'processing', 40, {
@@ -366,7 +354,6 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
     }
 
     await fs.rm(baseOutDir, { recursive: true, force: true }, (err) => {
-      if (err) console.error(`Error deleting temp dir: ${err}`);
     });
 
   }
@@ -466,9 +453,7 @@ async function convertToPowerPoint(jobId, inputPath, outputPath, outputS3Key) {
   
   await fs.rm(baseOutDir, { recursive: true, force: true }, (err) => {
     if (err) {
-      console.error(`Error deleting directory: ${err}`);
     } else {
-      console.log(`Directory and its contents deleted: ${baseOutDir}`);
     }
   });
 

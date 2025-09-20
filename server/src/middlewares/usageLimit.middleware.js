@@ -56,7 +56,6 @@ export const enforceUsageLimits = asyncHandler(async (req, res, next) => {
     
     if (currentOperations >= limits.dailyOps) {
       await redisClient.unwatch();
-      console.log(`Daily limit reached: ${currentOperations}/${limits.dailyOps}`);
       const errorMessage = claims
         ? 'Daily plan limit reached. Upgrade plan to continue.'
         : 'Daily free limit reached. Visit /pricing to upgrade.';

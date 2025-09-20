@@ -84,13 +84,6 @@ const verifyEmailByLink = asyncHandler(async (req, res) => {
 
   const registrationToken = issueRegistrationToken(email);
 
-  // const wantsJson = req.accepts(["json", "html"]) === "json" || req.query?.response === 'json';
-  // if (wantsJson) {
-  //   return ApiResponse
-  //     .success({ registrationToken, email }, "Email verified successfully by link", 200)
-  //     .withRequest(req)
-  //     .send(res);
-  // }
 
   return res.redirect(
     `${process.env.FRONTEND_URL}/register?verified=true&email=${encodeURIComponent(email)}&registrationToken=${registrationToken}`

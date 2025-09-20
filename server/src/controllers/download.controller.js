@@ -61,7 +61,6 @@ export const checkJobStatus = asyncHandler(async (req, res) => {
       : new ApiResponse(statusCode, responseData, statusMessage, false);
     return resp.withRequest(req).send(res);
   } catch (error) {
-    console.error('Error checking job status:', error);
     throw ApiError.internal('Internal server error while checking job status');
   }
 });
@@ -94,7 +93,6 @@ export const downloadFile = asyncHandler(async (req, res) => {
       try {
         s3Metadata = await getS3ObjectMetadata(jobData.outputS3Key);
       } catch (error) {
-        console.warn('Could not get S3 metadata:', error);
       }
       
       // Determine the correct file name and extension based on S3 content type
@@ -134,8 +132,6 @@ export const downloadFile = asyncHandler(async (req, res) => {
         fileName = `${baseName}.docx`;
       } else if (jobData.operation === 'convertImagesToPdf') {
         // Check if images were merged into one PDF or kept as individual PDFs in a zip
-        console.log('convertImagesToPdf - mergeImagesInOnePdf:', jobData.mergeImagesInOnePdf);
-        console.log('convertImagesToPdf - s3Metadata contentType:', s3Metadata?.contentType);
         
         if (jobData.mergeImagesInOnePdf === true || jobData.mergeImagesInOnePdf === "true") {
           fileName = `converted-images.pdf`;
@@ -152,20 +148,15 @@ export const downloadFile = asyncHandler(async (req, res) => {
       
       // Determine the correct content type based on the operation
       let contentType = s3Metadata?.contentType || 'application/octet-stream';
-      console.log('Original S3 contentType:', s3Metadata?.contentType);
-      console.log('Job mergeImagesInOnePdf:', jobData.mergeImagesInOnePdf);
       
       if (jobData.operation === 'convertImagesToPdf') {
         if (jobData.mergeImagesInOnePdf === true || jobData.mergeImagesInOnePdf === "true") {
           contentType = 'application/pdf';
-          console.log('Setting contentType to application/pdf for merged PDF');
         } else {
           contentType = 'application/zip';
-          console.log('Setting contentType to application/zip for individual PDFs');
         }
       }
       
-      console.log('Final contentType:', contentType);
       
       return res.json({
         success: true,
@@ -188,16 +179,13 @@ export const downloadFile = asyncHandler(async (req, res) => {
       const downloadFileName = match ? match[1] : fileName;
       return res.download(filePath, downloadFileName, (err) => {
         if (err) {
-          console.error('File download failed:', err);
         } else {
-          console.log('File downloaded successfully.');
         }
       });
     }
 
     throw ApiError.notFound('No output available for this job');
   } catch (error) {
-    console.error('Error downloading file:', error);
     throw error;
   }
 });
@@ -222,9 +210,7 @@ export const downloadFileByPath = asyncHandler(async (req, res) => {
 
   return res.download(filePath, downloadFileName, (err) => {
     if (err) {
-      console.error('File download failed:', err);
     } else {
-      console.log('File downloaded successfully.');
     }
   });
 });
@@ -263,7 +249,6 @@ export const listProcessedFiles = asyncHandler(async (req, res) => {
           });
         }
       } catch (error) {
-        console.error(`Error processing file ${file}:`, error);
       }
     }
 
@@ -272,7 +257,6 @@ export const listProcessedFiles = asyncHandler(async (req, res) => {
       .withRequest(req)
       .send(res);
   } catch (error) {
-    console.error('Error listing processed files:', error);
     throw ApiError.internal('Internal server error while listing processed files');
   }
 });
@@ -300,7 +284,6 @@ export const deleteProcessedFile = asyncHandler(async (req, res) => {
       .withRequest(req)
       .send(res);
   } catch (error) {
-    console.error('Error deleting file:', error);
     throw ApiError.internal('Internal server error while deleting file');
   }
 });

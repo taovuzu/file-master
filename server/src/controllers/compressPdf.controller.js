@@ -68,7 +68,6 @@ const compressPdf = asyncHandler(async (req, res) => {
     }, { attempts: 3, backoff: { type: 'exponential', delay: 10000 } });
 
   } catch (error) {
-    console.error(`Failed to queue compress job ${jobId}:`, error);
 
 
     try {
@@ -78,7 +77,6 @@ const compressPdf = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
 
     throw error;

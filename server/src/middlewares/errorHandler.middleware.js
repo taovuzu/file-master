@@ -13,7 +13,6 @@ export const errorHandler = (err, req, res, next) => {
 
   error.path = req.originalUrl;
 
-  console.log(error.stack);
 
   const response = {
     success: false,

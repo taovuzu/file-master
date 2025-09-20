@@ -25,19 +25,15 @@ const redisClient = createClient({
 let isConnected = false;
 
 redisClient.on('error', (err) => {
-  console.error('Redis Client Error:', err);
   isConnected = false;
 });
 redisClient.on('connect', () => {
-  console.log('Redis Client Connected');
   isConnected = true;
 });
 redisClient.on('disconnect', () => {
-  console.log('Redis Client Disconnected');
   isConnected = false;
 });
 redisClient.on('ready', () => {
-  console.log('Redis Client Ready');
   isConnected = true;
 });
 
@@ -46,10 +42,8 @@ async function connectRedis() {
     if (!isConnected || !redisClient.isOpen) {
       await redisClient.connect();
       isConnected = true;
-      console.log('Redis client connected successfully');
     }
   } catch (error) {
-    console.error('Failed to connect to Redis:', error);
     throw error;
   }
 }
@@ -62,7 +56,6 @@ async function healthCheck() {
     await redisClient.ping();
     return true;
   } catch (error) {
-    console.error('Redis health check failed:', error);
     isConnected = false;
     return false;
   }
@@ -85,7 +78,6 @@ async function initializeQueue() {
     pdfQueueEvents = new QueueEvents('pdf-processing-queue', {
       connection: bullConnection
     });
-    console.log('PDF processing queue + queue events initialized successfully');
   }
 }
 
@@ -128,7 +120,6 @@ async function updateJobStatus(jobId, status, progress, additionalData = {}) {
     await redisClient.hSet(`job:${jobId}`, sanitizedJobData);
     await redisClient.expire(`job:${jobId}`, 86400);
   } catch (error) {
-    console.error('Failed to update job status:', error);
     throw error;
   }
 }
@@ -140,7 +131,6 @@ async function getJobStatus(jobId) {
     const jobData = await redisClient.hGetAll(`job:${jobId}`);
     return Object.keys(jobData).length > 0 ? jobData : null;
   } catch (error) {
-    console.error('Failed to get job status:', error);
     return null;
   }
 }
@@ -150,7 +140,6 @@ async function deleteJobData(jobId) {
     if (!(await healthCheck())) throw new Error('Redis not healthy');
     await redisClient.del(`job:${jobId}`);
   } catch (error) {
-    console.error('Failed to delete job data:', error);
   }
 }
 
@@ -161,7 +150,6 @@ async function getWaitingJobsCount() {
     const activeCount = await pdfProcessingQueue.getActiveCount();
     return (waitingCount || 0) + (activeCount || 0);
   } catch (err) {
-    console.error('[pdf.queue] Failed to get waiting+active jobs count:', err);
     return 0;
   }
 }

@@ -29,11 +29,8 @@ app.use(express.static("public"));
 import "./middlewares/passport.js";
 app.use(passport.initialize());
 
-console.log(process.env.AWS_REGION);
 
 app.use((req, res, next) => {
-  console.log(`Incoming Request: ${req.method} ${req.originalUrl}`);
-  console.log(`Client IP: ${req.clientIp}`);
   next();
 });
 
@@ -54,16 +51,3 @@ app.use("/api/v1/health", healthRouter);
 app.use(errorHandler);
 
 export { app };
-
-// image-to-pdf -> { PDFDocument from "pdf-lib" }
-// doc-to-pdf -> { libreoffice }
-// pdf-to-ppt -> { pptxgenjs, pdf-poppler, pdf-lib }
-// merge -> { PDFMerger from "pdf-merger-js" }
-// split -> { PDFDocument from "pdf-lib" }
-// compress -> { qpdf }
-// rotate -> { PDFDocument, degrees from "pdf-lib" }
-// page-numbers -> { PDFDocument, StandardFonts, rgb from "pdf-lib" }
-// watermark -> { PDFDocument, rgb, StandardFonts, degrees from "pdf-lib" }
-// esign -> { PDFDocument from "pdf-lib" }
-// unlock -> { qpdf }
-// protect -> { qpdf }
