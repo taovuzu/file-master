@@ -128,7 +128,7 @@ const usePdfPreview = (input) => {
         setTotalPages(pdfJsDoc.numPages);
         setCurrentPage(1);
       } catch (err) {
-        console.error("PDF loading error:", err);
+        // PDF loading error
 
         const first = Array.isArray(input) ? input[0] : input;
         if (first && isPdfType(first)) message.error("Failed to load PDF file.");
@@ -183,7 +183,7 @@ const usePdfPreview = (input) => {
 
       return canvas.toDataURL();
     } catch (err) {
-      console.error("Error rendering page:", err);
+      // Error rendering page
       return null;
     }
   }, [pdfDocJs]);
@@ -201,7 +201,7 @@ const usePdfPreview = (input) => {
       }
       setPageImages(images);
     } catch (err) {
-      console.error("Error loading all pages:", err);
+      // Error loading all pages
       message.error("Failed to load PDF pages.");
     } finally {
       setLoading(false);
@@ -221,7 +221,7 @@ const usePdfPreview = (input) => {
       const pdfBytes = await pdfDocLib.save();
       return new Blob([pdfBytes], { type: "application/pdf" });
     } catch (err) {
-      console.error("Error saving PDF:", err);
+      // Error saving PDF
       return null;
     }
   }, [pdfDocLib]);

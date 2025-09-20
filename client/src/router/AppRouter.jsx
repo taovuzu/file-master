@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { useLocation, Routes, Route } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { openApp as openAppAction, resetApp as resetAppAction } from '@/redux/app';
 import routes from './routes';
 import { matchPath } from 'react-router-dom';
+import PageLoader from '@/components/PageLoader';
 
 export default function AppRouter() {
   const location = useLocation();
@@ -37,14 +38,14 @@ export default function AppRouter() {
   }, [location.pathname, dispatch]);
 
   return (
-    <Routes>
-      {routesList.map((route, index) =>
-      <Route
-        key={index}
-        path={route.path}
-        element={route.element} />
-
-      )}
-    </Routes>);
-
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {routesList.map((route, index) =>
+          <Route
+            key={index}
+            path={route.path}
+            element={route.element} />
+        )}
+      </Routes>
+    </Suspense>);
 }

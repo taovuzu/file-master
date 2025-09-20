@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Layout, Typography, Space } from 'antd';
 
 const { Footer: AntFooter } = Layout;
 const { Text, Link } = Typography;
 
 const Footer = () => {
+  const currentYear = useMemo(() => new Date().getFullYear(), []);
+
   return (
     <AntFooter style={{ textAlign: 'center', backgroundColor: '#f9f9f9', padding: '20px 0' }}>
       <Space direction="vertical" size={4}>
@@ -16,11 +18,10 @@ const Footer = () => {
           <Link href="/pricing">Pricing</Link>
         </Space>
         <Text type="secondary">
-          © {new Date().getFullYear()} iLovePDF Clone. All rights reserved.
+          © {currentYear} iLovePDF Clone. All rights reserved.
         </Text>
       </Space>
     </AntFooter>);
-
 };
 
-export default Footer;
+export default React.memo(Footer);

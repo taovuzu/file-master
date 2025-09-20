@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Dropdown, Avatar, Badge } from "antd";
 import {
   User,
@@ -36,16 +36,7 @@ const Header = () => {
   const [showSearchResults, setShowSearchResults] = useState(false);
   const navigate = useNavigate();
 
-  const toolCategories = {
-    // organize: {
-    //   title: "Organize PDF",
-    //   tools: [
-    //   { name: "Merge PDF", path: "/merge", icon: Merge },
-    //   { name: "Split PDF", path: "/split", icon: Split },
-    //   { name: "Organize PDF", path: "/split", icon: FileText },
-    //   { name: "Add Page Numbers", path: "/page-numbers", icon: Hash }]
-
-    // },
+  const toolCategories = useMemo(() => ({
     optimize: {
       title: "Optimize PDF",
       tools: [{ name: "Compress PDF", path: "/compress", icon: FileDown }]
@@ -57,35 +48,28 @@ const Header = () => {
       { name: "PowerPoint to PDF", path: "/convert", icon: Download },
       { name: "Excel to PDF", path: "/convert", icon: Download },
       { name: "JPG to PDF", path: "/convert", icon: FileText }]
-
     },
     convertFromPdf: {
       title: "Convert from PDF",
       tools: [
       { name: "Convert PDF", path: "/convert", icon: Download },
-      { name: "PDF to PowerPoint", path: "/pdf-to-powerpoint", icon: Download },
-      // { name: "PDF to JPG", path: "/convert", icon: Download },
-      // { name: "Edit PDF", path: "/convert", icon: FileText }
-    ]
-
+      { name: "PDF to PowerPoint", path: "/pdf-to-powerpoint", icon: Download }]
     },
     edit: {
       title: "Edit PDF",
       tools: [
       { name: "Rotate PDF", path: "/rotate", icon: RotateCw },
       { name: "Add Watermark", path: "/watermark", icon: Type }]
-
     },
     security: {
       title: "PDF Security",
       tools: [
       { name: "Protect PDF", path: "/protect", icon: Lock },
       { name: "Unlock PDF", path: "/unlock", icon: Unlock }]
-
     }
-  };
+  }), []);
 
-  const userMenuItems = [
+  const userMenuItems = useMemo(() => [
   {
     key: "profile",
     icon: <User className="w-4 h-4" />,
@@ -106,7 +90,7 @@ const Header = () => {
     onClick: () => {
       navigate("/logout");
     }
-  }];
+  }], [navigate]);
 
 
   const companyMenuItems = [
@@ -194,21 +178,21 @@ const Header = () => {
   }];
 
 
-  const handleToolClick = (path) => {
+  const handleToolClick = useCallback((path) => {
     navigate(path);
     setIsMobileMenuOpen(false);
-  };
+  }, [navigate]);
 
-  const handleAuthClick = () => {
+  const handleAuthClick = useCallback(() => {
     if (isLoggedIn) {
       navigate("/profile");
     } else {
       const from = window.location.pathname + window.location.search;
       navigate(`/login?redirectTo=${encodeURIComponent(from)}`);
     }
-  };
+  }, [isLoggedIn, navigate]);
 
-  const handleSearch = (query) => {
+  const handleSearch = useCallback((query) => {
     setSearchQuery(query);
     if (query.trim() === "") {
       setSearchResults([]);
@@ -216,54 +200,51 @@ const Header = () => {
       return;
     }
 
-
     const allTools = Object.values(toolCategories).flatMap((category) =>
-    category.tools.map((tool) => ({ ...tool, category: category.title }))
+      category.tools.map((tool) => ({ ...tool, category: category.title }))
     );
 
     const filtered = allTools.filter((tool) =>
-    tool.name.toLowerCase().includes(query.toLowerCase()) ||
-    tool.category.toLowerCase().includes(query.toLowerCase())
+      tool.name.toLowerCase().includes(query.toLowerCase()) ||
+      tool.category.toLowerCase().includes(query.toLowerCase())
     );
 
     setSearchResults(filtered);
     setShowSearchResults(true);
-  };
+  }, [toolCategories]);
 
-  const handleSearchSelect = (tool) => {
+  const handleSearchSelect = useCallback((tool) => {
     navigate(tool.path);
     setSearchQuery("");
     setShowSearchResults(false);
-  };
+  }, [navigate]);
 
-  const renderToolDropdown = () =>
-  <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 min-w-[800px]">
+  const renderToolDropdown = useCallback(() =>
+    <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 min-w-[800px]">
       <div className="grid grid-cols-3 gap-6">
         {Object.entries(toolCategories).map(([key, category]) =>
-      <div key={key} className="space-y-3">
+          <div key={key} className="space-y-3">
             <h3 className="font-semibold text-gray-900 text-sm uppercase tracking-wide">
               {category.title}
             </h3>
             <ul className="space-y-2">
               {category.tools.map((tool) => {
-            const Icon = tool.icon;
-            return (
-              <li key={tool.name}>
+                const Icon = tool.icon;
+                return (
+                  <li key={tool.name}>
                     <button
-                  onClick={() => handleToolClick(tool.path)}
-                  className="flex items-center space-x-3 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                  
+                      onClick={() => handleToolClick(tool.path)}
+                      className="flex items-center space-x-3 w-full p-2 rounded-lg hover:bg-gray-50 transition-colors text-left">
                       <Icon className="w-4 h-4 text-gray-500" />
                       <span className="text-sm text-gray-700">{tool.name}</span>
                     </button>
                   </li>);
-
-          })}
+              })}
             </ul>
           </div>
-      )}
+        )}
       </div>
-    </div>;
+    </div>, [toolCategories, handleToolClick]);
 
 
   return (
@@ -602,4 +583,4 @@ const Header = () => {
 
 };
 
-export default Header;
+export default React.memo(Header);

@@ -17,7 +17,6 @@ import MainLayout from '@/layout/MainLayout';
 import ToolCard, { toolCardUtils } from '@/components/ToolCard';
 import FileUploadZone from '@/components/FileUploadZone';
 import { PDF_OPERATIONS, ROUTES } from '@/utils/constants';
-import { usePageTracking } from '@/utils/analytics';
 import { logUserAction } from '@/utils/logger';
 
 const { Title, Paragraph } = Typography;
@@ -30,7 +29,6 @@ const HomePage = () => {
   const [allTools, setAllTools] = useState([]);
 
 
-  usePageTracking('home');
 
   useEffect(() => {
 

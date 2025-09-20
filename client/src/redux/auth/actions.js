@@ -97,7 +97,6 @@ export const login = createAsyncThunk(
 export const requestPasswordReset = createAsyncThunk(
   'auth/requestPasswordReset',
   async ({ email }, { rejectWithValue }) => {
-    console.log(email);
     const data = await authService.requestPasswordReset({ email });
 
     if (data.success === true) {

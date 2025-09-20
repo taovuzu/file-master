@@ -20,7 +20,6 @@ const SideBar = ({ form }) => {
         </div>
       }
     </div>);
-
 };
 
-export default SideBar;
+export default React.memo(SideBar);

@@ -1,31 +1,43 @@
 import { lazy } from "react";
 import { Navigate } from "react-router-dom";
 
-
+// Core pages - loaded immediately
 const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const HomePage = lazy(() => import("@/pages/HomePage"));
+const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
+
+// Auth pages - grouped together
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
 const RegisterPage = lazy(() => import("@/pages/RegisterPage"));
 const LogoutPage = lazy(() => import("@/pages/LogoutPage"));
 const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
 const ChangePasswordPage = lazy(() => import("@/pages/ChangePasswordPage"));
-const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
 const AuthCallbackPage = lazy(() => import("@/pages/AuthCallbackPage"));
-const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
+
+// User pages
+const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
+
+// Info pages
 const HelpCenterPage = lazy(() => import("@/pages/HelpCenterPage"));
 const PricingPage = lazy(() => import("@/pages/PricingPage"));
 
-
+// PDF tool pages - most frequently used
 const MergePdfPage = lazy(() => import("@/pages/MergePdfPage"));
 const SplitPdfPage = lazy(() => import("@/pages/SplitPdfPage"));
 const CompressPdfPage = lazy(() => import("@/pages/CompressPdfPage"));
 const ConvertPdfPage = lazy(() => import("@/pages/ConvertPdfPage"));
+
+// PDF tool pages - security features
 const ProtectPdfPage = lazy(() => import("@/pages/ProtectPdfPage"));
 const UnlockPdfPage = lazy(() => import("@/pages/UnlockPdfPage"));
+
+// PDF tool pages - editing features
 const RotatePdfPage = lazy(() => import("@/pages/RotatePdfPage"));
 const WatermarkPdfPage = lazy(() => import("@/pages/WatermarkPdfPage"));
 const PageNumbersPdfPage = lazy(() => import("@/pages/PageNumbersPdfPage"));
+
+// PDF tool pages - advanced features
 const DownloadPage = lazy(() => import("@/pages/DownloadPage"));
 const PdfToPowerPointPage = lazy(() => import("@/pages/PdfToPowerPointPage"));
 const PdfEditorPage = lazy(() => import("@/pages/PdfEditorPage"));

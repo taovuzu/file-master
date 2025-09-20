@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Badge } from 'antd';
 import {
   FileText,
@@ -21,11 +21,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES, PDF_OPERATIONS } from '@/utils/constants';
-import { useComponentTracking } from '@/utils/analytics';
 import { logUserAction } from '@/utils/logger';
-
-
-
 
 const TOOL_CONFIG = {
   'Merge PDF': {
@@ -160,30 +156,6 @@ const TOOL_CONFIG = {
     premium: false,
     route: '/convert?type=excel-to-pdf'
   },
-  // 'Edit PDF': {
-  //   title: 'Edit PDF',
-  //   description: 'Edit text, images, and content in PDF files',
-  //   icon: FileText,
-  //   color: 'purple',
-  //   features: ['Text editing', 'Image editing', 'Content modification'],
-  //   popularity: 76,
-  //   processingTime: '40 seconds',
-  //   users: '1.3M+',
-  //   premium: true,
-  //   route: '/edit'
-  // },
-  // 'PDF to JPG': {
-  //   title: 'PDF to JPG',
-  //   description: 'Convert PDF pages to high-quality JPG images',
-  //   icon: Download,
-  //   color: 'yellow',
-  //   features: ['High resolution', 'Batch conversion', 'Custom settings'],
-  //   popularity: 74,
-  //   processingTime: '35 seconds',
-  //   users: '1.1M+',
-  //   premium: false,
-  //   route: '/convert?type=pdf-to-jpg'
-  // },
   'JPG to PDF': {
     title: 'JPG to PDF',
     description: 'Convert JPG images to PDF documents',
@@ -196,18 +168,6 @@ const TOOL_CONFIG = {
     premium: false,
     route: '/convert?type=image-to-pdf'
   },
-  // 'Organize PDF': {
-  //   title: 'Organize PDF',
-  //   description: 'Reorder, delete, and organize PDF pages',
-  //   icon: FileText,
-  //   color: 'teal',
-  //   features: ['Page reordering', 'Page deletion', 'Batch operations'],
-  //   popularity: 69,
-  //   processingTime: '15 seconds',
-  //   users: '900K+',
-  //   premium: false,
-  //   route: '/organize'
-  // },
   'Page numbers': {
     title: 'Add Page Numbers',
     description: 'Add page numbers to PDF documents',
@@ -333,9 +293,6 @@ const getColorClasses = (color) => {
   return colorMap[color] || colorMap.blue;
 };
 
-
-
-
 const ToolCard = ({
   tool,
   featured = false,
@@ -345,22 +302,42 @@ const ToolCard = ({
   style = {}
 }) => {
   const navigate = useNavigate();
-  const { trackInteraction } = useComponentTracking('ToolCard');
-
-  const config = TOOL_CONFIG[tool];
+  const config = useMemo(() => TOOL_CONFIG[tool], [tool]);
   if (!config) {
     console.warn(`Tool configuration not found for: ${tool}`);
     return null;
   }
 
   const { title, description, icon: Icon, color, features, popularity, processingTime, users, premium, route } = config;
-  const colors = getColorClasses(color);
+  const colors = useMemo(() => getColorClasses(color), [color]);
 
+  const handleMouseEnter = useCallback(() => {
+    if (route && !onClick) {
+      const routePath = route.split('?')[0];
+      const prefetchMap = {
+        '/merge': () => import('@/pages/MergePdfPage'),
+        '/split': () => import('@/pages/SplitPdfPage'),
+        '/compress': () => import('@/pages/CompressPdfPage'),
+        '/convert': () => import('@/pages/ConvertPdfPage'),
+        '/protect': () => import('@/pages/ProtectPdfPage'),
+        '/unlock': () => import('@/pages/UnlockPdfPage'),
+        '/rotate': () => import('@/pages/RotatePdfPage'),
+        '/watermark': () => import('@/pages/WatermarkPdfPage'),
+        '/page-numbers': () => import('@/pages/PageNumbersPdfPage'),
+        '/pdf-to-powerpoint': () => import('@/pages/PdfToPowerPointPage'),
+        '/edit': () => import('@/pages/PdfEditorPage'),
+        '/organize': () => import('@/pages/OrganizePdfPage'),
+        '/download': () => import('@/pages/DownloadPage')
+      };
+      
+      const prefetchFn = prefetchMap[routePath];
+      if (prefetchFn) {
+        prefetchFn().catch(() => {});
+      }
+    }
+  }, [route, onClick]);
 
-
-
-  const handleClick = () => {
-    trackInteraction('tool_selected', { tool, title });
+  const handleClick = useCallback(() => {
     logUserAction('tool_card_clicked', { tool, title, premium });
 
     if (onClick) {
@@ -368,7 +345,7 @@ const ToolCard = ({
     } else if (route) {
       navigate(route);
     }
-  };
+  }, [tool, title, premium, onClick, route, navigate]);
 
   return (
     <div
@@ -380,14 +357,12 @@ const ToolCard = ({
         ${className}
       `}
       style={style}
-      onClick={handleClick}>
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}>
       
-      {}
       <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`} />
       
-      {}
       <div className="relative z-10 p-6 h-full flex flex-col">
-        {}
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className={`
@@ -420,7 +395,6 @@ const ToolCard = ({
             </div>
           </div>
           
-          {}
           {premium &&
           <div className="flex-shrink-0">
               <Badge
@@ -439,7 +413,6 @@ const ToolCard = ({
           }
         </div>
 
-        {}
         <p className={`
           text-gray-600 mb-4 flex-1 leading-relaxed
           ${compact ? 'text-sm line-clamp-2' : 'text-sm line-clamp-3'}
@@ -447,7 +420,6 @@ const ToolCard = ({
           {description}
         </p>
 
-        {}
         {!compact && features && features.length > 0 &&
         <div className="mb-4">
             <div className="flex flex-wrap gap-1.5">
@@ -455,7 +427,6 @@ const ToolCard = ({
             <span
               key={index}
               className="inline-block px-2 py-1 text-xs bg-gray-50 rounded-md text-gray-600 border border-gray-100">
-              
                   {feature}
                 </span>
             )}
@@ -468,7 +439,6 @@ const ToolCard = ({
           </div>
         }
 
-        {}
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
           <div className="flex items-center space-x-2">
             <Clock className="w-3 h-3 text-gray-400" />
@@ -495,7 +465,6 @@ const ToolCard = ({
                 e.stopPropagation();
                 handleClick();
               }}>
-              
               <span>{compact ? 'Use' : 'Start'}</span>
               <ArrowRight className="w-3 h-3" />
             </button>
@@ -506,26 +475,14 @@ const ToolCard = ({
 
 };
 
-
 export default React.memo(ToolCard);
-
 
 export { TOOL_CONFIG, getColorClasses };
 
-
 export const toolCardUtils = {
-
-
-
-
-
   getToolConfig: (tool) => {
     return TOOL_CONFIG[tool];
   },
-
-
-
-
 
   getAllTools: () => {
     return Object.entries(TOOL_CONFIG).map(([key, config]) => ({
@@ -534,44 +491,32 @@ export const toolCardUtils = {
     }));
   },
 
-
-
-
-
   getFeaturedTools: () => {
-    return Object.entries(TOOL_CONFIG).
-    filter(([_, config]) => config.popularity > 85).
-    map(([key, config]) => ({
-      key,
-      ...config
-    })).
-    sort((a, b) => b.popularity - a.popularity);
+    return Object.entries(TOOL_CONFIG)
+      .filter(([_, config]) => config.popularity > 85)
+      .map(([key, config]) => ({
+        key,
+        ...config
+      }))
+      .sort((a, b) => b.popularity - a.popularity);
   },
-
-
-
-
 
   getPremiumTools: () => {
-    return Object.entries(TOOL_CONFIG).
-    filter(([_, config]) => config.premium).
-    map(([key, config]) => ({
-      key,
-      ...config
-    }));
+    return Object.entries(TOOL_CONFIG)
+      .filter(([_, config]) => config.premium)
+      .map(([key, config]) => ({
+        key,
+        ...config
+      }));
   },
 
-
-
-
-
   getPopularTools: () => {
-    return Object.entries(TOOL_CONFIG).
-    sort((a, b) => b[1].popularity - a[1].popularity).
-    slice(0, 8).
-    map(([key, config]) => ({
-      key,
-      ...config
-    }));
+    return Object.entries(TOOL_CONFIG)
+      .sort((a, b) => b[1].popularity - a[1].popularity)
+      .slice(0, 8)
+      .map(([key, config]) => ({
+        key,
+        ...config
+      }));
   }
 };

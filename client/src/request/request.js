@@ -53,7 +53,6 @@ axiosInstance.interceptors.response.use(
 
 const sendRequest = async (method, url, data = null, config = {}, successOptions) => {
   try {
-    console.log(API_BASE_URL, url);
     const response = await axiosInstance({ method, url, data, ...config });
     if (successOptions) successHandler(response, successOptions);
     return response.data;

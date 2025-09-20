@@ -18,7 +18,6 @@ import { useDropzone } from "react-dropzone";
 import { validateFile, validateFiles } from "@/utils/validation";
 import { formatFileSize, isPdfFile } from "@/utils/helpers";
 import { MESSAGES, APP_CONFIG } from "@/utils/constants";
-import { usePdfPerformance } from "@/utils/performance";
 import { logUserAction } from "@/utils/logger";
 import PdfPreview from "@/components/PdfPreview";
 
@@ -42,7 +41,6 @@ const FileUploadZone = ({
   const [dragActive, setDragActive] = useState(false);
   const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false);
   const fileInputRef = useRef(null);
-  const { measureUpload } = usePdfPerformance();
 
 
   useEffect(() => {

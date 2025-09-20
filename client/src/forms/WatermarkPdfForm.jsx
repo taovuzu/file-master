@@ -51,7 +51,7 @@ const WatermarkPdfForm = ({ onFinish, file }) => {
 
       onFinish(formData);
     } catch (error) {
-      console.error("Validation failed:", error);
+      // Validation failed
     }
   };
 

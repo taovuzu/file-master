@@ -1,16 +1,5 @@
-import { notification } from 'antd';
+import { notifyError } from '@/utils/notify';
 import codeMessage from './codeMessage';
-
-const notifyError = (title, description, duration = 15, maxCount = 1) => {
-  notification.config({ duration, maxCount });
-  notification.error({
-    message: title,
-    description,
-    duration,
-    placement: 'bottomRight',
-    key: Date.now()
-  });
-};
 
 const makeErrorResult = (message) => ({
   success: false,
@@ -24,17 +13,15 @@ const clearAuth = () => {
 };
 
 const errorHandler = (error) => {
-  console.log(error);
-
   if (!navigator.onLine) {
-    notifyError('No internet connection', 'Check your internet network');
+    notifyError('No internet connection', 'network');
     return makeErrorResult('Cannot connect to the server, Check your internet network');
   }
 
   const { response } = error || {};
 
   if (!response) {
-    notifyError('Problem connecting to server', 'Contact your Account administrator', 20);
+    notifyError('Server connection failed', 'server');
     return makeErrorResult('Cannot connect to the server, Contact your Account administrator');
   }
 
@@ -50,11 +37,9 @@ const errorHandler = (error) => {
     }
   }
 
-
   if (response?.status) {
-    const errorText =
-    response.data?.message || codeMessage[response.status] || 'Unexpected error';
-    notifyError(`Request error ${response.status}`, errorText, 20, 2);
+    const errorText = response.data?.message || codeMessage[response.status] || 'Unexpected error';
+    notifyError(errorText, `error_${response.status}`);
 
     if (response?.data?.message === 'JsonWebTokenError') {
       clearAuth();
@@ -62,7 +47,7 @@ const errorHandler = (error) => {
     return response.data;
   }
 
-  notifyError('Problem connecting to server', 'Try again later');
+  notifyError('Server connection failed', 'server');
   return makeErrorResult('Cannot connect to the server, Try again later');
 };
 

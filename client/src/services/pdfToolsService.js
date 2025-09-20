@@ -160,17 +160,12 @@ const processPdfToolDirectUpload = async (endpoint, files, options, onProgress, 
   const formData = new FormData();
   const fileArray = Array.isArray(files) ? files : [files];
   
-  // Debug: Log files being processed
-  console.log('Processing files for direct upload:', fileArray);
-  
   fileArray.forEach((file, index) => { 
-    console.log(`Appending file ${index}:`, file.name, file.type, file.size);
     formData.append(fieldName, file); 
   });
   
   Object.entries(options).forEach(([key, value]) => { 
     if (value !== undefined && value !== null) { 
-      console.log(`Appending option ${key}:`, value, typeof value);
       if (typeof value === 'object') { 
         formData.append(key, JSON.stringify(value)); 
       } else { 
@@ -527,9 +522,6 @@ export const downloadFile = async (fileOrUrl, fileName) => {
           const downloadResponse = await fetch(data.downloadUrl);
           const blob = await downloadResponse.blob();
           
-          console.log('Download response content type:', downloadResponse.headers.get('content-type'));
-          console.log('API response fileName:', data.fileName);
-          console.log('API response contentType:', data.contentType);
           
           // Create object URL and download
           const objectUrl = URL.createObjectURL(blob);
@@ -555,7 +547,6 @@ export const downloadFile = async (fileOrUrl, fileName) => {
         throw new Error(`Download failed: ${response.status}`);
       }
     } catch (error) {
-      console.error('Download failed:', error);
       // Fallback to direct link
       const link = document.createElement('a');
       link.href = url;

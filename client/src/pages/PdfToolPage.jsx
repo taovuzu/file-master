@@ -170,7 +170,6 @@ const PdfToolPage = ({
 
 
       if (!result.success) {
-        console.error("Processing failed:", result.error);
         setProgressError(result.error || "Processing failed");
         return;
       }
@@ -196,7 +195,6 @@ const PdfToolPage = ({
 
 
         if (resultData.error) {
-          console.error("API returned error:", resultData.error);
           setProgressError(resultData.error);
           return;
         }
@@ -219,7 +217,6 @@ const PdfToolPage = ({
             'operation-complete'
           );
 
-          console.log(`File ready for download: ${resultData.fileUrl}`);
 
 
           setTimeout(() => {
@@ -241,7 +238,6 @@ const PdfToolPage = ({
         }
       }
     } catch (err) {
-      console.error("Processing error:", err);
 
 
       let errorMessage = err.message || "An error occurred during processing";
