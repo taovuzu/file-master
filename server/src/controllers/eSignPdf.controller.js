@@ -86,9 +86,6 @@ const eSignPdf = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue e-sign job ${jobId}:`, error);
-
-
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue e-sign job',
@@ -96,10 +93,9 @@ const eSignPdf = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
 
-    throw error;
+    throw ApiError.internal(`PDF e-signature operation failed: ${error.message}`);
   }
 
   return ApiResponse

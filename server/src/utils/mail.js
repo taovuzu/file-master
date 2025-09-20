@@ -2,15 +2,13 @@ import nodemailer from "nodemailer";
 import Mailgen from "mailgen";
 import { ApiError } from "./ApiError.js";
 
-
-
 const sendEmail = async (input) => {
 
   const mailGenerator = new Mailgen({
     theme: "default",
     product: {
-      name: "tier",
-      link: "http://localhost:3000"
+      name: process.env.APP_NAME,
+      link: process.env.MAIL_LINK
     }
   });
 
@@ -25,9 +23,7 @@ const sendEmail = async (input) => {
   });
 
   const emailHTML = mailGenerator.generate(input.mailgenContent);
-
   const emailText = mailGenerator.generatePlaintext(input.mailgenContent);
-
   const mail = {
     from: "narmankalyan@gmail.com",
     to: input.email,
@@ -41,8 +37,6 @@ const sendEmail = async (input) => {
     throw new ApiError(400, "Email could not be send", error);
   }
 };
-
-
 
 const emailVerificationMailgen = (verificationUrl, otpNumber) => {
   return {

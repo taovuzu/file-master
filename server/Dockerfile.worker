@@ -1,4 +1,9 @@
-FROM node:20-bookworm
+FROM node:20-bookworm AS base
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+FROM node:20-bookworm AS runtime
 WORKDIR /app
 
 ARG UID=1000
@@ -8,16 +13,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   qpdf \
   libreoffice \
   poppler-utils \
+  dumb-init \
   && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
-RUN npm install
+COPY --from=base /app/node_modules ./node_modules
 COPY src ./src
-
-ENV NODE_ENV=production
+COPY package*.json ./
 
 RUN \
     if [ "${GID}" != "1000" ]; then groupmod -g ${GID} node; fi && \
     if [ "${UID}" != "1000" ]; then usermod -u ${UID} node; fi
+
+USER node
+
+ENV NODE_ENV=production
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "process.exit(0)"
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "src/worker.js"]
 
 

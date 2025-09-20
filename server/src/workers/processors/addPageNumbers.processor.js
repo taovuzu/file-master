@@ -3,6 +3,7 @@ import path from 'path';
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { updateJobStatus } from '../../queues/pdf.queue.js';
 import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
+import { ApiError } from '../../utils/ApiError.js';
 
 const fontSizes = {
   small: 10,
@@ -87,7 +88,7 @@ export async function addPageNumbersProcessor(jobId, jobData) {
     const toPageIndex = Math.min(toPageNum - 1, numberOfPages - 1);
 
     if (fromPageIndex > toPageIndex) {
-      throw new Error("fromPage cannot be greater than toPage");
+      throw ApiError.badRequest("fromPage cannot be greater than toPage");
     }
 
     const fontSizeValue = fontSizes[fontSize] || fontSizes.normal;
@@ -112,7 +113,7 @@ export async function addPageNumbersProcessor(jobId, jobData) {
 
     const pages = pdfDoc.getPages();
     if (!pages || pages.length === 0) {
-      throw new Error("PDF has no pages");
+      throw ApiError.badRequest("PDF has no pages");
     }
 
     await updateJobStatus(jobId, 'processing', 50, {
@@ -201,7 +202,6 @@ export async function addPageNumbersProcessor(jobId, jobData) {
       await uploadFileToS3(localOutputPath, outputS3Key, 'application/pdf');
     }
 
-    // Copy to shared path for backward compatibility
     await fs.copyFile(localOutputPath, outputPath);
 
     await updateJobStatus(jobId, 'completed', 100, {
@@ -225,13 +225,11 @@ export async function addPageNumbersProcessor(jobId, jobData) {
     };
 
   } catch (error) {
-    console.error(`Add page numbers failed for job ${jobId}:`, error);
-    throw error;
+    throw ApiError.internal(`Page numbering failed: ${error.message}`);
   } finally {
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
     } catch (cleanupError) {
-      console.error(`Failed to cleanup temp directory for job ${jobId}:`, cleanupError);
     }
   }
 }

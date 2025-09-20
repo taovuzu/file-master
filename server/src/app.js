@@ -1,16 +1,12 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { rateLimit } from "express-rate-limit";
-import { globalSlowDown, sensitiveRateLimiter } from "./middlewares/rateLimit.middleware.js";
+import { globalSlowDown } from "./middlewares/rateLimit.middleware.js";
 import requestIp from "request-ip";
 import passport from "passport";
-import { ApiError } from "./utils/ApiError.js";
 
 const app = express();
-
 app.set('trust proxy', 1);
-
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
   credentials: true
@@ -24,15 +20,30 @@ app.use(express.urlencoded({ extended: true, limit: "32kb" }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(express.static("public"));
 
-
-
+import logger from './utils/logger.js';
 import "./middlewares/passport.js";
 app.use(passport.initialize());
 
-
 app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    const { method, originalUrl } = req;
+    const { statusCode } = res;
+    
+    logger.http(`${method} ${originalUrl}`, {
+      method,
+      url: originalUrl,
+      statusCode,
+      duration: `${duration}ms`,
+      ip: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+  });
+  
   next();
 });
+
 
 import userRouter from "./routes/user.route.js";
 import pdfToolsRouter from "./routes/pdfTools.route.js";

@@ -71,7 +71,7 @@ const mergePdfFiles = asyncHandler(async (req, res) => {
     } catch (redisError) {
     }
 
-    throw error;
+    throw ApiError.internal(`PDF merge operation failed: ${error.message}`);
   }
 
   return ApiResponse

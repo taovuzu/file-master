@@ -1,11 +1,5 @@
-/*
-  Web Worker to render PDF pages and thumbnails using pdf.js without blocking UI.
-  Supports job cancellation via jobId and renderingTask.cancel().
-*/
-
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 
-// Use CDN worker if not bundled; main thread may also set this.
 GlobalWorkerOptions.workerSrc = "https://unpkg.com/pdfjs-dist@5.4.54/build/pdf.worker.min.mjs";
 
 /** @type {import('pdfjs-dist').PDFDocumentProxy | null} */

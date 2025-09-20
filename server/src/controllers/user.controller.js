@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 import { sendEmail, emailVerificationMailgen, forgetPasswordMailgen } from "../utils/mail.js";
 import { request } from "http";
 import { redisClient, healthCheck } from "../queues/pdf.queue.js";
+import logger from "../utils/logger.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -315,7 +316,7 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
 
   const resetLink = `${process.env.FRONTEND_URL}/reset-password?email=${encodeURIComponent(email)}&unHashedToken=${unHashedToken}`;
 
-  console.log(resetLink);
+  logger.info('Password reset link generated', { email });
 
   await sendEmail({
     email,
@@ -332,7 +333,7 @@ const forgotPasswordRequest = asyncHandler(async (req, res) => {
 const resetForgottenPassword = asyncHandler(async (req, res) => {
   const { email, unHashedToken, newPassword } = req.body;
 
-  console.log(email, unHashedToken, newPassword);
+  logger.info('Password reset attempt', { email });
   if (!email || !unHashedToken || !newPassword) {
     throw ApiError.badRequest("Email, token, or new password is missing");
   }
@@ -398,8 +399,7 @@ const sendRegistrationTokens = async (email, req) => {
   await redisClient.expire(key, ttlSeconds);
 
   const verifyUrl = `${req.protocol}://${req.get("host")}/api/v1/users/verify-email-link?email=${encodeURIComponent(email)}&unHashedToken=${unHashedToken}`;
-  console.log(otp);
-  console.log(verifyUrl);
+  logger.info('Email verification tokens generated', { email, otp });
   await sendEmail({
     email: email,
     subject: "Email Verification Tokens",

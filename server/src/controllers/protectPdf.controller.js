@@ -26,7 +26,6 @@ const protectPdf = asyncHandler(async (req, res) => {
   const outputS3Key = `processed/${jobId}/result.pdf`;
 
   try {
-
     let retryCount = 0;
     const maxRetries = 3;
     while (retryCount < maxRetries) {
@@ -44,13 +43,11 @@ const protectPdf = asyncHandler(async (req, res) => {
       throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
-
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'protect',
       originalFileName: originalFileName || "file.pdf"
     });
-
 
     await pdfProcessingQueue.add('protect-pdf', {
       jobId,
@@ -63,9 +60,6 @@ const protectPdf = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue protect job ${jobId}:`, error);
-
-
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue protect job',
@@ -73,10 +67,8 @@ const protectPdf = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-
-    throw error;
+    throw ApiError.internal(`PDF protection operation failed: ${error.message}`);
   }
 
   return ApiResponse

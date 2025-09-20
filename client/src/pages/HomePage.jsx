@@ -1,47 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Typography, Button, Card, Carousel, Statistic, Divider } from 'antd';
+import { Row, Col, Typography, Button, Card } from 'antd';
 import {
   FileText,
-  Users,
-  Clock,
   Shield,
   Zap,
-  Star,
   ArrowRight,
   CheckCircle,
-  Globe,
-  Lock } from
-'lucide-react';
+} from
+  'lucide-react';
 
 import MainLayout from '@/layout/MainLayout';
 import ToolCard, { toolCardUtils } from '@/components/ToolCard';
-import FileUploadZone from '@/components/FileUploadZone';
-import { PDF_OPERATIONS, ROUTES } from '@/utils/constants';
-import { logUserAction } from '@/utils/logger';
-
 const { Title, Paragraph } = Typography;
-
-
-
-
 
 const HomePage = () => {
   const [allTools, setAllTools] = useState([]);
-
-
-
   useEffect(() => {
-
     setAllTools(toolCardUtils.getAllTools());
-
-
   }, []);
-
 
   return (
     <MainLayout>
-
-      {}
+      { }
       <section className="py-4 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -52,21 +32,18 @@ const HomePage = () => {
               Everything you need to work with PDFs. From basic operations to advanced features, we've got you covered.
             </Paragraph>
           </div>
-
           <Row gutter={[24, 24]}>
             {allTools.map((tool) =>
-            <Col xs={24} sm={12} lg={8} xl={6} key={tool.key}>
+              <Col xs={24} sm={12} lg={8} xl={6} key={tool.key}>
                 <ToolCard
-                tool={tool.key}
-                compact={true} />
-              
+                  tool={tool.key}
+                  compact={true} />
               </Col>
             )}
           </Row>
         </div>
       </section>
-
-      {}
+      { }
       <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -77,7 +54,6 @@ const HomePage = () => {
               We've built the most comprehensive and user-friendly PDF processing platform available online.
             </Paragraph>
           </div>
-
           <Row gutter={[32, 32]}>
             <Col xs={24} md={8}>
               <Card className="text-center border-0 shadow-sm h-full">
@@ -117,8 +93,7 @@ const HomePage = () => {
           </Row>
         </div>
       </section>
-
-      {}
+      { }
       <section className="py-20 px-6 bg-gradient-to-r from-primary-600 to-primary-800">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-white mb-4">
@@ -141,7 +116,6 @@ const HomePage = () => {
                 fontSize: '16px',
                 fontWeight: '600'
               }}>
-              
               Start Processing Now
             </Button>
             <Button
@@ -157,14 +131,13 @@ const HomePage = () => {
                 fontSize: '16px',
                 fontWeight: '600'
               }}>
-              
+
               Learn More
             </Button>
           </div>
         </div>
       </section>
-
-      {}
+      { }
       <footer className="py-12 px-6 bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -182,7 +155,7 @@ const HomePage = () => {
                 The complete PDF solution trusted by millions of users worldwide.
               </p>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Tools</h4>
               <ul className="space-y-2 text-gray-400">
@@ -192,7 +165,7 @@ const HomePage = () => {
                 <li>Convert PDF</li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-gray-400">
@@ -202,7 +175,6 @@ const HomePage = () => {
                 <li>Terms of Service</li>
               </ul>
             </div>
-            
             <div>
               <h4 className="font-semibold mb-4">Connect</h4>
               <ul className="space-y-2 text-gray-400">
@@ -213,7 +185,7 @@ const HomePage = () => {
               </ul>
             </div>
           </div>
-          
+
         </div>
       </footer>
     </MainLayout>);

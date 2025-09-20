@@ -79,7 +79,7 @@ const compressPdf = asyncHandler(async (req, res) => {
     } catch (redisError) {
     }
 
-    throw error;
+    throw ApiError.internal(`PDF compression operation failed: ${error.message}`);
   }
 
   return ApiResponse

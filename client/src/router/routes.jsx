@@ -6,7 +6,7 @@ const LandingPage = lazy(() => import("@/pages/LandingPage"));
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const NotFoundPage = lazy(() => import("@/pages/NotFoundPage"));
 
-// Auth pages - grouped together
+// Auth pages 
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
 const RegisterPage = lazy(() => import("@/pages/RegisterPage"));
 const LogoutPage = lazy(() => import("@/pages/LogoutPage"));

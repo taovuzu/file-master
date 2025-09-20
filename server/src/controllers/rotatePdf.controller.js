@@ -9,7 +9,7 @@ import { SHARED_PROCESSED_PATH } from "../constants.js";
 
 const rotatePdf = asyncHandler(async (req, res) => {
   const { s3Key, angle, originalFileName } = req.body || {};
-  
+
   if (!s3Key) {
     throw ApiError.badRequest("Missing s3Key. Upload the file to S3 first.");
   }
@@ -66,9 +66,6 @@ const rotatePdf = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue rotate job ${jobId}:`, error);
-
-
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue rotate job',
@@ -76,10 +73,8 @@ const rotatePdf = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-
-    throw error;
+    throw ApiError.internal(`PDF rotation operation failed: ${error.message}`);
   }
 
   return ApiResponse

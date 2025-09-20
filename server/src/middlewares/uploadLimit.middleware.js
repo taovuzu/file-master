@@ -24,7 +24,6 @@ function ensureQueueEventsListener() {
         EX: RESERVATION_TTL_SECONDS
       });
     } catch (err) {
-      console.error('[uploadLimit] QueueEvents handler error:', err);
     }
   });
 
@@ -35,13 +34,10 @@ function ensureQueueEventsListener() {
       await redisClient.set(`${RESERVED_META_PREFIX}${reservationId}`, 'transferred', {
         EX: RESERVATION_TTL_SECONDS
       });
-      console.log(`[uploadLimit] QueueEvents: transferred reservation (added) ${reservationId}`);
     } catch (err) {
-      console.error('[uploadLimit] QueueEvents(add) handler error:', err);
     }
   });
 }
-
 
 export async function uploadLimitMiddleware(req, res, next) {
   try {
@@ -59,14 +55,11 @@ export async function uploadLimitMiddleware(req, res, next) {
     try {
       reservedCount = (await redisClient.lLen(RESERVED_LIST_KEY)) || 0;
     } catch (err) {
-      console.warn('[uploadLimit] Could not read reserved list length:', err);
       reservedCount = 0;
     }
-
     if (queueJobs + reservedCount >= MAX_TOTAL_PENDING_JOBS) {
       throw new ApiError(429, `Server busy: maximum total pending jobs (${MAX_TOTAL_PENDING_JOBS}) exceeded. Try again later.`);
     }
-
     const reservationId = randomUUID();
     await redisClient.rPush(RESERVED_LIST_KEY, reservationId);
     await redisClient.set(`${RESERVED_META_PREFIX}${reservationId}`, 'reserved', {
@@ -85,21 +78,16 @@ export async function uploadLimitMiddleware(req, res, next) {
         const metaVal = await redisClient.get(metaKey);
 
         if (!metaVal) {
-          console.log(`[uploadLimit] Reservation ${reservationId} meta missing on cleanup.`);
         } else if (metaVal === 'transferred') {
           await redisClient.del(metaKey);
-          console.log(`[uploadLimit] Reservation ${reservationId} already transferred; cleanup done.`);
         } else {
           const removed = await redisClient.lRem(RESERVED_LIST_KEY, 0, reservationId);
           await redisClient.del(metaKey);
           if (removed > 0) {
-            console.log(`[uploadLimit] Reservation ${reservationId} released on cleanup (removed=${removed}).`);
           } else {
-            console.log(`[uploadLimit] Reservation ${reservationId} not found in list during cleanup (removed=${removed}).`);
           }
         }
       } catch (err) {
-        console.error('[uploadLimit] Error releasing reservation on cleanup:', err);
       }
 
       if (req._reservationTimeout) {
@@ -113,7 +101,6 @@ export async function uploadLimitMiddleware(req, res, next) {
     req.on('aborted', cleanup);
 
     req._reservationTimeout = setTimeout(async () => {
-      console.warn(`[uploadLimit] Reservation ${reservationId} timeout reached, forcing cleanup.`);
       await cleanup();
     }, RESERVATION_TIMEOUT_MS);
 

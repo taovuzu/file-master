@@ -20,7 +20,6 @@ async function ensureDir(dirPath) {
     await fs.access(dirPath);
   } catch {
     await fs.mkdir(dirPath, { recursive: true });
-    console.log(`Created directory: ${dirPath}`);
   }
 }
 
@@ -37,29 +36,22 @@ async function cleanupDirectory(dirPath, maxAge) {
 
       if (now - stats.mtime.getTime() > maxAge) {
         await fs.rm(entryPath, { recursive: true, force: true });
-        console.log(`Cleaned up expired: ${entryPath}`);
       }
     }
   } catch (error) {
-    console.error(` Error cleaning directory ${dirPath}:`, error);
   }
 }
 
 export async function cleanupExpiredAll() {
   if (isCleaning) {
-    console.log('Cleanup skipped (previous run still in progress)');
     return;
   }
-
   isCleaning = true;
-  console.log('Running scheduled cleanup...');
-
   for (const target of cleanupTargets) {
     await cleanupDirectory(target.path, target.maxAge);
   }
 
   isCleaning = false;
-  console.log('Cleanup cycle completed');
 }
 
 export function scheduleCleanup(interval = 3 * 60 * 1000) {
@@ -72,5 +64,4 @@ export async function initCleanup() {
   }
   await cleanupExpiredAll();
   scheduleCleanup();
-  console.log('Multi-directory cleanup system initialized');
 }

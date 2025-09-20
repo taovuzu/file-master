@@ -7,7 +7,6 @@ import { getUserLoggedInOrNot } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
-// Apply middleware to check usage limits before allowing upload
 router.use(getUserLoggedInOrNot);
 router.use(enforceUsageLimits);
 

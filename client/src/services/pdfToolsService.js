@@ -1,11 +1,9 @@
 import { request } from '@/request';
 import { API_BASE_URL, DOWNLOAD_BASE_URL } from '@/config/serverApiConfig';
 
-
 const POLLING_INTERVAL = 2000;
 const MAX_POLLING_ATTEMPTS = 5;
 const POLLING_TIMEOUT = 300000;
-
 
 export const JOB_STATUS = {
   QUEUED: 'queued',
@@ -14,7 +12,6 @@ export const JOB_STATUS = {
   FAILED: 'failed',
   CANCELLED: 'cancelled'
 };
-
 
 const pollJobStatus = async (statusUrl, onProgress, maxAttempts = MAX_POLLING_ATTEMPTS, abortSignal = null) => {
   let attempts = 0;
@@ -190,7 +187,6 @@ const processPdfToolDirectUpload = async (endpoint, files, options, onProgress, 
 };
 
 const processPdfToolWithPolling = async (endpoint, files, options, onProgress, onPollingStart, fieldName = 'PDFFILE', abortSignal = null) => {
-  // Tools that now support S3 upload
   const s3SupportedTools = ['compress', 'rotate', 'protect', 'unlock', 'watermark/text', 'page-numbers', 'convert/doc-to-pdf', 'convert/pdf-to-ppt', 'convert/pdf-to-doc'];
   
   if (s3SupportedTools.includes(endpoint)) {
@@ -208,10 +204,8 @@ const processPdfToolWithPolling = async (endpoint, files, options, onProgress, o
     if (!putResp.ok) throw new Error('Failed to upload file');
     if (onProgress) onProgress(35, 'Upload complete. Enqueuing job...');
 
-    // Prepare the request data based on the endpoint
     let requestData = { s3Key: key, originalFileName: file.name };
     
-    // Add endpoint-specific options
     switch (endpoint) {
       case 'compress':
         requestData.compressionLevel = options?.compressionLevel || options?.level;
@@ -254,7 +248,6 @@ const processPdfToolWithPolling = async (endpoint, files, options, onProgress, o
       case 'convert/images-to-pdf':
       case 'convert/pdf-to-ppt':
       case 'convert/pdf-to-doc':
-        // For convert, we might need to handle different conversion types
         requestData = { ...requestData, ...options };
         break;
     }
@@ -326,7 +319,6 @@ export const mergePdfs = async (files, options = {}, onProgress, onPollingStart,
 
   if (onProgress) onProgress(5, 'Requesting secure upload links...');
   
-  // Get presigned URLs for all files
   const uploadPromises = fileArray.map(async (file) => {
     const presign = await request.post({ 
       entity: 'upload/presign', 
@@ -340,7 +332,6 @@ export const mergePdfs = async (files, options = {}, onProgress, onPollingStart,
   
   if (onProgress) onProgress(15, 'Uploading files to secure storage...');
   
-  // Upload all files to S3
   const uploadPromises2 = uploadData.map(async ({ file, presign }) => {
     const putResp = await fetch(presign.url, { 
       method: 'PUT', 
@@ -503,10 +494,8 @@ export const addPageNumbers = async (file, options = {}, onProgress, onPollingSt
 export const downloadFile = async (fileOrUrl, fileName) => {
   const url = fileOrUrl?.startsWith('http') ? fileOrUrl : `${DOWNLOAD_BASE_URL}${fileOrUrl}`;
   
-  // If it's a jobId (not a full URL), we need to get the download URL from the API
   if (!fileOrUrl?.startsWith('http')) {
     try {
-      // Make a request to get the download URL
       const response = await fetch(url, { 
         method: 'GET',
         headers: {
@@ -518,17 +507,13 @@ export const downloadFile = async (fileOrUrl, fileName) => {
         const data = await response.json();
         
         if (data.success && data.downloadUrl) {
-          // Force download by creating a blob and downloading it
           const downloadResponse = await fetch(data.downloadUrl);
           const blob = await downloadResponse.blob();
           
-          
-          // Create object URL and download
           const objectUrl = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = objectUrl;
           
-          // Use the fileName from the API response, which now includes the correct extension
           const downloadFileName = data.fileName || fileName || 'processed-document.pdf';
           link.setAttribute('download', downloadFileName);
           link.style.display = 'none';
@@ -536,7 +521,6 @@ export const downloadFile = async (fileOrUrl, fileName) => {
           link.click();
           document.body.removeChild(link);
           
-          // Clean up object URL
           URL.revokeObjectURL(objectUrl);
           
           return { success: true, fileName: downloadFileName, contentType: data.contentType };
@@ -547,7 +531,6 @@ export const downloadFile = async (fileOrUrl, fileName) => {
         throw new Error(`Download failed: ${response.status}`);
       }
     } catch (error) {
-      // Fallback to direct link
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', fileName || 'processed-document.pdf');
@@ -558,7 +541,6 @@ export const downloadFile = async (fileOrUrl, fileName) => {
       return { success: true };
     }
   } else {
-    // Direct URL - use normal link download
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', fileName || 'processed-document.pdf');

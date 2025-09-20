@@ -10,14 +10,11 @@ import { s3Bucket } from "../utils/s3.js";
 
 const splitPdf = asyncHandler(async (req, res) => {
   const { s3Key, ranges, originalFileName } = req.body || {};
-  
   if (!s3Key) {
     throw ApiError.badRequest("Missing s3Key. Upload the file to S3 first.");
   }
-
   let parsedRanges = ranges;
   
-  // Handle different input formats
   if (typeof ranges === 'string') {
     try {
       const parsed = JSON.parse(ranges);
@@ -26,7 +23,6 @@ const splitPdf = asyncHandler(async (req, res) => {
       throw ApiError.badRequest('Invalid ranges format');
     }
   } else if (typeof ranges === 'object' && ranges !== null) {
-    // Handle nested ranges object like { ranges: [[1,5], [3,8]] }
     if (ranges.ranges && Array.isArray(ranges.ranges)) {
       parsedRanges = ranges.ranges;
     } else if (Array.isArray(ranges)) {
@@ -38,7 +34,6 @@ const splitPdf = asyncHandler(async (req, res) => {
     throw ApiError.badRequest('Ranges must be an array or object');
   }
   
-  // Validate ranges format
   if (!Array.isArray(parsedRanges) || parsedRanges.length === 0) {
     throw ApiError.badRequest('At least one page range is required');
   }
@@ -47,7 +42,6 @@ const splitPdf = asyncHandler(async (req, res) => {
   const jobId = uuidv4();
   const name = path.basename(originalFileName || "file.pdf", path.extname(originalFileName || "file.pdf"));
   
-  // Determine if it's a single range (PDF) or multiple ranges (ZIP)
   const isSingleRange = parsedRanges.length === 1;
   const fileExtension = isSingleRange ? 'pdf' : 'zip';
   const outputName = `${uuidv4()}___${name}_splited.${fileExtension}`;
@@ -99,8 +93,6 @@ const splitPdf = asyncHandler(async (req, res) => {
     }, { attempts: 3, backoff: { type: 'exponential', delay: 10000 } });
 
   } catch (error) {
-    console.error(`Failed to queue split job ${jobId}:`, error);
-
 
     try {
       await updateJobStatus(jobId, 'failed', 0, {
@@ -109,10 +101,8 @@ const splitPdf = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-
-    throw error;
+    throw ApiError.internal(`PDF split operation failed: ${error.message}`);
   }
 
   return ApiResponse

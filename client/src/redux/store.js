@@ -28,15 +28,12 @@ const store = configureStore({
   devTools: import.meta.env.PROD === false,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      // Optimize serializable check for better performance
       serializableCheck: {
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
         ignoredActionsPaths: ['meta.arg', 'payload.timestamp'],
         ignoredPaths: ['_persist']
       },
-      // Disable immutable check in production for better performance
       immutableCheck: import.meta.env.PROD ? false : { warnAfter: 32 },
-      // Optimize action creator check
       actionCreatorCheck: import.meta.env.PROD ? false : { warnAfter: 32 }
     })
 });

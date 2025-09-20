@@ -304,13 +304,6 @@ const ProgressModal = ({
 
         }
 
-        {(status === 'uploading' || status === 'processing') && !error &&
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <Button onClick={onCancel} danger>
-              Cancel
-            </Button>
-          </div>
-        }
       </div>);
 
   };

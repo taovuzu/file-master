@@ -85,19 +85,16 @@ export const downloadFile = asyncHandler(async (req, res) => {
     }
 
     if (jobData.outputS3Key) {
-      // authorize user if needed (omitted for brevity)
       const url = await createPresignedGetUrl(jobData.outputS3Key, 60);
       
-      // Get file metadata from S3 to determine content type
       let s3Metadata = null;
       try {
         s3Metadata = await getS3ObjectMetadata(jobData.outputS3Key);
       } catch (error) {
       }
       
-      // Determine the correct file name and extension based on S3 content type
       let fileName = jobData.originalFileName || 'processed-document.pdf';
-      let fileExtension = '.pdf'; // default
+      let fileExtension = '.pdf'; 
       
       if (s3Metadata?.contentType) {
         if (s3Metadata.contentType === 'application/zip') {
@@ -111,7 +108,7 @@ export const downloadFile = asyncHandler(async (req, res) => {
         } else if (s3Metadata.contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
           fileExtension = '.xlsx';
         } else if (s3Metadata.contentType.includes('image/')) {
-          fileExtension = '.jpg'; // or determine from content type
+          fileExtension = '.jpg';
         }
       }
       
@@ -131,22 +128,19 @@ export const downloadFile = asyncHandler(async (req, res) => {
         const baseName = jobData.originalFileName?.replace(/\.pdf$/i, '') || 'document';
         fileName = `${baseName}.docx`;
       } else if (jobData.operation === 'convertImagesToPdf') {
-        // Check if images were merged into one PDF or kept as individual PDFs in a zip
         
         if (jobData.mergeImagesInOnePdf === true || jobData.mergeImagesInOnePdf === "true") {
           fileName = `converted-images.pdf`;
-          fileExtension = '.pdf'; // Ensure correct extension
+          fileExtension = '.pdf'; 
         } else {
           fileName = `converted-images.zip`;
-          fileExtension = '.zip'; // Ensure correct extension
+          fileExtension = '.zip'; 
         }
       } else {
-        // For other operations, use the detected extension
         const baseName = jobData.originalFileName?.replace(/\.[^/.]+$/, '') || 'document';
         fileName = `${baseName}${fileExtension}`;
       }
       
-      // Determine the correct content type based on the operation
       let contentType = s3Metadata?.contentType || 'application/octet-stream';
       
       if (jobData.operation === 'convertImagesToPdf') {
@@ -156,7 +150,6 @@ export const downloadFile = asyncHandler(async (req, res) => {
           contentType = 'application/zip';
         }
       }
-      
       
       return res.json({
         success: true,
@@ -186,7 +179,7 @@ export const downloadFile = asyncHandler(async (req, res) => {
 
     throw ApiError.notFound('No output available for this job');
   } catch (error) {
-    throw error;
+    throw ApiError.internal(`Download operation failed: ${error.message}`);
   }
 });
 

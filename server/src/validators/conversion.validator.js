@@ -100,7 +100,6 @@ const docToPdfValidator = asyncHandler(async (req, res, next) => {
       try {
         await fs.promises.unlink(req.file.path);
       } catch (unlinkError) {
-        console.error("Error deleting the file:", unlinkError);
       }
     }
     throw new ApiError(400, error.message || "Error while validating file", error);
@@ -179,7 +178,6 @@ const validateFilePdf = asyncHandler(async (req, res, next) => {
       try {
         await fs.promises.unlink(req.file.path);
       } catch (unlinkError) {
-        console.error("Error deleting the file:", unlinkError);
       }
     }
     throw new ApiError(400, error.message || "Error while validating file", error);

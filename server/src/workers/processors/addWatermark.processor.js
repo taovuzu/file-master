@@ -3,6 +3,7 @@ import path from 'path';
 import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
 import { updateJobStatus } from '../../queues/pdf.queue.js';
 import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
+import { ApiError } from '../../utils/ApiError.js';
 
 const fontSizes = {
   small: 20,
@@ -52,11 +53,9 @@ export async function addWatermarkProcessor(jobId, jobData) {
       message: 'Downloading files from S3...'
     });
 
-    // Download PDF file
     const pdfS3KeyToUse = s3Key || pdfS3Key;
     await downloadFromS3ToFile(pdfS3KeyToUse, inputPath);
 
-    // Download image file if it's an image watermark
     if (operation === 'addImageWatermark' && imageS3Key) {
       await downloadFromS3ToFile(imageS3Key, imagePath);
     }
@@ -243,7 +242,6 @@ export async function addWatermarkProcessor(jobId, jobData) {
       await uploadFileToS3(localOutputPath, outputS3Key, 'application/pdf');
     }
 
-    // Copy to shared path for backward compatibility
     await fs.copyFile(localOutputPath, outputPath);
 
     await updateJobStatus(jobId, 'completed', 100, {
@@ -265,13 +263,11 @@ export async function addWatermarkProcessor(jobId, jobData) {
       message: `Successfully processed ${operation} for ${numberOfPages} pages`
     };
   } catch (error) {
-    console.error(`Watermark job failed for ${jobId}:`, error);
-    throw error;
+    throw ApiError.internal(`Watermark processing failed: ${error.message}`);
   } finally {
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
     } catch (cleanupError) {
-      console.error(`Failed to cleanup temp directory for job ${jobId}:`, cleanupError);
     }
   }
 }

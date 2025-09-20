@@ -3,6 +3,7 @@ import IORedis from 'ioredis';
 import { createClient } from 'redis';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { ApiError } from '../utils/ApiError.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(import.meta.url);
@@ -44,7 +45,7 @@ async function connectRedis() {
       isConnected = true;
     }
   } catch (error) {
-    throw error;
+    throw ApiError.internal(`Job status update failed: ${error.message}`);
   }
 }
 
@@ -83,7 +84,7 @@ async function initializeQueue() {
 
 async function updateJobStatus(jobId, status, progress, additionalData = {}) {
   try {
-    if (!(await healthCheck())) throw new Error('Redis not healthy');
+    if (!(await healthCheck())) throw ApiError.serviceUnavailable('Redis not healthy');
 
 
     const essentialJobData = {
@@ -120,7 +121,7 @@ async function updateJobStatus(jobId, status, progress, additionalData = {}) {
     await redisClient.hSet(`job:${jobId}`, sanitizedJobData);
     await redisClient.expire(`job:${jobId}`, 86400);
   } catch (error) {
-    throw error;
+    throw ApiError.internal(`Job status update failed: ${error.message}`);
   }
 }
 
@@ -137,7 +138,7 @@ async function getJobStatus(jobId) {
 
 async function deleteJobData(jobId) {
   try {
-    if (!(await healthCheck())) throw new Error('Redis not healthy');
+    if (!(await healthCheck())) throw ApiError.serviceUnavailable('Redis not healthy');
     await redisClient.del(`job:${jobId}`);
   } catch (error) {
   }

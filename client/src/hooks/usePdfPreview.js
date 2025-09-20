@@ -4,11 +4,6 @@ import { PDFDocument, degrees } from "pdf-lib";
 import { getDocument } from "pdfjs-dist";
 import "../utils/pdfWorker";
 
-
-
-
-
-
 const usePdfPreview = (input) => {
   const [pdfDocLib, setPdfDocLib] = useState(null);
   const [pdfDocJs, setPdfDocJs] = useState(null);
@@ -22,7 +17,7 @@ const usePdfPreview = (input) => {
   const itemsRef = useRef([]);
 
   const inputsArray = useMemo(() => Array.isArray(input) ? input : input ? [input] : [], [input]);
-  useEffect(() => {itemsRef.current = inputsArray;}, [inputsArray]);
+  useEffect(() => { itemsRef.current = inputsArray; }, [inputsArray]);
 
 
   const getMimeType = useCallback((src) => {
@@ -109,18 +104,14 @@ const usePdfPreview = (input) => {
           setLoading(false);
           return;
         }
-
-
         const arrayBuffer = await toArrayBuffer(first);
         if (!arrayBuffer) {
           setLoading(false);
           return;
         }
 
-
         const pdfLibDoc = await PDFDocument.load(arrayBuffer);
         setPdfDocLib(pdfLibDoc);
-
 
         const pdfJsDoc = await getDocument({ data: arrayBuffer }).promise;
         setPdfDocJs(pdfJsDoc);
@@ -128,8 +119,6 @@ const usePdfPreview = (input) => {
         setTotalPages(pdfJsDoc.numPages);
         setCurrentPage(1);
       } catch (err) {
-        // PDF loading error
-
         const first = Array.isArray(input) ? input[0] : input;
         if (first && isPdfType(first)) message.error("Failed to load PDF file.");
       } finally {
@@ -160,19 +149,19 @@ const usePdfPreview = (input) => {
       if (rads !== 0) {
         const tmp = document.createElement('canvas');
         if (rads === 90 || rads === 270) {
-          tmp.width = height;tmp.height = width;
+          tmp.width = height; tmp.height = width;
         } else {
-          tmp.width = width;tmp.height = height;
+          tmp.width = width; tmp.height = height;
         }
         const tctx = tmp.getContext('2d');
         tctx.save();
         switch (rads) {
           case 90:
-            tctx.translate(tmp.width, 0);tctx.rotate(Math.PI / 2);break;
+            tctx.translate(tmp.width, 0); tctx.rotate(Math.PI / 2); break;
           case 180:
-            tctx.translate(tmp.width, tmp.height);tctx.rotate(Math.PI);break;
+            tctx.translate(tmp.width, tmp.height); tctx.rotate(Math.PI); break;
           case 270:
-            tctx.translate(0, tmp.height);tctx.rotate(3 * Math.PI / 2);break;
+            tctx.translate(0, tmp.height); tctx.rotate(3 * Math.PI / 2); break;
           default:
             break;
         }
@@ -183,7 +172,6 @@ const usePdfPreview = (input) => {
 
       return canvas.toDataURL();
     } catch (err) {
-      // Error rendering page
       return null;
     }
   }, [pdfDocJs]);
@@ -201,7 +189,6 @@ const usePdfPreview = (input) => {
       }
       setPageImages(images);
     } catch (err) {
-      // Error loading all pages
       message.error("Failed to load PDF pages.");
     } finally {
       setLoading(false);
@@ -221,7 +208,6 @@ const usePdfPreview = (input) => {
       const pdfBytes = await pdfDocLib.save();
       return new Blob([pdfBytes], { type: "application/pdf" });
     } catch (err) {
-      // Error saving PDF
       return null;
     }
   }, [pdfDocLib]);
@@ -280,7 +266,7 @@ const usePdfPreview = (input) => {
       if (!isCancelled) setPreviews(newPreviews);
     })();
 
-    return () => {isCancelled = true;};
+    return () => { isCancelled = true; };
   }, [input, toArrayBuffer, isPdfType, isImageType]);
 
 

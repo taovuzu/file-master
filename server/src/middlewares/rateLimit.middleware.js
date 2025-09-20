@@ -36,7 +36,6 @@ export const globalSlowDown = (options = {}) => {
       const delay = calcDelayMs(current - threshold);
       setTimeout(next, Math.max(0, delay));
     } catch (_) {
-      // Fail open on Redis issues
       return next();
     }
   });

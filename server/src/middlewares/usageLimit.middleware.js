@@ -1,7 +1,6 @@
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import requestIp from 'request-ip';
-import { User } from '../models/user.model.js';
 import { redisClient, healthCheck } from '../queues/pdf.queue.js';
 
 const PLAN_LIMITS = {

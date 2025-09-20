@@ -1,17 +1,14 @@
 import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
-import { StandardFonts } from "pdf-lib";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.queue.js";
 import { SHARED_PROCESSED_PATH } from "../constants.js";
 
-
 const addTextWatermark = asyncHandler(async (req, res) => {
   const { s3Key, originalFileName } = req.body || {};
-  
   if (!s3Key) {
     throw ApiError.badRequest("Missing s3Key. Upload the file to S3 first.");
   }
@@ -41,7 +38,6 @@ const addTextWatermark = asyncHandler(async (req, res) => {
   const outputS3Key = `processed/${jobId}/result.pdf`;
 
   try {
-
     let retryCount = 0;
     const maxRetries = 3;
     while (retryCount < maxRetries) {
@@ -59,7 +55,6 @@ const addTextWatermark = asyncHandler(async (req, res) => {
       throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
-
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'addTextWatermark',
@@ -73,7 +68,6 @@ const addTextWatermark = asyncHandler(async (req, res) => {
       fontFamily,
       fontSize
     });
-
 
     await pdfProcessingQueue.add('add-text-watermark', {
       jobId,
@@ -95,9 +89,6 @@ const addTextWatermark = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue text watermark job ${jobId}:`, error);
-
-
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue text watermark job',
@@ -105,10 +96,8 @@ const addTextWatermark = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
-
-    throw error;
+    throw ApiError.internal(`Watermark operation failed: ${error.message}`);
   }
 
   return ApiResponse
@@ -134,11 +123,9 @@ const addTextWatermark = asyncHandler(async (req, res) => {
 
 const addImageWatermark = asyncHandler(async (req, res) => {
   const { pdfS3Key, imageS3Key, originalFileName } = req.body || {};
-  
   if (!pdfS3Key || !imageS3Key) {
     throw ApiError.badRequest("Missing pdfS3Key or imageS3Key. Upload both files to S3 first.");
   }
-
   let {
     position = "bottom-right",
     transparency = 0.5,
@@ -170,7 +157,6 @@ const addImageWatermark = asyncHandler(async (req, res) => {
   const outputS3Key = `processed/${jobId}/result.pdf`;
 
   try {
-
     let retryCount = 0;
     const maxRetries = 3;
     while (retryCount < maxRetries) {
@@ -187,8 +173,6 @@ const addImageWatermark = asyncHandler(async (req, res) => {
     if (retryCount > maxRetries) {
       throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
-
-
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'addImageWatermark',
@@ -200,7 +184,6 @@ const addImageWatermark = asyncHandler(async (req, res) => {
       toPage,
       scale
     });
-
 
     await pdfProcessingQueue.add('add-image-watermark', {
       jobId,
@@ -220,9 +203,6 @@ const addImageWatermark = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue image watermark job ${jobId}:`, error);
-
-
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue image watermark job',
@@ -230,10 +210,9 @@ const addImageWatermark = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
 
-    throw error;
+    throw ApiError.internal(`Watermark operation failed: ${error.message}`);
   }
 
   return ApiResponse

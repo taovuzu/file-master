@@ -5,16 +5,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { GS_PATH, SHARED_PROCESSED_PATH } from "../constants.js";
+import { SHARED_PROCESSED_PATH } from "../constants.js";
 import { pdfProcessingQueue, updateJobStatus, healthCheck } from "../queues/pdf.queue.js";
 
 const unlockPdf = asyncHandler(async (req, res) => {
   const { s3Key, password, originalFileName } = req.body || {};
-  
   if (!s3Key) {
     throw ApiError.badRequest("Missing s3Key. Upload the file to S3 first.");
   }
-
   if (!password) {
     throw ApiError.badRequest("Password is required to unlock PDF");
   }
@@ -27,7 +25,6 @@ const unlockPdf = asyncHandler(async (req, res) => {
   const outputS3Key = `processed/${jobId}/result.pdf`;
 
   try {
-
     let retryCount = 0;
     const maxRetries = 3;
     while (retryCount < maxRetries) {
@@ -45,13 +42,11 @@ const unlockPdf = asyncHandler(async (req, res) => {
       throw ApiError.serviceUnavailable("Unable to establish Redis connection");
     }
 
-
     await updateJobStatus(jobId, 'queued', 0, {
       createdAt: new Date().toISOString(),
       operation: 'unlock',
       originalFileName: originalFileName || "file.pdf"
     });
-
 
     await pdfProcessingQueue.add('unlock-pdf', {
       jobId,
@@ -64,9 +59,6 @@ const unlockPdf = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue unlock job ${jobId}:`, error);
-
-
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue unlock job',
@@ -74,10 +66,9 @@ const unlockPdf = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
 
-    throw error;
+    throw ApiError.internal(`PDF unlock operation failed: ${error.message}`);
   }
 
   return ApiResponse

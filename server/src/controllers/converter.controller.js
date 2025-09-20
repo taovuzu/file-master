@@ -69,7 +69,7 @@ const convertDocToPdf = asyncHandler(async (req, res) => {
     } catch (redisError) {
     }
 
-    throw error;
+    throw ApiError.internal(`Conversion failed: ${error.message}`);
   }
 
   return ApiResponse
@@ -148,8 +148,6 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-
-
     try {
       await updateJobStatus(jobId, 'failed', 0, {
         message: error.message || 'Failed to queue images to pdf conversion job',
@@ -158,8 +156,7 @@ const convertImagesToPdf = asyncHandler(async (req, res) => {
       });
     } catch (redisError) {
     }
-
-    throw error;
+    throw ApiError.internal(`Conversion failed: ${error.message}`);
   }
 
   return ApiResponse
@@ -238,7 +235,7 @@ const convertPdfToDoc = asyncHandler(async (req, res) => {
     } catch (redisError) {
     }
 
-    throw error;
+    throw ApiError.internal(`Conversion failed: ${error.message}`);
   }
 
   return ApiResponse
@@ -313,7 +310,7 @@ const convertPdfToPpt = asyncHandler(async (req, res) => {
     } catch (redisError) {
     }
 
-    throw error;
+    throw ApiError.internal(`Conversion failed: ${error.message}`);
   }
 
   return ApiResponse

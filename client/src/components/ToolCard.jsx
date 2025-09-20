@@ -20,9 +20,6 @@ import {
 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { ROUTES, PDF_OPERATIONS } from '@/utils/constants';
-import { logUserAction } from '@/utils/logger';
-
 const TOOL_CONFIG = {
   'Merge PDF': {
     title: 'Merge PDF',
@@ -182,11 +179,6 @@ const TOOL_CONFIG = {
   }
 };
 
-
-
-
-
-
 const getColorClasses = (color) => {
   const colorMap = {
     blue: {
@@ -304,7 +296,6 @@ const ToolCard = ({
   const navigate = useNavigate();
   const config = useMemo(() => TOOL_CONFIG[tool], [tool]);
   if (!config) {
-    console.warn(`Tool configuration not found for: ${tool}`);
     return null;
   }
 
@@ -338,8 +329,6 @@ const ToolCard = ({
   }, [route, onClick]);
 
   const handleClick = useCallback(() => {
-    logUserAction('tool_card_clicked', { tool, title, premium });
-
     if (onClick) {
       onClick(tool);
     } else if (route) {

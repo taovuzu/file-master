@@ -10,6 +10,7 @@ import archiver from "archiver";
 import pptxgen from "pptxgenjs";
 import { imageSizeFromFile } from 'image-size/fromFile';
 import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
+import { ApiError } from '../../utils/ApiError.js';
 
 export async function convertProcessor(jobId, jobData) {
   const { s3Key, s3Keys, inputPath, files, outputName, outputDir, outputPath, outputS3Key, operation, orientation, pagetype, margin, mergeImagesInOnePdf, originalFileName } = jobData;
@@ -17,7 +18,6 @@ export async function convertProcessor(jobId, jobData) {
 
   const tempDir = path.join('/tmp', jobId);
   
-  // Determine input and output file extensions based on operation
   let inputExtension = '.pdf';
   let outputExtension = '.pptx';
   
@@ -35,8 +35,7 @@ export async function convertProcessor(jobId, jobData) {
       outputExtension = '.docx';
       break;
     case 'convertImagesToPdf':
-      inputExtension = '.jpg'; // Individual image files, not zip
-      // Output extension depends on mergeImagesInOnePdf setting
+      inputExtension = '.jpg'; 
       const shouldMerge = (mergeImagesInOnePdf === "true" || mergeImagesInOnePdf === true);
       outputExtension = shouldMerge ? '.pdf' : '.zip';
       break;
@@ -59,11 +58,9 @@ export async function convertProcessor(jobId, jobData) {
       message: 'Downloading files from S3...'
     });
 
-    // Download input file(s) from S3
     if (s3Key) {
       await downloadFromS3ToFile(s3Key, localInputPath);
     } else if (s3Keys && Array.isArray(s3Keys)) {
-      // For multiple files (like images to PDF)
       for (let i = 0; i < s3Keys.length; i++) {
         const filePath = path.join(tempDir, `input_${i}`);
         await downloadFromS3ToFile(s3Keys[i], filePath);
@@ -100,14 +97,13 @@ export async function convertProcessor(jobId, jobData) {
         result = await convertToText(jobId, localInputPath, localOutputPath, outputS3Key);
         break;
       default:
-        throw new Error(`Unsupported target format: ${operation}`);
+        throw ApiError.badRequest(`Unsupported target format: ${operation}`);
     }
 
     await updateJobStatus(jobId, 'processing', 90, {
       message: 'Finalizing conversion and cleaning up...'
     });
 
-    // Copy to shared path for backward compatibility
     if (result && result.outputPath) {
       await fs.copyFile(localOutputPath, outputPath);
     }
@@ -131,7 +127,7 @@ export async function convertProcessor(jobId, jobData) {
     };
 
   } catch (error) {
-    throw error;
+    throw ApiError.internal(`PDF conversion failed: ${error.message}`);
   } finally {
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
@@ -145,11 +141,10 @@ async function convertDocToPdf(jobId, inputPath, outputDir, localOutputPath, out
     message: 'Converting document to PDF using LibreOffice...'
   });
 
-  // Check if input file exists
   try {
     await fs.access(inputPath);
   } catch (error) {
-    throw new Error(`Input file not found: ${inputPath}`);
+    throw ApiError.notFound(`Input file not found: ${inputPath}`);
   }
 
   const tempOutputDir = path.dirname(localOutputPath);
@@ -165,31 +160,27 @@ async function convertDocToPdf(jobId, inputPath, outputDir, localOutputPath, out
   await new Promise((resolve, reject) => {
     exec(libreCmd, { timeout: 60000 }, (error, stdout, stderr) => {
       if (error) {
-        reject(new Error(`LibreOffice conversion failed: ${error.message}`));
+        reject(ApiError.internal(`LibreOffice conversion failed: ${error.message}`));
       } else {
         resolve();
       }
     });
   });
 
-  // Find the generated PDF file
   const inputFileName = path.basename(inputPath, path.extname(inputPath));
   const generatedPdfPath = path.join(tempOutputDir, `${inputFileName}.pdf`);
   
-  // Check if the generated PDF exists
   try {
     await fs.access(generatedPdfPath);
   } catch (error) {
-    throw new Error(`Generated PDF not found: ${generatedPdfPath}`);
+    throw ApiError.notFound(`Generated PDF not found: ${generatedPdfPath}`);
   }
 
-  // Move to our local output path
   await fs.rename(generatedPdfPath, localOutputPath);
 
-  // Verify the output file exists and has content
   const stats = await fs.stat(localOutputPath);
   if (stats.size === 0) {
-    throw new Error('Generated PDF file is empty');
+    throw ApiError.internal('Generated PDF file is empty');
   }
 
   await updateJobStatus(jobId, 'processing', 70, {
@@ -292,7 +283,6 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
     const pdfBytes = await pdfDoc.save();
     await fs.writeFile(outputPath, pdfBytes);
 
-    // Upload to S3 if outputS3Key is provided
     if (outputS3Key) {
       await uploadFileToS3(outputPath, outputS3Key, 'application/pdf');
     }
@@ -343,12 +333,11 @@ async function convertImagesToPdf(jobId, files, outputPath, orientation, pagetyp
     const output = fss.createWriteStream(outputPath);
     const archive = archiver("zip", { zlib: { level: 2 } });
 
-    archive.on("error", (err) => {throw new Error(err);});
+    archive.on("error", (err) => {throw ApiError.internal(`Archive creation failed: ${err.message}`);});
     archive.pipe(output);
     archive.directory(baseOutDir, false);
     await archive.finalize();
 
-    // Upload to S3 if outputS3Key is provided
     if (outputS3Key) {
       await uploadFileToS3(outputPath, outputS3Key, 'application/zip');
     }
@@ -379,14 +368,13 @@ async function convertToWord(jobId, inputPath, outputPath, outputS3Key) {
   await new Promise((resolve, reject) => {
     exec(libreOfficeCmd, (error, stdout, stderr) => {
       if (error) {
-        reject(new Error(`LibreOffice error: ${error.message}`));
+        reject(ApiError.internal(`LibreOffice error: ${error.message}`));
       } else {
         resolve();
       }
     });
   });
 
-  // Upload to S3 if outputS3Key is provided
   if (outputS3Key) {
     await uploadFileToS3(outputPath, outputS3Key, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   }
@@ -402,7 +390,7 @@ async function convertPdfToImages(inputPath, outDir) {
 
     const cmd = `pdftoppm -png "${inputPath}" "${outPrefix}"`;
     exec(cmd, { maxBuffer: 1024 * 1024 * 50 }, (error, stdout, stderr) => {
-      if (error) return reject(new Error(`pdftoppm failed: ${stderr || error.message}`));
+      if (error) return reject(ApiError.internal(`pdftoppm failed: ${stderr || error.message}`));
       resolve();
     });
   });
@@ -428,7 +416,7 @@ async function convertToPowerPoint(jobId, inputPath, outputPath, outputS3Key) {
 
   const imageFiles = (await fs.readdir(baseOutDir)).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   if (imageFiles.length == 0) {
-    throw new Error("no image was generated from pdf");
+    throw ApiError.internal("No image was generated from PDF");
   }
   const dimensions = await imageSizeFromFile(path.join(baseOutDir, imageFiles[0]));
   const slideWidth = dimensions.width / 72;
@@ -446,7 +434,6 @@ async function convertToPowerPoint(jobId, inputPath, outputPath, outputS3Key) {
 
   await pptx.writeFile({ fileName: outputPath });
   
-  // Upload to S3 if outputS3Key is provided
   if (outputS3Key) {
     await uploadFileToS3(outputPath, outputS3Key, 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
   }
@@ -478,7 +465,7 @@ async function convertToExcel(jobId, inputPath, outputPath) {
   await new Promise((resolve, reject) => {
     exec(libreOfficeCmd, (error, stdout, stderr) => {
       if (error) {
-        reject(new Error(`LibreOffice error: ${error.message}`));
+        reject(ApiError.internal(`LibreOffice error: ${error.message}`));
       } else {
         resolve();
       }

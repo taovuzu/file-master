@@ -40,8 +40,6 @@ try {
       }
     )
   );
-  console.log("Google OAuth strategy initialized successfully");
 } catch (error) {
-  console.error("Failed to initialize Google OAuth strategy:", error.message);
 }
 export default passport;

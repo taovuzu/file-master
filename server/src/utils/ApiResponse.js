@@ -22,7 +22,6 @@ class ApiResponse {
 
   withRequest(req) {
     this.path = req && (req.originalUrl || req.url) ? (req.originalUrl || req.url) : null;
-    // Refresh timestamp as close to send time as possible
     this.timestamp = new Date().toISOString();
     return this;
   }

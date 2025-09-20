@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export const useProgress = () => {
   const [progress, setProgress] = useState(0);
@@ -11,6 +11,8 @@ export const useProgress = () => {
   const [pollingAttempts, setPollingAttempts] = useState(0);
   const [maxPollingAttempts, setMaxPollingAttempts] = useState(150);
   const abortControllerRef = useRef(null);
+  const progressIntervalRef = useRef(null);
+  const lastProgressUpdateRef = useRef(0);
 
   const startProgress = useCallback((initialStep = 'Preparing...') => {
     setProgress(0);
@@ -21,46 +23,80 @@ export const useProgress = () => {
     setEstimatedTime(null);
     setIsPolling(false);
     setPollingAttempts(0);
+    lastProgressUpdateRef.current = Date.now();
     abortControllerRef.current = new AbortController();
   }, []);
 
   const updateProgress = useCallback((percent, step = null) => {
-    setProgress(Math.min(100, Math.max(0, percent)));
+    const newProgress = Math.min(100, Math.max(0, percent));
+    setProgress(newProgress);
+    lastProgressUpdateRef.current = Date.now();
+    
     if (step) {
       setCurrentStep(step);
     }
 
-
-    if (percent >= 100) {
+    if (newProgress >= 100) {
       setStatus('completed');
-    } else if (percent > 0 && status === 'uploading') {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    } else if (newProgress > 0 && status === 'uploading') {
       setStatus('processing');
     }
 
-
-    if (error && percent > 0 && status !== 'error' && status !== 'polling_failed') {
+    if (error && newProgress > 0 && status !== 'error' && status !== 'polling_failed') {
       setError(null);
     }
   }, [status, error]);
 
+  const startSimulatedProgress = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    progressIntervalRef.current = setInterval(() => {
+      const now = Date.now();
+      const timeSinceLastUpdate = now - lastProgressUpdateRef.current;
+      
+      if (timeSinceLastUpdate > 10000) {
+        setProgress(prev => {
+          const newProgress = prev + Math.random() * 3;
+          if (newProgress >= 90) {
+            return Math.max(48, prev - Math.random() * 5);
+          }
+          return Math.min(90, newProgress);
+        });
+      }
+    }, 2000);
+  }, []);
+
+  const stopSimulatedProgress = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+  }, []);
+
   const setProgressError = useCallback((errorMessage) => {
     setError(errorMessage);
     setStatus('error');
-
     setProgress(0);
-
     setIsPolling(false);
+    stopSimulatedProgress();
 
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-  }, []);
+  }, [stopSimulatedProgress]);
 
   const startPolling = useCallback((maxAttempts = 150) => {
     setIsPolling(true);
     setMaxPollingAttempts(maxAttempts);
     setPollingAttempts(0);
-  }, []);
+    startSimulatedProgress();
+  }, [startSimulatedProgress]);
 
   const updatePollingAttempts = useCallback((attempts) => {
     setPollingAttempts(attempts);
@@ -87,11 +123,18 @@ export const useProgress = () => {
     setEstimatedTime(null);
     setIsPolling(false);
     setPollingAttempts(0);
+    stopSimulatedProgress();
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-  }, []);
+  }, [stopSimulatedProgress]);
+
+  useEffect(() => {
+    return () => {
+      stopSimulatedProgress();
+    };
+  }, [stopSimulatedProgress]);
 
   const abort = useCallback(() => {
     if (abortControllerRef.current) {

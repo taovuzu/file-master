@@ -110,7 +110,6 @@ const AddPageNumber = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`Failed to queue page numbering job ${jobId}:`, error);
 
 
     try {
@@ -120,10 +119,9 @@ const AddPageNumber = asyncHandler(async (req, res) => {
         failedAt: new Date().toISOString()
       });
     } catch (redisError) {
-      console.error(`Failed to update job status for ${jobId}:`, redisError);
     }
 
-    throw error;
+    throw ApiError.internal(`Page numbering operation failed: ${error.message}`);
   }
 
   return ApiResponse

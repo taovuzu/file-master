@@ -9,7 +9,6 @@ import "../middlewares/passport.js";
 
 const router = Router();
 
-
 router.route("/register-email").post(sensitiveRateLimiter({ max: 20, windowMs: 15 * 60 * 1000 }), emailValidator(), validate, registerEmail);
 router.route("/register-user").post(sensitiveRateLimiter({ max: 30, windowMs: 15 * 60 * 1000 }), userRegisterValidator(), validate, registerUser);
 router.route("/verify-email-link").get(verifyEmailByLink);
@@ -19,13 +18,10 @@ router.route("/resend-verification").post(sensitiveRateLimiter({ max: 10, window
 router.route("/request-password-reset").post(sensitiveRateLimiter({ max: 10, windowMs: 15 * 60 * 1000 }), emailValidator(), validate, forgotPasswordRequest);
 router.route("/reset-forgot-password").post(sensitiveRateLimiter({ max: 10, windowMs: 15 * 60 * 1000 }), resetForgottenPasswordValidator(), validate, resetForgottenPassword);
 
-
 router.route("/logout").post(verifyJWT, verifyCSRF, logoutUser);
 router.route("/change-password").post(verifyJWT, verifyCSRF, changeCurrentPasswordValidator(), validate, changeCurrentPassword);
 router.route("/current-user").get(verifyJWT, getCurrentUser);
 router.route("/refresh-access-token").get(refreshAccessToken);
-
-
 
 router.route("/google").get(
   passport.authenticate("google", {

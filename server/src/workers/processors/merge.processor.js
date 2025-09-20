@@ -23,7 +23,6 @@ export async function mergeProcessor(jobId, jobData) {
       message: 'Downloading files from S3...'
     });
 
-    // Download all files from S3
     const inputPaths = [];
     for (let i = 0; i < s3Keys.length; i++) {
       const inputPath = path.join(tempDir, `input_${i}.pdf`);
@@ -88,20 +87,17 @@ export async function mergeProcessor(jobId, jobData) {
     };
 
   } catch (error) {
-    console.error(`Merge failed for job ${jobId}:`, error);
-
     await updateJobStatus(jobId, 'failed', 0, {
       message: error.message || 'Merge processing failed',
       error: error.stack,
       failedAt: new Date().toISOString()
     });
 
-    throw error;
+    throw ApiError.internal(`PDF merge failed: ${error.message}`);
   } finally {
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
     } catch (cleanupError) {
-      console.error(`Failed to cleanup temp directory for job ${jobId}:`, cleanupError);
     }
   }
 }

@@ -18,7 +18,7 @@ const Footer = () => {
           <Link href="/pricing">Pricing</Link>
         </Space>
         <Text type="secondary">
-          © {currentYear} iLovePDF Clone. All rights reserved.
+          © {currentYear} File Master. All rights reserved.
         </Text>
       </Space>
     </AntFooter>);

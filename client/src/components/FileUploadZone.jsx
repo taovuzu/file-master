@@ -2,23 +2,19 @@ import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   Upload,
   File,
-  AlertCircle,
   CheckCircle,
   X,
   Cloud,
   FileType,
   Sparkles,
-  Plus,
-  ChevronDown,
-  ChevronUp } from
-"lucide-react";
-import { message, Progress, Button, Tooltip, Collapse } from "antd";
+} from
+  "lucide-react";
+import { message } from "antd";
 import { useDropzone } from "react-dropzone";
 
 import { validateFile, validateFiles } from "@/utils/validation";
 import { formatFileSize, isPdfFile } from "@/utils/helpers";
 import { MESSAGES, APP_CONFIG } from "@/utils/constants";
-import { logUserAction } from "@/utils/logger";
 import PdfPreview from "@/components/PdfPreview";
 
 const FileUploadZone = ({
@@ -37,11 +33,8 @@ const FileUploadZone = ({
 }) => {
   const [files, setFiles] = useState([]);
   const [rotationMap, setRotationMap] = useState({});
-  const [uploadProgress, setUploadProgress] = useState({});
   const [dragActive, setDragActive] = useState(false);
-  const [isPreviewCollapsed, setIsPreviewCollapsed] = useState(false);
   const fileInputRef = useRef(null);
-
 
   useEffect(() => {
     if (fileList && fileList.length > 0) {
@@ -60,11 +53,6 @@ const FileUploadZone = ({
       setFiles([]);
     }
   }, [fileList]);
-
-
-
-
-
 
   const validateSelectedFiles = useCallback(
     (selectedFiles) => {
@@ -85,10 +73,6 @@ const FileUploadZone = ({
     },
     [multiple, maxFiles, maxSize, acceptedTypes]
   );
-
-
-
-
 
   const processFiles = useCallback(
     (selectedFiles) => {
@@ -111,28 +95,16 @@ const FileUploadZone = ({
       }));
 
       const newFiles = multiple ?
-      [...files, ...processedFiles] :
-      processedFiles;
+        [...files, ...processedFiles] :
+        processedFiles;
       setFiles(newFiles);
-
 
       if (onFilesSelected) {
         onFilesSelected(newFiles.map((f) => f.file));
       }
-
-
-      logUserAction("files_selected", {
-        count: processedFiles.length,
-        totalSize: processedFiles.reduce((sum, f) => sum + f.size, 0),
-        types: processedFiles.map((f) => f.type)
-      });
     },
     [files, multiple, validateSelectedFiles, onFilesSelected]
   );
-
-
-
-
 
   const handleFileRemove = useCallback(
     (fileId) => {
@@ -143,7 +115,6 @@ const FileUploadZone = ({
         const removedFile = files.find((f) => f.id === fileId);
         onFileRemove(removedFile?.file);
       }
-
 
       if (onFilesSelected) {
         onFilesSelected(updatedFiles.map((f) => f.file));
@@ -177,9 +148,6 @@ const FileUploadZone = ({
     });
   }, [files, onRotationMapChange]);
 
-
-
-
   const handleFileInputChange = useCallback(
     (event) => {
       const selectedFiles = Array.from(event.target.files);
@@ -190,15 +158,11 @@ const FileUploadZone = ({
     [processFiles]
   );
 
-
-
-
   const handleBrowseClick = useCallback(() => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   }, []);
-
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: processFiles,
@@ -213,11 +177,10 @@ const FileUploadZone = ({
     }, {})
   });
 
-
   if (files.length > 0) {
     return (
       <div className={`w-full ${className}`} style={style}>
-        {}
+        { }
         <input
           ref={fileInputRef}
           type="file"
@@ -225,9 +188,7 @@ const FileUploadZone = ({
           accept={acceptedTypes.join(",")}
           onChange={handleFileInputChange}
           className="hidden" />
-        
-
-        {}
+        { }
         <PdfPreview
           files={files}
           onRemove={handleFileRemove}
@@ -235,11 +196,8 @@ const FileUploadZone = ({
           onReorder={handleReorder}
           onRotateChange={handleRotateChange}
           disabled={disabled || loading} />
-        
       </div>);
-
   }
-
 
   const acceptedLabel = () => {
     if (!acceptedTypes || acceptedTypes.length === 0) return 'Any files';
@@ -258,10 +216,9 @@ const FileUploadZone = ({
     return Array.from(new Set(labels)).join(', ');
   };
 
-
   return (
     <div className={`w-[80%] md:w-[40%] ${className}`} style={style}>
-      {}
+      { }
       <input
         ref={fileInputRef}
         type="file"
@@ -269,68 +226,57 @@ const FileUploadZone = ({
         accept={acceptedTypes.join(",")}
         onChange={handleFileInputChange}
         className="hidden" />
-      
-
-      {}
+      { }
       <div
         {...getRootProps()}
         className={`
           upload-zone relative overflow-hidden
           ${isDragActive || dragActive ? "upload-zone-active" : ""}
-          ${
-        disabled || loading ?
-        "opacity-50 cursor-not-allowed" :
-        "cursor-pointer"}
+          ${disabled || loading ?
+            "opacity-50 cursor-not-allowed" :
+            "cursor-pointer"}
         `
         }>
-        
-        {}
+        { }
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-50 opacity-30" />
-
         <div className="relative z-10">
-          {}
+          { }
           <div className="flex justify-center mb-6">
             <div
               className={`
               p-4 rounded-full transition-all duration-300
-              ${
-              isDragActive || dragActive ?
-              "bg-primary-100 scale-110" :
-              "bg-white shadow-medium"}
+              ${isDragActive || dragActive ?
+                  "bg-primary-100 scale-110" :
+                  "bg-white shadow-medium"}
             `
               }>
-              
               {isDragActive || dragActive ?
-              <Cloud className="w-12 h-12 text-primary-600 animate-bounce-soft" /> :
+                <Cloud className="w-12 h-12 text-primary-600 animate-bounce-soft" /> :
 
-              <Upload className="w-12 h-12 text-primary-500" />
+                <Upload className="w-12 h-12 text-primary-500" />
               }
             </div>
           </div>
-
-          {}
+          { }
           <div className="text-center mb-6">
             <h3
               className={`
               text-2xl font-bold mb-2 transition-colors duration-200
-              ${
-              isDragActive || dragActive ?
-              "text-primary-700" :
-              "text-gray-800"}
+              ${isDragActive || dragActive ?
+                  "text-primary-700" :
+                  "text-gray-800"}
             `
               }>
-              
               {isDragActive || dragActive ?
-              "Drop files here" :
-              "Upload your files"}
+                "Drop files here" :
+                "Upload your files"}
             </h3>
             <p className="text-gray-600 text-lg mb-4">
               {isDragActive || dragActive ?
-              "Release to upload your files" :
-              "Drag and drop files here, or click to browse"}
+                "Release to upload your files" :
+                "Drag and drop files here, or click to browse"}
             </p>
-
-            {}
+            { }
             <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
               <div className="flex items-center space-x-1">
                 <FileType className="w-4 h-4" />
@@ -343,8 +289,7 @@ const FileUploadZone = ({
               </div>
             </div>
           </div>
-
-          {}
+          { }
           <div className="flex justify-center">
             <button
               type="button"
@@ -358,13 +303,11 @@ const FileUploadZone = ({
                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500
                 ${disabled || loading ? "opacity-50 cursor-not-allowed" : ""}
               `}>
-              
               <File className="w-5 h-5" />
               <span>Browse Files</span>
             </button>
           </div>
-
-          {}
+          { }
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500 flex items-center justify-center space-x-1">
               <CheckCircle className="w-3 h-3 text-green-500" />

@@ -4,6 +4,7 @@ import path from 'path';
 import { updateJobStatus } from '../../queues/pdf.queue.js';
 import { QPDF_PATH } from '../../constants.js';
 import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
+import { ApiError } from '../../utils/ApiError.js';
 
 export async function unlockProcessor(jobId, jobData) {
   const { s3Key, outputPath, outputS3Key, password, originalFileName } = jobData;
@@ -39,7 +40,7 @@ export async function unlockProcessor(jobId, jobData) {
     await new Promise((resolve, reject) => {
       exec(qpdfCmd, (error, stdout, stderr) => {
         if (error) {
-          reject(new Error(`QPDF error: ${error.message}`));
+          reject(ApiError.internal(`QPDF error: ${error.message}`));
         } else {
           resolve();
         }
@@ -54,7 +55,6 @@ export async function unlockProcessor(jobId, jobData) {
       await uploadFileToS3(localOutputPath, outputS3Key, 'application/pdf');
     }
 
-    // Copy to shared path for backward compatibility
     await fs.copyFile(localOutputPath, outputPath);
 
     await updateJobStatus(jobId, 'processing', 90, {
@@ -78,13 +78,11 @@ export async function unlockProcessor(jobId, jobData) {
     };
 
   } catch (error) {
-    console.error(`Unlock failed for job ${jobId}:`, error);
-    throw error;
+    throw ApiError.internal(`PDF unlock failed: ${error.message}`);
   } finally {
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
     } catch (cleanupError) {
-      console.error(`Failed to cleanup temp directory for job ${jobId}:`, cleanupError);
     }
   }
 }

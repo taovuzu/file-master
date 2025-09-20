@@ -1,5 +1,6 @@
 import { spawn } from 'child_process';
 import { PassThrough } from 'stream';
+import { ApiError } from './ApiError.js';
 
 /**
  * Securely spawns a process with streaming input/output
@@ -14,17 +15,17 @@ export function secureSpawn(command, args = [], options = {}) {
     try {
       // Validate inputs to prevent injection
       if (typeof command !== 'string' || !command.trim()) {
-        throw new Error('Command must be a non-empty string');
+        throw ApiError.badRequest('Command must be a non-empty string');
       }
       
       if (!Array.isArray(args)) {
-        throw new Error('Args must be an array');
+        throw ApiError.badRequest('Args must be an array');
       }
       
       // Validate each argument
       for (const arg of args) {
         if (typeof arg !== 'string') {
-          throw new Error('All arguments must be strings');
+          throw ApiError.badRequest('All arguments must be strings');
         }
       }
       
@@ -50,12 +51,12 @@ export function secureSpawn(command, args = [], options = {}) {
       
       // Handle process events
       child.on('error', (error) => {
-        reject(new Error(`Process spawn error: ${error.message}`));
+        reject(ApiError.internal(`Process spawn error: ${error.message}`));
       });
       
       child.on('exit', (code, signal) => {
         if (code !== 0) {
-          reject(new Error(`Process exited with code ${code}${signal ? ` (signal: ${signal})` : ''}`));
+          reject(ApiError.internal(`Process exited with code ${code}${signal ? ` (signal: ${signal})` : ''}`));
         }
       });
       
@@ -122,7 +123,7 @@ export function validateCommand(command, args = []) {
   ];
   
   if (!allowedCommands.includes(command)) {
-    throw new Error(`Command not in allowed list: ${command}`);
+    throw ApiError.forbidden(`Command not in allowed list: ${command}`);
   }
   
   // Check for dangerous patterns in arguments (excluding file paths)
@@ -154,7 +155,7 @@ export function validateCommand(command, args = []) {
     
     for (const pattern of dangerousPatterns) {
       if (pattern.test(arg)) {
-        throw new Error(`Potentially dangerous argument detected: ${arg}`);
+        throw ApiError.forbidden(`Potentially dangerous argument detected: ${arg}`);
       }
     }
   }
@@ -175,7 +176,7 @@ export function validateCommand(command, args = []) {
   
   for (const pattern of dangerousCommandPatterns) {
     if (pattern.test(fullCommand)) {
-      throw new Error(`Potentially dangerous command detected: ${fullCommand}`);
+      throw ApiError.forbidden(`Potentially dangerous command detected: ${fullCommand}`);
     }
   }
 }

@@ -3,11 +3,11 @@ import { QPDF_PATH } from '../../constants.js';
 import { secureSpawn, validateCommand } from '../../utils/secureSpawn.js';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { ApiError } from '../../utils/ApiError.js';
 
 export const compressProcessor = async (jobId, jobData) => {
   const { s3Key, outputPath: sharedOutputPath, outputS3Key, compressionLevel, originalFileName } = jobData;
 
-  // Create temporary directory for processing
   const tempDir = path.join('/tmp', jobId);
   const inputPath = path.join(tempDir, 'input.pdf');
   const localOutputPath = path.join(tempDir, 'output.pdf');
@@ -19,14 +19,12 @@ export const compressProcessor = async (jobId, jobData) => {
       message: 'Starting secure PDF compression...'
     });
 
-    // Validate command for security
     validateCommand(QPDF_PATH, ['--linearize', '--object-streams=generate', '--compress-streams=y', inputPath, localOutputPath]);
 
     await updateJobStatus(jobId, 'processing', 20, {
       message: 'Downloading PDF from S3...'
     });
 
-    // Download from S3 to temporary file
     const { downloadFromS3ToFile } = await import('../../utils/s3.js');
     await downloadFromS3ToFile(s3Key, inputPath);
 
@@ -34,7 +32,6 @@ export const compressProcessor = async (jobId, jobData) => {
       message: 'Compressing PDF with QPDF (secure process)...'
     });
 
-    // Use secure spawn with file paths
     const { stdin, stdout, stderr, process: childProcess } = await secureSpawn(
       QPDF_PATH,
       [
@@ -46,13 +43,12 @@ export const compressProcessor = async (jobId, jobData) => {
       ]
     );
 
-    // Wait for process to complete
     await new Promise((resolve, reject) => {
       childProcess.on('exit', (code) => {
         if (code === 0) {
           resolve();
         } else {
-          reject(new Error(`QPDF process exited with code ${code}`));
+          reject(ApiError.internal(`QPDF process exited with code ${code}`));
         }
       });
       
@@ -63,13 +59,11 @@ export const compressProcessor = async (jobId, jobData) => {
       message: 'Compression completed, uploading to S3...'
     });
 
-    // Upload compressed file to S3
     if (outputS3Key) {
       const { uploadFileToS3 } = await import('../../utils/s3.js');
       await uploadFileToS3(localOutputPath, outputS3Key, 'application/pdf');
     }
 
-    // Copy to shared path for backward compatibility
     await fs.copyFile(localOutputPath, sharedOutputPath);
 
     await updateJobStatus(jobId, 'processing', 90, {
@@ -102,9 +96,8 @@ export const compressProcessor = async (jobId, jobData) => {
       failedAt: new Date().toISOString()
     });
     
-    throw error;
+    throw ApiError.internal(`PDF compression failed: ${error.message}`);
   } finally {
-    // Clean up temporary files
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
     } catch (cleanupError) {

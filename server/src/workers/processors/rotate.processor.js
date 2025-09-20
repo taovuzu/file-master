@@ -3,6 +3,7 @@ import path from 'path';
 import { updateJobStatus } from '../../queues/pdf.queue.js';
 import { PDFDocument, degrees } from 'pdf-lib';
 import { downloadFromS3ToFile, uploadFileToS3 } from '../../utils/s3.js';
+import { ApiError } from '../../utils/ApiError.js';
 
 export async function rotateProcessor(jobId, jobData) {
   const { s3Key, outputPath, outputS3Key, angle, originalFileName } = jobData;
@@ -49,7 +50,6 @@ export async function rotateProcessor(jobId, jobData) {
       await uploadFileToS3(localOutputPath, outputS3Key, 'application/pdf');
     }
 
-    // Copy to shared path for backward compatibility
     await fs.copyFile(localOutputPath, outputPath);
 
     await updateJobStatus(jobId, 'processing', 90, {
@@ -78,13 +78,11 @@ export async function rotateProcessor(jobId, jobData) {
     };
 
   } catch (error) {
-    console.error(`Rotation failed for job ${jobId}:`, error);
-    throw error;
+    throw ApiError.internal(`PDF rotation failed: ${error.message}`);
   } finally {
     try {
       await fs.rm(tempDir, { recursive: true, force: true });
     } catch (cleanupError) {
-      console.error(`Failed to cleanup temp directory for job ${jobId}:`, cleanupError);
     }
   }
 }
