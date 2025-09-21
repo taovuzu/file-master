@@ -71,4 +71,37 @@ export const sensitiveRateLimiter = (options = {}) => {
   });
 };
 
+export const downloadRateLimiter = (options = {}) => {
+  const {
+    windowMs = 24 * 60 * 60 * 1000, // 24 hours
+    max = 8, 
+    prefix = "download:"
+  } = options;
+
+  return rateLimit({
+    windowMs,
+    max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: async (req, res) => {
+      throw new ApiError(429, "Maximum download limit reached for this file. This file has been downloaded 8 times and is no longer available for download.");
+    },
+    keyGenerator: (req) => {
+      const jobId = req.params?.jobId || 'unknown';
+      return `${prefix}file:${jobId}`; // Only use jobId, no userId - global limit per file
+    },
+    store: new RedisStore({
+      sendCommand: async (...args) => {
+        try {
+          if (!redisClient.isOpen) {
+            await redisClient.connect();
+          }
+        } catch (_) {}
+        return redisClient.sendCommand(args);
+      },
+      prefix
+    })
+  });
+};
+
 

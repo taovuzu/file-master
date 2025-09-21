@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { message } from "antd";
 import { PDFDocument, degrees } from "pdf-lib";
 import { getDocument } from "pdfjs-dist";
-import "../utils/pdfWorker";
+import "/public/pdf.worker.min.mjs";
 
 const usePdfPreview = (input) => {
   const [pdfDocLib, setPdfDocLib] = useState(null);
@@ -17,7 +17,13 @@ const usePdfPreview = (input) => {
   const itemsRef = useRef([]);
 
   const inputsArray = useMemo(() => Array.isArray(input) ? input : input ? [input] : [], [input]);
-  useEffect(() => { itemsRef.current = inputsArray; }, [inputsArray]);
+  useEffect(() => { 
+    itemsRef.current = inputsArray; 
+    return () => {
+      // Cleanup: clear the ref when component unmounts
+      itemsRef.current = [];
+    };
+  }, [inputsArray]);
 
 
   const getMimeType = useCallback((src) => {
@@ -75,8 +81,9 @@ const usePdfPreview = (input) => {
 
 
   useEffect(() => {
-    if (!input) {
+    let isCancelled = false;
 
+    if (!input) {
       setPdfDocLib(null);
       setPdfDocJs(null);
       setTotalPages(0);
@@ -87,46 +94,59 @@ const usePdfPreview = (input) => {
     }
 
     const loadPdf = async () => {
+      if (isCancelled) return;
+      
       setLoading(true);
       try {
         const first = Array.isArray(input) ? input[0] : input;
         if (!first) {
-          setLoading(false);
+          if (!isCancelled) setLoading(false);
           return;
         }
 
-
         if (!isPdfType(first)) {
-          setPdfDocLib(null);
-          setPdfDocJs(null);
-          setTotalPages(0);
-          setCurrentPage(1);
-          setLoading(false);
+          if (!isCancelled) {
+            setPdfDocLib(null);
+            setPdfDocJs(null);
+            setTotalPages(0);
+            setCurrentPage(1);
+            setLoading(false);
+          }
           return;
         }
         const arrayBuffer = await toArrayBuffer(first);
-        if (!arrayBuffer) {
-          setLoading(false);
+        if (!arrayBuffer || isCancelled) {
+          if (!isCancelled) setLoading(false);
           return;
         }
 
         const pdfLibDoc = await PDFDocument.load(arrayBuffer);
+        if (isCancelled) return;
         setPdfDocLib(pdfLibDoc);
 
         const pdfJsDoc = await getDocument({ data: arrayBuffer }).promise;
+        if (isCancelled) return;
         setPdfDocJs(pdfJsDoc);
 
-        setTotalPages(pdfJsDoc.numPages);
-        setCurrentPage(1);
+        if (!isCancelled) {
+          setTotalPages(pdfJsDoc.numPages);
+          setCurrentPage(1);
+        }
       } catch (err) {
-        const first = Array.isArray(input) ? input[0] : input;
-        if (first && isPdfType(first)) message.error("Failed to load PDF file.");
+        if (!isCancelled) {
+          const first = Array.isArray(input) ? input[0] : input;
+          if (first && isPdfType(first)) message.error("Failed to load PDF file.");
+        }
       } finally {
-        setLoading(false);
+        if (!isCancelled) setLoading(false);
       }
     };
 
     loadPdf();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [input, toArrayBuffer, isPdfType]);
 
 
@@ -193,7 +213,7 @@ const usePdfPreview = (input) => {
     } finally {
       setLoading(false);
     }
-  }, [pdfDocJs, renderPage]);
+  }, [pdfDocJs]); // Removed renderPage from dependencies to avoid circular dependency
 
 
   const goToPage = useCallback((pageNum) => {

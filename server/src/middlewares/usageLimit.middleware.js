@@ -4,9 +4,9 @@ import requestIp from 'request-ip';
 import { redisClient, healthCheck } from '../queues/pdf.queue.js';
 
 const PLAN_LIMITS = {
-  FREE: { dailyOps: 1000000, maxSizeMB: 50 },
-  PRO: { dailyOps: 500, maxSizeMB: 1024 },
-  BUSINESS: { dailyOps: 1000, maxSizeMB: 2048 }
+  FREE: { dailyOps: 30, maxSizeMB: 50 },
+  PRO: { dailyOps: 500, maxSizeMB: 400 },
+  BUSINESS: { dailyOps: 1000, maxSizeMB: 800 }
 };
 
 const getLimitsFor = (user) => {

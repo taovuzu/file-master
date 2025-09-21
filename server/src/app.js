@@ -4,9 +4,12 @@ import cookieParser from "cookie-parser";
 import { globalSlowDown } from "./middlewares/rateLimit.middleware.js";
 import requestIp from "request-ip";
 import passport from "passport";
+import helmet from "helmet";
 
 const app = express();
+
 app.set('trust proxy', 1);
+app.use(helmet());
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
   credentials: true
