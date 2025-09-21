@@ -42,7 +42,7 @@
   <p align="center">
     A comprehensive PDF manipulation platform that provides all essential PDF processing tools online. From basic operations like merging and splitting to advanced features like watermarking and password protection, FileMaster offers a complete solution for all your PDF needs.
     <br />
-    <a href="https://github.com/taovuzu/file-master"><strong>Explore the docs »</strong></a>
+    <a href="DOCUMENTATION.md"><strong>Explore the docs »</strong></a>
     <br />
     <br />
     <a href="https://github.com/taovuzu/file-master">View Demo</a>
@@ -178,6 +178,9 @@ Below are the different methods to install and set up the project.
 6. Access the application at `http://localhost:5173`
 
 #### Normal Installation
+
+0. Pre Requisites
+ Download the libreoffice, qpdf
 
 1. Clone the repository
    ```bash
