@@ -5,7 +5,8 @@ services:
       - /app/node_modules
       - shared-files:/app/shared
     command: sh -c "mkdir -p /app/shared/temp/uploads /app/shared/public/processed \
-      && chmod -R 0777 /app/shared || true \
+      && chown -R 1000:1000 /app/shared \
+      && chmod -R 755 /app/shared \
       && npm run dev:server"
     environment:
       - NODE_ENV=development
@@ -21,7 +22,10 @@ services:
       - ./server:/app
       - /app/node_modules
       - shared-files:/app/shared
-    command: npm run dev:worker
+    command: sh -c "mkdir -p /app/shared/temp/uploads /app/shared/public/processed \
+      && chown -R 1000:1000 /app/shared \
+      && chmod -R 755 /app/shared \
+      && npm run dev:worker"
     environment:
       - NODE_ENV=development
     healthcheck:

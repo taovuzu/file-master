@@ -1,7 +1,6 @@
-version: "3.9"
-
 volumes:
   shared-files:
+    driver: local
 
 networks:
   app-network:
@@ -30,8 +29,8 @@ services:
 
   api:
     build:
-      context: ./server
-      dockerfile: Dockerfile.api
+      context: .
+      dockerfile: ./server/Dockerfile.api
       args:
         UID: "${UID:-1000}"
         GID: "${GID:-1000}"
@@ -63,8 +62,8 @@ services:
 
   worker:
     build:
-      context: ./server
-      dockerfile: Dockerfile.worker
+      context: .
+      dockerfile: ./server/Dockerfile.worker
       args:
         UID: "${UID:-1000}"
         GID: "${GID:-1000}"
