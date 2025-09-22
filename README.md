@@ -180,10 +180,10 @@ This method is recommended for its simplicity and consistent environment setup.
     * Open the newly created `.env`, `client/.env`, and `server/.env` files.
     * Populate the files with the necessary credentials and configuration values, particularly for the **AWS S3 account**. The database and Redis variables in the root `.env` file are utilized by Docker Compose to provision the respective services.
 
-4.  **Build and Run the Containers**
-    ```bash
-    docker-compose up --build -d
-    ```
+5. Build and run the Docker containers
+   ```bash
+   docker-compose up --build
+   ```
 
 5.  **Accessing the Application**
     * The application will be accessible at `http://localhost:5173`.
