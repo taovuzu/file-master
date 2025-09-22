@@ -182,7 +182,7 @@ This method is recommended for its simplicity and consistent environment setup.
 
 5. Build and run the Docker containers
    ```bash
-   docker-compose up --build
+   docker compose up --build
    ```
 
 5.  **Accessing the Application**
