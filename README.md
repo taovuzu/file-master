@@ -45,7 +45,7 @@
     <a href="DOCUMENTATION.md"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/taovuzu/file-master">View Demo</a>
+    <a href="https://youtu.be/XMpiShj4NlA">View Demo</a>
     ·
     <a href="https://github.com/taovuzu/file-master/issues">Report Bug</a>
     ·
@@ -133,93 +133,108 @@ This section lists the major frameworks and libraries used to build the project.
 
 ## Getting Started
 
-To get a local copy up and running, follow these simple steps.
-
 ### Prerequisites
 
-List of software and tools that users need to install before running the project.
-* Node.js (v20 or higher)
-* Docker and Docker Compose
-* MongoDB
-* Redis
-* AWS S3 account (for file storage)
+The following prerequisites must be met before proceeding with the installation. Note that an **AWS S3 account** is a mandatory requirement for both installation methods to facilitate file storage.
 
-### Installation
+#### For Docker (Recommended)
+* **Docker & Docker Compose**: Ensure both are correctly installed and the Docker daemon is active.
 
-Below are the different methods to install and set up the project.
+#### For Manual Installation
+* **Node.js**: Version 20 or a higher version is required.
+* **MongoDB**: A running instance of MongoDB, accessible from the local machine.
+* **Redis**: A running instance of Redis.
+* **LibreOffice**: Required for document conversion functionalities.
+    * **Ubuntu/Debian**: Execute `sudo apt-get install libreoffice`
+    * **macOS (via Homebrew)**: Execute `brew install --cask libreoffice`
+    * **Windows**: Download the installer from the [official website](https://www.libreoffice.org/download/download-libreoffice/).
+* **qpdf**: Required for core PDF manipulation tasks.
+    * **Ubuntu/Debian**: Execute `sudo apt-get install qpdf`
+    * **macOS (via Homebrew)**: Execute `brew install qpdf`
+    * **Windows**: Install using a package manager such as Chocolatey (`choco install qpdf`) or obtain it from the [official source repository](https://github.com/qpdf/qpdf/releases).
 
-#### Using Docker (Recommended)
+---
 
-1. Clone the repository
-   ```bash
-   git clone https://github.com/taovuzu/file-master.git
-   ```
+## Installation
 
-2. Navigate to the project directory
-   ```bash
-   cd file-master
-   ```
 
-3. Create environment files
-   ```bash
-   # Copy environment templates
-   cp client/.env.example client/.env
-   cp server/.env.example server/.env
-   cp .env.example .env
-   ```
+## Using Docker (Recommended)
 
-4. Configure environment variables in all `.env` files with your database, Redis, and AWS S3 credentials and other configurations
+This method is recommended for its simplicity and consistent environment setup.
 
-5. Build and run the Docker containers
-   ```bash
-   docker-compose up --build
-   ```
+1.  **Clone the Repository**
+    ```bash
+    git clone [https://github.com/taovuzu/file-master.git](https://github.com/taovuzu/file-master.git)
+    cd file-master
+    ```
 
-6. Access the application at `http://localhost:5173`
+2.  **Create Environment Files**
+    ```bash
+    # Copy the templates for the client, server, and Docker Compose
+    cp client/.env.example client/.env
+    cp server/.env.example server/.env
+    cp .env.example .env
+    ```
 
-#### Normal Installation
+3.  **Configure Environment Variables**
+    * Open the newly created `.env`, `client/.env`, and `server/.env` files.
+    * Populate the files with the necessary credentials and configuration values, particularly for the **AWS S3 account**. The database and Redis variables in the root `.env` file are utilized by Docker Compose to provision the respective services.
 
-0. Pre Requisites
- Download the libreoffice, qpdf
+4.  **Build and Run the Containers**
+    ```bash
+    docker-compose up --build -d
+    ```
 
-1. Clone the repository
-   ```bash
-   git clone https://github.com/taovuzu/file-master.git
-   ```
+5.  **Accessing the Application**
+    * The application will be accessible at `http://localhost:5173`.
 
-2. Install client dependencies
-   ```bash
-   cd file-master
-   cd client
-   npm install
-   ```
+## Manual Installation
 
-3. Install server dependencies
-   ```bash
-   cd ../server
-   npm install
-   ```
+1.  **Start Dependent Services**
+    * Ensure that your local instances of **MongoDB** and **Redis** are running before proceeding.
 
-4. Set up environment variables
-   ```bash
-   cp client/.env.example client/.env
-   cp server/.env.example server/.env
-   cp .env.example .env
-     # Configure your environment variables
-   ```
+2.  **Clone the Repository**
+    ```bash
+    git clone [https://github.com/taovuzu/file-master.git](https://github.com/taovuzu/file-master.git)
+    cd file-master
+    ```
 
-5. Start the development servers
-   ```bash
-   # Terminal 1 - Start the API server
-   npm run dev:server
-   
-   # Terminal 2 - Start the worker
-   npm run dev:worker
-   
-   # Terminal 3 - Start the client
-   cd ../client
-   npm run dev
-   ```
+3.  **Set Up Environment Variables**
+    ```bash
+    # Copy the environment templates for the client and server
+    cp client/.env.example client/.env
+    cp server/.env.example server/.env
+    cp .env.example .env
+    ```
+    * Open `client/.env` and `server/.env` to apply your configuration.
+    * **Important**: In `server/.env`, the `MONGO_URI` and `REDIS_URL` variables must be updated to point to your running local services. AWS S3 credentials must also be provided.
+
+4.  **Install Project Dependencies**
+    ```bash
+    # Install server-side dependencies
+    cd server
+    npm install
+    
+    # Install client-side dependencies from the project root in a new terminal
+    cd ../client
+    npm install
+    ```
+
+5.  **Run the Application**
+    * Three separate terminal sessions are required to run the application components.
+    ```bash
+    # In Terminal 1 (from the /server directory): Start the API server
+    npm run dev:server
+    
+    # In Terminal 2 (from the /server directory): Start the background worker
+    npm run dev:worker
+    
+    # In Terminal 3 (from the /client directory): Start the frontend client
+    npm run dev
+    ```
+
+6.  **Accessing the Application**
+    * The application will be accessible at `http://localhost:5173`.
 ## Usage
 
 FileMaster PDF Tools provides an intuitive web interface for all PDF operations. Here's how to use the platform:

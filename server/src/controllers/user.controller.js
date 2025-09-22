@@ -398,7 +398,7 @@ const sendRegistrationTokens = async (email, req) => {
   });
   await redisClient.expire(key, ttlSeconds);
 
-  const verifyUrl = `${req.protocol}://${req.get("host")}/api/v1/users/verify-email-link?email=${encodeURIComponent(email)}&unHashedToken=${unHashedToken}`;
+  const verifyUrl = `${process.env.FRONTEND_URL}/api/v1/users/verify-email-link?email=${encodeURIComponent(email)}&unHashedToken=${unHashedToken}`;
   logger.info('Email verification tokens generated', { email, otp });
   await sendEmail({
     email: email,
