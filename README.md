@@ -172,7 +172,7 @@ Below are the different methods to install and set up the project.
 
 5. Build and run the Docker containers
    ```bash
-   docker-compose up --build
+   docker compose up --build
    ```
 
 6. Access the application at `http://localhost:5173`
