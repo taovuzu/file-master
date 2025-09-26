@@ -1,0 +1,37 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+COPY server/package*.json ./
+RUN npm ci
+
+FROM node:20-alpine AS runtime
+WORKDIR /app
+
+ARG UID=1000
+ARG GID=1000
+
+RUN apk add --no-cache shadow dumb-init
+
+COPY --from=base /app/node_modules ./node_modules
+COPY server/src ./src
+COPY server/package*.json ./
+
+RUN mkdir -p /app/shared/temp/uploads /app/shared/public/processed && \
+    chown -R ${UID}:${GID} /app/shared && \
+    chmod -R 755 /app/shared
+
+RUN \
+    if [ "${GID}" != "1000" ]; then groupmod -g ${GID} node; fi && \
+    if [ "${UID}" != "1000" ]; then usermod -u ${UID} node; fi
+
+USER node
+
+ENV NODE_ENV=production
+ENV PORT=8080
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:8080/api/v1/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["sh", "-c", "mkdir -p /app/shared/temp/uploads /app/shared/public/processed && chown -R 1000:1000 /app/shared && chmod -R 755 /app/shared && node src/server.js"]
