@@ -1,0 +1,17 @@
+FROM node:20-bookworm
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  qpdf \
+  libreoffice \
+  poppler-utils \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY server/package*.json ./
+RUN npm ci --omit=dev
+
+COPY server/src ./src
+
+RUN mkdir -p /app/shared/temp/uploads /app/shared/public/processed
+
+CMD ["node", "src/worker.js"]
