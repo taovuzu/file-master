@@ -1,0 +1,100 @@
+volumes:
+  shared-files:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.client
+    ports:
+      - "5173:80"
+    env_file:
+      - ./client/.env
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+
+  api:
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile.api
+      args:
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
+    env_file:
+      - ./server/.env
+    environment:
+      - SHARED_BASE_DIR=/app/shared
+      - NODE_ENV=production
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    volumes:
+      - shared-files:/app/shared
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/api/v1/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  worker:
+    build:
+      context: .
+      dockerfile: ./server/Dockerfile.worker
+      args:
+        UID: "${UID:-1000}"
+        GID: "${GID:-1000}"
+    env_file:
+      - ./server/.env
+    environment:
+      - SHARED_BASE_DIR=/app/shared
+      - NODE_ENV=production
+    restart: unless-stopped
+    volumes:
+      - shared-files:/app/shared
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "6.0"
+          memory: 4096M
+        reservations:
+          memory: 1024M
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+      - /app/jobs:rw,noexec,nosuid,nodev
+
