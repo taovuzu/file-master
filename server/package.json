@@ -58,7 +58,6 @@
   },
   "devDependencies": {
     "@babel/generator": "^7.28.3",
-    "@babel/parser": "^7.28.3",
-    "madge": "^8.0.0"
+    "@babel/parser": "^7.28.3"
   }
 }
