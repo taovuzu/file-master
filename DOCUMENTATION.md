@@ -48,36 +48,166 @@ During a typical PDF processing job, the following flow occurs:
 sequenceDiagram
     participant C as Client (React)
     participant A as API Server (Express)
+    participant Auth as Auth Middleware
+    participant S as AWS S3
     participant R as Redis (BullMQ)
     participant W as Worker Service
-    participant S as AWS S3
-    participant M as MongoDB
+    participant W_FS as Worker FS (local /tmp)
+    participant V as Shared Volume (SHARED_PROCESSED_PATH)
 
-    C->>A: POST /api/v1/pdf-tools/compress
-    A->>A: Validate JWT token
-    A->>M: Create job record
-    A->>R: Queue processing job
-    A->>C: Return job ID (201)
+    %% --- Flow 1 & 2: Get Upload URL & Upload File (Unchanged) ---
+    Note over C,A: Flows 1 & 2: Get Upload URL and Upload File
+    C->>A: POST /api/v1/upload/presign-url
+    activate A
+    A->>Auth: verifyJWT(...)
+    activate Auth
+    Auth-->>A: User OK
+    deactivate Auth
+    A->>S: s3.getSignedUrl('putObject', ...)
+    activate S
+    S-->>A: Return presigned UPLOAD URL + s3Key
+    deactivate S
+    A-->>C: 200 OK (Returns { uploadUrl, s3Key })
+    deactivate A
+    
+    C->>S: PUT (presigned UPLOAD URL) [File data]
+    activate S
+    S-->>C: 200 OK
+    deactivate S
 
-    Note over W: Background processing
-    W->>R: Poll for jobs
-    R->>W: Return job data
-    W->>S: Download input files
-    W->>W: Process PDF (QPDF/LibreOffice)
-    W->>R: Update progress (10%, 50%, 90%)
-    W->>S: Upload processed file
-    W->>M: Update job status to completed
+    %% --- Flow 3: Start Processing Job ---
+    Note over C,A: Flow 3: Client tells API to process the uploaded file
+    C->>A: POST /api/v1/pdf-tools/compress (Body: { s3Key, ... })
+    activate A
+    A->>Auth: verifyJWT(...)
+    activate Auth
+    Auth-->>A: User OK
+    deactivate Auth
+    A->>R: updateJobStatus(jobId, 'queued', ...)
+    activate R
+    R-->>A: Status 'queued' saved
+    deactivate R
+    A->>R: pdfProcessingQueue.add('compress-pdf', { s3Key, ... })
+    activate R
+    R-->>A: Job added to queue
+    deactivate R
+    A-->>C: 200 OK (Returns { jobId, statusUrl, downloadUrl })
+    deactivate A
 
-    Note over C: Client polling
+    %% --- Flow 4a: Background Processing (Happy Path) ---
+    par "Flow 4a: Background Processing (Success)"
+        W->>R: Polls for jobs
+        activate W
+        activate R
+        R-->>W: Returns 'compress-pdf' job data (s3Key, sharedOutputPath)
+        deactivate R
+        W->>R: updateJobStatus(jobId, 'processing', 10, 'Starting...')
+        activate R
+        deactivate R
+        
+        W->>W_FS: Create temp directory (/tmp/jobId)
+        activate W_FS
+        deactivate W_FS
+        
+        W->>S: downloadFromS3ToFile(s3Key, /tmp/jobId/input.pdf)
+        activate S
+        S-->>W: Original file data
+        deactivate S
+        
+        W->>R: updateJobStatus(jobId, 'processing', 30, 'Compressing...')
+        activate R
+        deactivate R
+        
+        W->>W_FS: secureSpawn(QPDF_PATH, [..., '/tmp/jobId/input.pdf', '/tmp/jobId/output.pdf'])
+        activate W_FS
+        W_FS-->>W: Process exits code 0 (Success)
+        deactivate W_FS
+        
+        W->>S: uploadFileToS3(/tmp/jobId/output.pdf, outputS3Key)
+        activate S
+        S-->>W: 200 OK
+        deactivate S
+
+        W->>V: fs.copyFile(/tmp/jobId/output.pdf, sharedOutputPath)
+        activate V
+        V-->>W: File copied
+        deactivate V
+        
+        W->>W_FS: fs.rm(/tmp/jobId, { recursive: true })
+        activate W_FS
+        deactivate W_FS
+        
+        W->>R: updateJobStatus(jobId, 'completed', 100, { outputS3Key, ... })
+        activate R
+        deactivate R
+        deactivate W
+    end
+
+    %% --- Flow 4b: Background Processing (Failure Path) ---
+    par "Flow 4b: Background Processing (Failure Example)"
+        W->>R: Polls for jobs
+        activate W
+        activate R
+        R-->>W: Returns 'compress-pdf' job data
+        deactivate R
+        W->>S: downloadFromS3ToFile(s3Key, ...)
+        activate S
+        S-->>W: Original file data
+        deactivate S
+        
+        W->>W_FS: secureSpawn(QPDF_PATH, [...])
+        activate W_FS
+        W_FS-->>W: Process exits code 1 (Error)
+        deactivate W_FS
+        
+        Note over W: Catches error
+        W->>R: updateJobStatus(jobId, 'failed', 0, { error: 'QPDF failed' })
+        activate R
+        deactivate R
+        
+        W->>W_FS: fs.rm(/tmp/jobId, { recursive: true }) (Cleanup)
+        activate W_FS
+        deactivate W_FS
+        deactivate W
+    end
+
+    %% --- Flow 5: Client Polls for Status (shows 'failed' path) ---
+    Note over C,A: Flow 5: Client polls statusUrl
     C->>A: GET /api/v1/download/status/:jobId
-    A->>R: Check job status
-    R->>A: Return progress data
-    A->>C: Return progress (200)
+    activate A
+    A->>R: redisClient.hGetAll(`job:jobId`)
+    activate R
+    R-->>A: Job data ({ status: 'failed', error: 'QPDF failed' })
+    deactivate R
+    A-->>C: 400 Bad Request (Returns { status: 'failed', error: '...' })
+    deactivate A
+    Note over C: Client UI shows error message to user
 
+    %% --- Flow 6 & 7: Download Final File (Happy Path) ---
+    Note over C,A: Flows 6 & 7: Client downloads (assuming a successful job)
     C->>A: GET /api/v1/download/:jobId
-    A->>S: Generate presigned download URL
-    A->>C: Return download URL (200)
-    C->>S: Download processed file
+    activate A
+    A->>Auth: verifyJWT(...)
+    activate Auth
+    Auth-->>A: User OK
+    deactivate Auth
+    A->>R: redisClient.hGetAll(`job:jobId`)
+    activate R
+    R-->>A: Job data ({ status: 'completed', outputS3Key: '...' })
+    deactivate R
+    
+    A->>S: createPresignedGetUrl(outputS3Key)
+    activate S
+    S-->>A: Return presigned DOWNLOAD URL
+    deactivate S
+    
+    A-->>C: 200 OK (Returns { downloadUrl: '...' })
+    deactivate A
+    
+    C->>S: GET (presigned DOWNLOAD URL)
+    activate S
+    S-->>C: Processed file data
+    deactivate S
 ```
 
 ---
