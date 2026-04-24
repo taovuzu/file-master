@@ -1,7 +1,8 @@
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import requestIp from 'request-ip';
-import { redisClient, healthCheck } from '../queues/pdf.queue.js';
+import redis from '../db/redis.js';
+import { healthCheck } from '../queues/pdf.queue.js';
 
 const PLAN_LIMITS = {
   FREE: { dailyOps: 30, maxSizeMB: 50 },
@@ -45,16 +46,16 @@ export const enforceUsageLimits = asyncHandler(async (req, res, next) => {
 
   const MAX_RETRIES = 5;
   for (let i = 0; i < MAX_RETRIES; i++) {
-    await redisClient.watch(key);
+    await redis.watch(key);
 
-    const existing = await redisClient.hGetAll(key);
+    const existing = await redis.hgetall(key);
     const record = existing && Object.keys(existing).length > 0 ? existing : { lastResetAt: new Date(0).toISOString(), dailyOperations: '0' };
     const fresh = resetIfNeeded(record);
     
     const currentOperations = parseInt(fresh.dailyOperations, 10) || 0;
     
     if (currentOperations >= limits.dailyOps) {
-      await redisClient.unwatch();
+      await redis.unwatch();
       const errorMessage = claims
         ? 'Daily plan limit reached. Upgrade plan to continue.'
         : 'Daily free limit reached. Visit /pricing to upgrade.';
@@ -63,11 +64,10 @@ export const enforceUsageLimits = asyncHandler(async (req, res, next) => {
     
     const newOperations = currentOperations + 1;
 
-    const multi = redisClient.multi()
-      .hSet(key, { ...fresh, dailyOperations: newOperations.toString() })
-      .expire(key, 86400);
-
-    const result = await multi.exec();
+    const result = await redis.multi()
+      .hmset(key, { ...fresh, dailyOperations: newOperations.toString() })
+      .expire(key, 86400)
+      .exec();
 
     if (result !== null) {
       return next();

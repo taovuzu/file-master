@@ -1,4 +1,4 @@
-import { redisClient } from '../queues/pdf.queue.js';
+import redis from '../db/redis.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { createReadStream } from 'fs';
@@ -16,7 +16,7 @@ export const checkJobStatus = asyncHandler(async (req, res) => {
   }
 
   try {
-    const jobData = await redisClient.hGetAll(`job:${jobId}`);
+    const jobData = await redis.hgetall(`job:${jobId}`);
 
     if (!jobData || Object.keys(jobData).length === 0) {
       throw ApiError.notFound('Job not found');
@@ -73,7 +73,7 @@ export const downloadFile = asyncHandler(async (req, res) => {
   }
 
   try {
-    const jobData = await redisClient.hGetAll(`job:${jobId}`);
+    const jobData = await redis.hgetall(`job:${jobId}`);
 
     if (!jobData || Object.keys(jobData).length === 0) {
       throw ApiError.notFound('Job not found');

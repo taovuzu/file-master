@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
-import { redisClient, pdfQueueEvents, getWaitingJobsCount } from '../queues/pdf.queue.js';
+import redis from '../db/redis.js';
+import { pdfQueueEvents, getWaitingJobsCount } from '../queues/pdf.queue.js';
 import { ApiError } from '../utils/ApiError.js';
 
 const MAX_TOTAL_PENDING_JOBS = 40;
@@ -16,24 +17,18 @@ function ensureQueueEventsListener() {
 
   pdfQueueEvents.on('waiting', async (args) => {
     try {
-      const reservationId = await redisClient.lPop(RESERVED_LIST_KEY);
-      if (!reservationId) {
-        return;
-      }
-      await redisClient.set(`${RESERVED_META_PREFIX}${reservationId}`, 'transferred', {
-        EX: RESERVATION_TTL_SECONDS
-      });
+      const reservationId = await redis.lpop(RESERVED_LIST_KEY);
+      if (!reservationId) return;
+      await redis.set(`${RESERVED_META_PREFIX}${reservationId}`, 'transferred', 'EX', RESERVATION_TTL_SECONDS);
     } catch (err) {
     }
   });
 
   pdfQueueEvents.on('added', async (args) => {
     try {
-      const reservationId = await redisClient.lPop(RESERVED_LIST_KEY);
+      const reservationId = await redis.lpop(RESERVED_LIST_KEY);
       if (!reservationId) return;
-      await redisClient.set(`${RESERVED_META_PREFIX}${reservationId}`, 'transferred', {
-        EX: RESERVATION_TTL_SECONDS
-      });
+      await redis.set(`${RESERVED_META_PREFIX}${reservationId}`, 'transferred', 'EX', RESERVATION_TTL_SECONDS);
     } catch (err) {
     }
   });
@@ -41,19 +36,13 @@ function ensureQueueEventsListener() {
 
 export async function uploadLimitMiddleware(req, res, next) {
   try {
-    if (!redisClient.isOpen) {
-      try {
-        await redisClient.connect();
-      } catch (err) {}
-    }
-
     ensureQueueEventsListener();
 
     const queueJobs = await getWaitingJobsCount();
 
     let reservedCount = 0;
     try {
-      reservedCount = (await redisClient.lLen(RESERVED_LIST_KEY)) || 0;
+      reservedCount = (await redis.llen(RESERVED_LIST_KEY)) || 0;
     } catch (err) {
       reservedCount = 0;
     }
@@ -61,10 +50,8 @@ export async function uploadLimitMiddleware(req, res, next) {
       throw new ApiError(429, `Server busy: maximum total pending jobs (${MAX_TOTAL_PENDING_JOBS}) exceeded. Try again later.`);
     }
     const reservationId = randomUUID();
-    await redisClient.rPush(RESERVED_LIST_KEY, reservationId);
-    await redisClient.set(`${RESERVED_META_PREFIX}${reservationId}`, 'reserved', {
-      EX: RESERVATION_TTL_SECONDS
-    });
+    await redis.rpush(RESERVED_LIST_KEY, reservationId);
+    await redis.set(`${RESERVED_META_PREFIX}${reservationId}`, 'reserved', 'EX', RESERVATION_TTL_SECONDS);
 
     req._uploadReservationId = reservationId;
 
@@ -75,17 +62,14 @@ export async function uploadLimitMiddleware(req, res, next) {
 
       try {
         const metaKey = `${RESERVED_META_PREFIX}${reservationId}`;
-        const metaVal = await redisClient.get(metaKey);
+        const metaVal = await redis.get(metaKey);
 
         if (!metaVal) {
         } else if (metaVal === 'transferred') {
-          await redisClient.del(metaKey);
+          await redis.del(metaKey);
         } else {
-          const removed = await redisClient.lRem(RESERVED_LIST_KEY, 0, reservationId);
-          await redisClient.del(metaKey);
-          if (removed > 0) {
-          } else {
-          }
+          const removed = await redis.lrem(RESERVED_LIST_KEY, 0, reservationId);
+          await redis.del(metaKey);
         }
       } catch (err) {
       }

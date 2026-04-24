@@ -1,6 +1,6 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { redisClient } from "../queues/pdf.queue.js";
+import redis from "../db/redis.js";
 import rateLimit from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 
@@ -15,25 +15,23 @@ export const globalSlowDown = (options = {}) => {
   return asyncHandler(async (req, res, next) => {
     try {
       const key = `${prefix}${req.clientIp || req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown"}`;
-      if (!redisClient.isOpen) {
-        try { await redisClient.connect(); } catch (_) {}
-      }
 
-      const tx = redisClient.multi();
-      tx.incr(key);
-      tx.expire(key, Math.ceil(windowMs / 1000));
-      const [hits] = await tx.exec();
-      const current = Array.isArray(hits) ? Number(hits[1]) : Number(hits);
+      const results = await redis.multi()
+        .incr(key)
+        .expire(key, Math.ceil(windowMs / 1000))
+        .exec();
 
-      if (Number.isNaN(current)) {
+      const current = results?.[0]?.[1];
+
+      if (current == null || Number.isNaN(Number(current))) {
         return next();
       }
 
-      if (current <= threshold) {
+      if (Number(current) <= threshold) {
         return next();
       }
 
-      const delay = calcDelayMs(current - threshold);
+      const delay = calcDelayMs(Number(current) - threshold);
       setTimeout(next, Math.max(0, delay));
     } catch (_) {
       return next();
@@ -58,14 +56,7 @@ export const sensitiveRateLimiter = (options = {}) => {
     },
     keyGenerator: (req) => req.clientIp || req.ip || req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown",
     store: new RedisStore({
-      sendCommand: async (...args) => {
-        try {
-          if (!redisClient.isOpen) {
-            await redisClient.connect();
-          }
-        } catch (_) {}
-        return redisClient.sendCommand(args);
-      },
+      sendCommand: (...args) => redis.call(...args),
       prefix
     })
   });
@@ -91,17 +82,8 @@ export const downloadRateLimiter = (options = {}) => {
       return `${prefix}file:${jobId}`; // Only use jobId, no userId - global limit per file
     },
     store: new RedisStore({
-      sendCommand: async (...args) => {
-        try {
-          if (!redisClient.isOpen) {
-            await redisClient.connect();
-          }
-        } catch (_) {}
-        return redisClient.sendCommand(args);
-      },
+      sendCommand: (...args) => redis.call(...args),
       prefix
     })
   });
 };
-
-

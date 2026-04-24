@@ -8,7 +8,8 @@ import crypto from "crypto";
 import mongoose from "mongoose";
 import { sendEmail, emailVerificationMailgen, forgetPasswordMailgen } from "../utils/mail.js";
 import { request } from "http";
-import { redisClient, healthCheck } from "../queues/pdf.queue.js";
+import redis from "../db/redis.js";
+import { healthCheck } from "../queues/pdf.queue.js";
 import logger from "../utils/logger.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -69,13 +70,13 @@ const verifyEmailByLink = asyncHandler(async (req, res) => {
   }
 
   const hashedToken = crypto.
-  createHash("sha256").
-  update(unHashedToken).
-  digest("hex");
+    createHash("sha256").
+    update(unHashedToken).
+    digest("hex");
 
   await healthCheck();
   const key = `email:verify:${email}`;
-  const data = await redisClient.hGetAll(key);
+  const data = await redis.hgetall(key);
   if (!data || Object.keys(data).length === 0) {
     throw ApiError.notFound("Verification token not found or expired");
   }
@@ -99,7 +100,7 @@ const verifyEmailByOTP = asyncHandler(async (req, res) => {
 
   await healthCheck();
   const key = `email:verify:${email}`;
-  const data = await redisClient.hGetAll(key);
+  const data = await redis.hgetall(key);
   if (!data || Object.keys(data).length === 0) {
     throw ApiError.notFound("OTP not found or expired");
   }
@@ -153,7 +154,7 @@ const registerUser = asyncHandler(async (req, res) => {
     throw ApiError.internal("Failed to create user", [error]);
   }
 
-  try { await redisClient.del(`email:verify:${email}`); } catch (_) {}
+  try { await redis.del(`email:verify:${email}`); } catch (_) { }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
   const createdUser = await User.findById(user._id).select("-password -refreshToken");
@@ -278,11 +279,11 @@ const userSocialLogin = asyncHandler(async (req, res) => {
   const csrfCookie = { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' };
 
   return res.
-  status(200).
-  cookie("accessToken", accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' }).
-  cookie("refreshToken", refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' }).
-  cookie("csrf-token", csrfToken, csrfCookie).
-  redirect(`${process.env.CLIENT_SSO_REDIRECT_URL || process.env.FRONTEND_URL}/auth/callback?success=true`);
+    status(200).
+    cookie("accessToken", accessToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' }).
+    cookie("refreshToken", refreshToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' }).
+    cookie("csrf-token", csrfToken, csrfCookie).
+    redirect(`${process.env.CLIENT_SSO_REDIRECT_URL || process.env.FRONTEND_URL}/auth/callback?success=true`);
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
@@ -339,9 +340,9 @@ const resetForgottenPassword = asyncHandler(async (req, res) => {
   }
 
   const hashedToken = crypto.
-  createHash("sha256").
-  update(unHashedToken).
-  digest("hex");
+    createHash("sha256").
+    update(unHashedToken).
+    digest("hex");
 
   const user = await User.findOne({
     email,
@@ -361,8 +362,8 @@ const resetForgottenPassword = asyncHandler(async (req, res) => {
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
   const options = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax' };
   res.
-  cookie("accessToken", accessToken, options).
-  cookie("refreshToken", refreshToken, options);
+    cookie("accessToken", accessToken, options).
+    cookie("refreshToken", refreshToken, options);
 
   return ApiResponse
     .success({}, "Password reset successfully", 200)
@@ -382,21 +383,21 @@ const sendRegistrationTokens = async (email, req) => {
 
   const unHashedToken = crypto.randomBytes(20).toString("hex");
   const hashedToken = crypto.
-  createHash("sha256").
-  update(unHashedToken).
-  digest("hex");
+    createHash("sha256").
+    update(unHashedToken).
+    digest("hex");
 
   const expiryMs = Number(process.env.USER_TEMPORARY_TOKEN_EXPIRY) || (15 * 60 * 1000);
   const ttlSeconds = Math.ceil(expiryMs / 1000);
 
   await healthCheck();
   const key = `email:verify:${email}`;
-  await redisClient.hSet(key, {
+  await redis.hmset(key, {
     otp: String(otp),
     hashedToken,
     createdAt: new Date().toISOString()
   });
-  await redisClient.expire(key, ttlSeconds);
+  await redis.expire(key, ttlSeconds);
 
   const verifyUrl = `${process.env.FRONTEND_URL}/api/v1/users/verify-email-link?email=${encodeURIComponent(email)}&unHashedToken=${unHashedToken}`;
   logger.info('Email verification tokens generated', { email, otp });

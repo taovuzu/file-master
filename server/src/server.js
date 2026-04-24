@@ -2,9 +2,9 @@ import 'dotenv/config';
 import connectDB from './db/index.db.js';
 import { app } from './app.js';
 import { initCleanup } from './utils/cleanup.js';
-import { initializeQueue, redisClient, healthCheck } from './queues/pdf.queue.js';
+import { initializeQueue, healthCheck } from './queues/pdf.queue.js';
+import redis from './db/redis.js';
 import logger from './utils/logger.js';
-import usageMetrics from './utils/usageMetrics.js';
 
 let server;
 
@@ -19,8 +19,6 @@ async function start() {
     logger.info('Queue system initialized');
     await healthCheck();
     logger.info('Health check passed');
-    await usageMetrics.initialize();
-    logger.info('Usage metrics initialized');
 
     const PORT = process.env.PORT || 8080;
     server = app.listen(PORT, () => {
@@ -54,8 +52,8 @@ async function shutdown(signal) {
       });
       logger.info('HTTP server closed');
     }
-    if (redisClient?.isOpen) {
-      await redisClient.quit();
+    if (redis.status === 'ready' || redis.status === 'connect') {
+      await redis.quit();
       logger.info('Redis connection closed');
     }
     logger.info('Server shutdown completed');
