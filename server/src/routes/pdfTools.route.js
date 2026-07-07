@@ -30,4 +30,13 @@ router.post("/split", splitPdf);
 router.post("/protect", protectPdf);
 router.post("/unlock", unlockPdf);
 
+// LibreOffice -> DocToPdf, 
+// Pdf-lib (js library) -> ImageToPdf, waterMark, pageNumber, rotate, split
+// Qpdf (c++ library) -> compress, encryption, decryption
+// pptxgen -> PdfToPpt
+// poppler-utils (c++ library) -> PdfToImages (for PdfToPpt)
+// Pdf-merger(pdf-lib wrapper) -> merge pdf
+// archiver -> for creating zip files 
+
+
 export default router;
